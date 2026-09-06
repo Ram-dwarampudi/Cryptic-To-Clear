@@ -8,7 +8,7 @@ import RegisterForm from "./RegisterForm";
 import ForgotPassword from "./ForgotPassword";
 import GuestButton from "./GuestButton";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Terminal, User, GraduationCap } from "lucide-react";
+import { X, User, GraduationCap } from "lucide-react";
 
 export default function AuthModal() {
   const { isAuthModalOpen, authModalTab, closeAuthModal } = useAuth();
@@ -65,7 +65,7 @@ export default function AuthModal() {
                 <span className="font-logo-title font-bold text-xl tracking-[0.06em] text-[var(--ink)]">
                   CRYPTIC
                 </span>
-                <span className="font-sans font-semibold text-[10.5px] tracking-[0.3em] text-[var(--ink-dim)] mt-1">
+                <span className="font-sans font-semibold text-[10.5px] tracking-[0.3em] text-[#E8C97A] mt-1">
                   TO CLEAR
                 </span>
               </div>

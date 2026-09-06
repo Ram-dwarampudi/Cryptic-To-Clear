@@ -36,7 +36,7 @@ class UserModel {
     const facultyPassword = bcrypt.hashSync("Faculty123!", 10);
     const demoFaculty = {
       id: "usr_faculty_demo",
-      name: "Dr. Sarah Jenkins",
+      name: "Dr.B.V.NRani",
       email: "faculty@cryptictoclear.io",
       passwordHash: facultyPassword,
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=FacultyDemo",

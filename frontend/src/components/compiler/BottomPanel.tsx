@@ -6,28 +6,14 @@ import {
   Terminal,
   FileText,
   AlertCircle,
-  Trash2,
-  Sparkles,
-  CheckCircle2,
-  XCircle,
   Clock,
   HardDrive,
   CornerDownLeft,
-  Play,
-  Plus,
-  Square,
+  Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 
-export type BottomTab = "output" | "testcases" | "stdin" | "errors";
-
-export interface TestCase {
-  id: string;
-  input: string;
-  expectedOutput: string;
-  actualOutput?: string;
-  status?: "idle" | "running" | "pass" | "fail" | "error";
-  error?: string;
-}
+export type BottomTab = "output" | "errors";
 
 interface BottomPanelProps {
   output: string;
@@ -40,11 +26,8 @@ interface BottomPanelProps {
   isRunning?: boolean;
   input?: string;
   onInputChange?: (val: string) => void;
-  activeTab?: BottomTab;
-  onTabChange?: (tab: BottomTab) => void;
-  testCases?: TestCase[];
-  onTestCasesChange?: (testCases: TestCase[]) => void;
-  onRunTestCases?: (testCases: TestCase[]) => void;
+  activeTab?: string;
+  onTabChange?: (tab: any) => void;
   executionTime?: string;
   memoryUsage?: string;
   onTriggerAiExplain?: () => void;
@@ -63,9 +46,6 @@ export default function BottomPanel({
   onInputChange,
   activeTab = "output",
   onTabChange,
-  testCases = [],
-  onTestCasesChange,
-  onRunTestCases,
   executionTime = "—",
   memoryUsage = "—",
   onTriggerAiExplain,
@@ -100,35 +80,10 @@ export default function BottomPanel({
     }, 50);
   };
 
-  const handleAddTestCase = () => {
-    const newCase: TestCase = {
-      id: `tc-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      input: "",
-      expectedOutput: "",
-      status: "idle",
-    };
-    onTestCasesChange?.([...testCases, newCase]);
-  };
-
-  const handleRemoveTestCase = (id: string) => {
-    onTestCasesChange?.(testCases.filter((tc) => tc.id !== id));
-  };
-
-  const handleUpdateTestCase = (
-    id: string,
-    field: "input" | "expectedOutput",
-    val: string
-  ) => {
-    onTestCasesChange?.(
-      testCases.map((tc) =>
-        tc.id === id ? { ...tc, [field]: val, status: "idle" } : tc
-      )
-    );
-  };
-
   const isExecutionActive =
     status !== "idle" || output.length > 0 || errors.length > 0;
-  const passedCount = testCases.filter((tc) => tc.status === "pass").length;
+
+  const currentTab = activeTab === "errors" ? "errors" : "output";
 
   return (
     <div className="flex h-full flex-col border-t border-[var(--border)] bg-[var(--bg-elevated)] text-[var(--ink)] font-sans select-none">
@@ -142,61 +97,33 @@ export default function BottomPanel({
 
       {/* Header Bar with Tabs */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-[var(--border)] shrink-0 bg-[var(--panel)]">
-        <div className="flex items-center gap-1.5 overflow-x-auto">
+        <div className="flex items-center gap-2 overflow-x-auto">
           <button
             onClick={() => onTabChange?.("output")}
-            className={`px-3 py-1 text-[13px] font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
-              activeTab === "output"
-                ? "bg-[var(--bg)] text-[var(--ink)] shadow-sm font-semibold"
-                : "text-[var(--ink-dim)] hover:text-[var(--ink)]"
+            className={`px-3.5 py-1 text-[12.5px] font-semibold rounded-lg transition-all flex items-center gap-2 cursor-pointer ${
+              currentTab === "output"
+                ? "bg-[var(--bg)] text-[var(--ink)] shadow-sm border border-[var(--border)]"
+                : "text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5"
             }`}
           >
             <Terminal className="h-3.5 w-3.5 text-emerald-400" />
-            <span>Output</span>
+            <span>Console (Output & Input)</span>
             {output && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
           </button>
 
           <button
             type="button"
-            onClick={() => onTabChange?.("testcases")}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[12px] font-mono transition-all cursor-pointer ${activeTab === "testcases"
-              ? "bg-[var(--bg)] text-[var(--ink)] font-bold shadow-sm border border-[var(--border)]"
-              : "text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5"
-              }`}
-          >
-            <Play className="h-3.5 w-3.5 text-purple-400" />
-            <span>Test Cases</span>
-            {testCases.length > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono font-bold">
-                {passedCount}/{testCases.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onTabChange?.("stdin")}
-            className={`px-3 py-1 text-[13px] font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
-              activeTab === "stdin"
-                ? "bg-[var(--bg)] text-[var(--ink)] shadow-sm font-semibold"
-                : "text-[var(--ink-dim)] hover:text-[var(--ink)]"
+            onClick={() => onTabChange?.("errors")}
+            className={`flex items-center gap-1.5 px-3.5 py-1 rounded-lg text-[12.5px] font-semibold transition-all cursor-pointer ${
+              currentTab === "errors"
+                ? "bg-[var(--bg)] text-[var(--ink)] shadow-sm border border-[var(--border)]"
+                : "text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5"
             }`}
           >
-            <FileText className="h-3.5 w-3.5 text-cyan-400" />
-            <span>Input (STDIN)</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onTabChange?.("errors")}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[12px] font-mono transition-all cursor-pointer ${activeTab === "errors"
-              ? "bg-[var(--bg)] text-[var(--ink)] font-bold shadow-sm border border-[var(--border)]"
-              : "text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5"
-              }`}
-          >
             <AlertCircle
-              className={`h-3.5 w-3.5 ${errors ? "text-rose-400" : "text-gray-400"
-                }`}
+              className={`h-3.5 w-3.5 ${
+                errors ? "text-rose-400" : "text-gray-400"
+              }`}
             />
             <span>Errors & Diagnostics</span>
             {errors && (
@@ -226,8 +153,8 @@ export default function BottomPanel({
             <button
               type="button"
               onClick={() => onTabChange?.("errors")}
-              className={`px-3 py-1 text-[13px] font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
-                activeTab === "errors"
+              className={`px-3 py-1 text-[12px] font-medium rounded-md transition-colors flex items-center gap-1.5 cursor-pointer ${
+                currentTab === "errors"
                   ? "bg-[var(--bg)] text-[var(--syn-const)] shadow-sm font-semibold"
                   : "text-[var(--syn-const)]/70 hover:text-[var(--syn-const)]"
               }`}
@@ -247,260 +174,144 @@ export default function BottomPanel({
         </div>
       </div>
 
-      {/* Instant Tab Switching (Using CSS hidden class to eliminate tab lag) */}
-
-      {/* Output Tab View */}
+      {/* Console Tab View (LeetCode Style: Combined Output & STDIN Input) */}
       <div
-        onClick={() => {
-          if (isExecutionActive) promptInputRef.current?.focus();
-        }}
-        className={`flex-1 p-4 font-mono text-[13px] bg-[var(--bg)] overflow-y-auto cursor-text flex-col selection:bg-blue-500/30 select-text ${activeTab === "output" ? "flex" : "hidden"
-          }`}
+        className={`flex-1 p-3 bg-[var(--bg)] overflow-y-auto flex-col font-mono text-[13px] gap-3 ${
+          currentTab === "output" ? "flex" : "hidden"
+        }`}
       >
-        {errors && (
-          <pre className="whitespace-pre-wrap text-[var(--syn-const)] font-mono text-[13px] leading-relaxed mb-2">
-            {errors}
-          </pre>
-        )}
+        {/* STDIN Input Block (LeetCode Style Top Box) */}
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--panel)] p-3 shrink-0">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-[var(--ink)]">
+              <FileText className="h-3.5 w-3.5 text-cyan-400" />
+              <span>Input (STDIN)</span>
+            </div>
+            <span className="text-[10px] text-[var(--ink-faint)]">
+              Standard input for program execution
+            </span>
+          </div>
+          <textarea
+            value={input}
+            onChange={(e) => onInputChange?.(e.target.value)}
+            placeholder="Type standard input (STDIN) here before running your program..."
+            rows={2}
+            className="w-full bg-[var(--bg)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] border border-[var(--border)] rounded-lg p-2.5 font-mono text-[12px] outline-none focus:border-[var(--syn-function)] transition-colors resize-y min-h-[50px] max-h-[120px]"
+          />
+        </div>
 
-        {output ? (
-          <div className="font-mono text-[13px] leading-relaxed whitespace-pre-wrap">
-            {output.split("\n").map((line, idx) => {
-              const trimmed = line.trim();
-              if (trimmed.startsWith(">")) {
+        {/* Execution Output Section */}
+        <div
+          onClick={() => {
+            if (isExecutionActive) promptInputRef.current?.focus();
+          }}
+          className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg-elevated)] p-3 overflow-y-auto flex flex-col cursor-text selection:bg-blue-500/30 select-text min-h-[120px]"
+        >
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[var(--border)] text-xs font-semibold text-[var(--ink-dim)]">
+            <div className="flex items-center gap-1.5">
+              <Terminal className="h-3.5 w-3.5 text-emerald-400" />
+              <span>Execution Terminal Output</span>
+            </div>
+            {isRunning && (
+              <span className="text-[11px] text-amber-400 font-mono animate-pulse">
+                Running...
+              </span>
+            )}
+          </div>
+
+          {errors && (
+            <pre className="whitespace-pre-wrap text-[var(--syn-const)] font-mono text-[12.5px] leading-relaxed mb-2">
+              {errors}
+            </pre>
+          )}
+
+          {output ? (
+            <div className="font-mono text-[13px] leading-relaxed whitespace-pre-wrap">
+              {output.split("\n").map((line, idx) => {
+                const trimmed = line.trim();
+                if (trimmed.startsWith(">")) {
+                  return (
+                    <div key={idx} className="text-[var(--syn-function)] font-bold">
+                      {line}
+                    </div>
+                  );
+                }
+
+                const promptMatch = line.match(/^(.+?[:?=>$]\s*)(\S+.*)$/);
+                const isPromptText =
+                  promptMatch &&
+                  /^(enter|input|type|please|what|how|select|choose)\b|[:?=>$]$/i.test(
+                    promptMatch[1].trim()
+                  );
+                const isResultHeader =
+                  promptMatch &&
+                  /^(name|age|cgpa|score|result|output|total|sum|diff|product|count):/i.test(
+                    promptMatch[1].trim()
+                  );
+
+                if (promptMatch && isPromptText && !isResultHeader) {
+                  return (
+                    <div key={idx} className="text-[var(--ink)]">
+                      <span>{promptMatch[1]}</span>
+                      <span className="text-[var(--syn-function)] font-bold">
+                        {promptMatch[2]}
+                      </span>
+                    </div>
+                  );
+                }
+
                 return (
-                  <div key={idx} className="text-[var(--syn-function)] font-bold">
+                  <div key={idx} className="text-[var(--ink)]">
                     {line}
                   </div>
                 );
-              }
-
-              const promptMatch = line.match(/^(.+?[:?=>$]\s*)(\S+.*)$/);
-              const isPromptText =
-                promptMatch &&
-                /^(enter|input|type|please|what|how|select|choose)\b|[:?=>$]$/i.test(
-                  promptMatch[1].trim()
-                );
-              const isResultHeader =
-                promptMatch &&
-                /^(name|age|cgpa|score|result|output|total|sum|diff|product|count):/i.test(
-                  promptMatch[1].trim()
-                );
-
-              if (promptMatch && isPromptText && !isResultHeader) {
-                return (
-                  <div key={idx} className="text-[var(--ink)]">
-                    <span>{promptMatch[1]}</span>
-                    <span className="text-[var(--syn-function)] font-bold">
-                      {promptMatch[2]}
-                    </span>
-                  </div>
-                );
-              }
-
-              return (
-                <div key={idx} className="text-[var(--ink)]">
-                  {line}
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          status === "idle" && (
-            <div className="text-[var(--ink-faint)] italic select-none">
-              Output will appear here after execution...
+              })}
             </div>
-          )
-        )}
-
-        {isExecutionActive && (
-          <form
-            onSubmit={handleSendPrompt}
-            className="flex items-center gap-2 mt-2 pt-2 border-t border-[var(--border)] shrink-0 font-mono"
-          >
-            <span className="text-[var(--syn-string)] font-bold text-[13px] shrink-0">
-              $
-            </span>
-            <input
-              ref={promptInputRef}
-              type="text"
-              value={terminalPrompt}
-              onChange={(e) => setTerminalPrompt(e.target.value)}
-              disabled={isRunning}
-              placeholder={isRunning ? "Executing..." : "Enter input..."}
-              className="flex-1 bg-transparent text-[var(--ink)] font-mono text-[13px] placeholder:text-[var(--ink-faint)] border-none outline-none focus:ring-0 p-0 disabled:opacity-50"
-            />
-            <button
-              type="submit"
-              disabled={isRunning || !terminalPrompt.trim()}
-              className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono rounded bg-[var(--syn-string)]/20 hover:bg-[var(--syn-string)]/30 text-[var(--syn-string)] border border-[var(--syn-string)]/30 transition-colors disabled:opacity-40 cursor-pointer shrink-0"
-            >
-              <span>Enter</span>
-              <CornerDownLeft className="h-3 w-3 text-[var(--syn-string)]" />
-            </button>
-          </form>
-        )}
-
-        <div ref={terminalEndRef} />
-      </div>
-
-      {/* Test Cases Tab View */}
-      <div
-        className={`flex-1 p-4 bg-[var(--bg)] overflow-y-auto flex-col font-mono text-[13px] gap-4 ${activeTab === "testcases" ? "flex" : "hidden"
-          }`}
-      >
-        <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] pb-3 shrink-0">
-          <div>
-            <h4 className="font-bold text-[var(--ink)] text-sm">Test Case Runner</h4>
-            <p className="text-[11px] text-[var(--ink-dim)]">
-              Define custom input & expected output pairs to verify program correctness.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleAddTestCase}
-              className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-[var(--border)] text-xs font-semibold text-[var(--ink)] transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Add Test Case</span>
-            </button>
-
-            {testCases.length > 0 && onRunTestCases && (
-              <button
-                type="button"
-                onClick={() => onRunTestCases(testCases)}
-                disabled={isRunning}
-                className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <Play className="h-3.5 w-3.5 fill-emerald-300" />
-                <span>Run All Cases</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {testCases.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-8 text-center border border-dashed border-[var(--border)] rounded-xl my-auto">
-            <p className="text-xs text-[var(--ink-dim)] mb-3">
-              No custom test cases added yet.
-            </p>
-            <button
-              type="button"
-              onClick={handleAddTestCase}
-              className="px-3.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-colors cursor-pointer"
-            >
-              + Create First Test Case
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {testCases.map((tc, idx) => (
-              <div
-                key={tc.id}
-                className={`p-3 rounded-xl border transition-colors ${tc.status === "pass"
-                  ? "bg-emerald-950/10 border-emerald-500/30"
-                  : tc.status === "fail" || tc.status === "error"
-                    ? "bg-rose-950/10 border-rose-500/30"
-                    : "bg-[var(--panel)] border-[var(--border)]"
-                  }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs text-[var(--ink-dim)]">
-                      Test Case #{idx + 1}
-                    </span>
-                    {tc.status === "pass" && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                        <CheckCircle2 className="h-3 w-3" /> Passed
-                      </span>
-                    )}
-                    {tc.status === "fail" && (
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/30">
-                        <XCircle className="h-3 w-3" /> Failed
-                      </span>
-                    )}
-                    {tc.status === "running" && (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse">
-                        Running...
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTestCase(tc.id)}
-                    className="text-[var(--ink-dim)] hover:text-rose-400 p-1 transition-colors cursor-pointer"
-                    title="Delete Test Case"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <label className="block text-[11px] text-[var(--ink-dim)] mb-1">
-                      Input (STDIN)
-                    </label>
-                    <textarea
-                      value={tc.input}
-                      onChange={(e) =>
-                        handleUpdateTestCase(tc.id, "input", e.target.value)
-                      }
-                      placeholder="Input data for this test case..."
-                      rows={2}
-                      className="w-full bg-[var(--bg)] text-[var(--ink)] border border-[var(--border)] rounded-md p-2 font-mono text-xs outline-none focus:border-[var(--syn-function)] transition-colors resize-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] text-[var(--ink-dim)] mb-1">
-                      Expected Output
-                    </label>
-                    <textarea
-                      value={tc.expectedOutput}
-                      onChange={(e) =>
-                        handleUpdateTestCase(tc.id, "expectedOutput", e.target.value)
-                      }
-                      placeholder="Expected stdout output..."
-                      rows={2}
-                      className="w-full bg-[var(--bg)] text-[var(--ink)] border border-[var(--border)] rounded-md p-2 font-mono text-xs outline-none focus:border-[var(--syn-function)] transition-colors resize-none"
-                    />
-                  </div>
-                </div>
-
-                {tc.actualOutput !== undefined && (
-                  <div className="mt-2.5 pt-2.5 border-t border-[var(--border)] text-xs font-mono">
-                    <span className="text-[11px] text-[var(--ink-dim)] block mb-1">
-                      Actual Output:
-                    </span>
-                    <pre className="p-2 rounded bg-[var(--bg)] border border-[var(--border)] text-[var(--ink)] whitespace-pre-wrap max-h-24 overflow-y-auto">
-                      {tc.actualOutput || "(empty)"}
-                    </pre>
-                  </div>
-                )}
+          ) : (
+            status === "idle" && (
+              <div className="text-[var(--ink-faint)] italic select-none text-xs my-auto text-center py-4">
+                Output will appear here after execution...
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+            )
+          )}
 
-      {/* STDIN Input View */}
-      <div
-        className={`flex-1 p-3 bg-[var(--bg)] flex-col font-mono text-[13px] ${activeTab === "stdin" ? "flex" : "hidden"
-          }`}
-      >
-        <textarea
-          value={input}
-          onChange={(e) => onInputChange?.(e.target.value)}
-          placeholder="Type standard input (STDIN) here before running your program..."
-          className="w-full flex-1 bg-transparent text-[var(--ink)] placeholder:text-[var(--ink-faint)] border border-[var(--border)] rounded-lg p-3 font-mono text-[13px] outline-none focus:border-[var(--syn-function)] transition-colors resize-none"
-        />
+          {isExecutionActive && (
+            <form
+              onSubmit={handleSendPrompt}
+              className="flex items-center gap-2 mt-auto pt-2 border-t border-[var(--border)] shrink-0 font-mono"
+            >
+              <span className="text-[var(--syn-string)] font-bold text-[13px] shrink-0">
+                $
+              </span>
+              <input
+                ref={promptInputRef}
+                type="text"
+                value={terminalPrompt}
+                onChange={(e) => setTerminalPrompt(e.target.value)}
+                disabled={isRunning}
+                placeholder={isRunning ? "Executing..." : "Enter input..."}
+                className="flex-1 bg-transparent text-[var(--ink)] font-mono text-[13px] placeholder:text-[var(--ink-faint)] border-none outline-none focus:ring-0 p-0 disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={isRunning || !terminalPrompt.trim()}
+                className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-mono rounded bg-[var(--syn-string)]/20 hover:bg-[var(--syn-string)]/30 text-[var(--syn-string)] border border-[var(--syn-string)]/30 transition-colors disabled:opacity-40 cursor-pointer shrink-0"
+              >
+                <span>Enter</span>
+                <CornerDownLeft className="h-3 w-3 text-[var(--syn-string)]" />
+              </button>
+            </form>
+          )}
+
+          <div ref={terminalEndRef} />
+        </div>
       </div>
 
       {/* Errors Tab View */}
       <div
-        className={`flex-1 p-4 font-mono text-[13px] bg-[var(--bg)] overflow-y-auto select-text flex-col ${activeTab === "errors" ? "flex" : "hidden"
-          }`}
+        className={`flex-1 p-4 font-mono text-[13px] bg-[var(--bg)] overflow-y-auto select-text flex-col ${
+          currentTab === "errors" ? "flex" : "hidden"
+        }`}
       >
         {errors ? (
           <div className="space-y-3">

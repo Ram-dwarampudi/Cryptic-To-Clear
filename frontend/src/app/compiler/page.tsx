@@ -6,8 +6,7 @@ import dynamic from "next/dynamic";
 import { GripVertical, Bot, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Toolbar from "@/components/compiler/Toolbar";
-import AIPanel from "@/components/compiler/AIPanel";
-import BottomPanel, { BottomTab, TestCase } from "@/components/compiler/BottomPanel";
+import BottomPanel, { BottomTab } from "@/components/compiler/BottomPanel";
 import { EditorSettings } from "@/components/compiler/CodeEditor";
 import { LANGUAGES, LanguageConfig, getLanguage } from "@/lib/languages";
 import { getStoredTheme, Theme } from "@/lib/theme";
@@ -25,7 +24,6 @@ import {
   submitStudentAssignment,
   AssignmentItem,
 } from "@/lib/api";
-import StudentAssignmentsModal from "@/components/compiler/StudentAssignmentsModal";
 import { changedLineNumbers } from "@/lib/diff";
 import {
   downloadTextFile,
@@ -102,6 +100,13 @@ const ConverterModal = dynamic(() => import("@/components/compiler/ConverterModa
 const ShortcutsModal = dynamic(() => import("@/components/compiler/ShortcutsModal"), {
   ssr: false,
 });
+const AIPanel = dynamic(() => import("@/components/compiler/AIPanel"), {
+  ssr: false,
+});
+const StudentAssignmentsModal = dynamic(
+  () => import("@/components/compiler/StudentAssignmentsModal"),
+  { ssr: false }
+);
 
 const STORAGE_KEY = "codementor:compiler:v1";
 const CHAT_STORAGE_KEY = "codementor:chat:v1";
@@ -212,7 +217,7 @@ export default function CompilerPage() {
   const [aiFloating, setAiFloating] = useState(false);
 
   // Test Cases State
-  const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [testCases, setTestCases] = useState<any[]>([]);
   const activeExecutionController = useRef<AbortController | null>(null);
 
   // Student Assignment State
@@ -779,9 +784,9 @@ export default function CompilerPage() {
   }, []);
 
   const handleRunTestCases = useCallback(
-    async (cases: TestCase[]) => {
+    async (cases: any[]) => {
       if (cases.length === 0) return;
-      setBottomTab("testcases");
+      setBottomTab("output");
       setIsRunning(true);
       setStatus("running");
 
@@ -1329,9 +1334,6 @@ export default function CompilerPage() {
                 onInputChange={setInput}
                 activeTab={bottomTab}
                 onTabChange={setBottomTab}
-                testCases={testCases}
-                onTestCasesChange={setTestCases}
-                onRunTestCases={handleRunTestCases}
                 executionTime={executionTime}
                 memoryUsage={memoryUsage}
                 onTriggerAiExplain={() => {

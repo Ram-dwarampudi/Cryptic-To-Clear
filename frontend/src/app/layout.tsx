@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Inter, JetBrains_Mono, Cinzel, Plus_Jakarta_Sans } from "next/font/google";
+import { Space_Grotesk, Inter, JetBrains_Mono, Cinzel, Plus_Jakarta_Sans, Playfair_Display, Merriweather } from "next/font/google";
 import "./globals.css";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+const merriweather = Merriweather({
+  variable: "--font-merriweather",
+  subsets: ["latin"],
+  weight: ["300", "400", "700", "900"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -12,7 +28,7 @@ const spaceGrotesk = Space_Grotesk({
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -34,9 +50,14 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Cryptic to Clear — A Tiny Compiler That Explains Its Own Errors",
+  title: "Cryptic to Clear — Modern Coding Environment with Timeless Aesthetics",
   description:
-    "Cryptic to Clear: A tiny compiler that explains its own errors. Write code, run instantly, and understand every compiler error using AI.",
+    "Cryptic to Clear: A modern coding environment with timeless aesthetics that explains its own errors with clarity and elegance.",
+  icons: {
+    icon: "/logo-icon.png",
+    shortcut: "/logo-icon.png",
+    apple: "/logo-icon.png",
+  },
 };
 
 import { AuthProvider } from "@/context/AuthContext";
@@ -55,7 +76,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
-        className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} ${cinzel.variable} ${jakarta.variable} antialiased bg-[var(--bg)] text-[var(--ink)]`}
+        className={`${playfair.variable} ${merriweather.variable} ${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} ${cinzel.variable} ${jakarta.variable} antialiased bg-[var(--bg)] text-[var(--ink)]`}
       >
         <AuthProvider>
           {children}

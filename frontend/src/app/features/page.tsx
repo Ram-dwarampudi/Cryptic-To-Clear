@@ -146,9 +146,9 @@ nums = [1, 2, 3]`,
             <span>Built for Students, Engineers & Educators</span>
           </div>
 
-          <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight leading-tight">
+          <h1 className="font-display text-4xl sm:text-6xl font-bold leading-[1.35] py-3">
             An Intelligent IDE Platform That <br />
-            <span className="text-gradient">Teaches as You Code</span>
+            <span className="text-gradient inline-block px-3 py-1">Teaches as You Code</span>
           </h1>
 
           <p className="mt-6 text-lg sm:text-xl text-[var(--ink-dim)] max-w-3xl mx-auto leading-relaxed">

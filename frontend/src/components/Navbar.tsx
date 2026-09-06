@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Terminal, BookOpen } from "lucide-react";
+import { Menu, X, BookOpen } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
 import UserMenu from "./auth/UserMenu";
@@ -42,8 +42,10 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
 
   return (
     <header
-      className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${
-        scrolled ? "glass-strong" : "bg-transparent border-b border-transparent"
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? "glass-strong shadow-[0_4px_28px_rgba(0,0,0,0.45)] border-b border-[rgba(212,175,55,0.22)]"
+          : "bg-transparent border-b border-transparent"
       }`}
     >
       <nav className="mx-auto max-w-7xl px-5 sm:px-8 h-16 flex items-center justify-between">
@@ -51,14 +53,14 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
         <Link href="/" className="flex items-center gap-3 group py-1">
           <img
             src="/logo-icon.png"
-            alt="Cryptic to Clear Logo Icon"
+            alt="Cryptic to Clear Logo"
             className="h-10 sm:h-11 w-auto object-contain filter drop-shadow-[0_0_14px_rgba(255,255,255,0.25)] group-hover:scale-105 transition-transform"
           />
           <div className="flex flex-col justify-center leading-none">
-            <span className="font-logo-title font-bold text-[16px] sm:text-[18px] tracking-[0.06em] text-[var(--ink)]">
+            <span className="font-logo-title font-bold text-[17px] sm:text-[19px] tracking-[0.06em] text-[var(--ink)] group-hover:text-[#E8C97A] transition-colors">
               CRYPTIC
             </span>
-            <span className="font-sans font-semibold text-[9px] sm:text-[10px] tracking-[0.3em] text-[var(--ink-dim)] mt-1">
+            <span className="font-sans font-semibold text-[9px] sm:text-[10px] tracking-[0.3em] text-[#E8C97A] mt-0.5">
               TO CLEAR
             </span>
           </div>
@@ -70,10 +72,10 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
             <li key={link.href}>
               <Link
                 href={link.href}
-                className="relative px-4 py-2 rounded-md font-medium text-[var(--ink-dim)] hover:text-[var(--ink)] transition-colors group"
+                className="relative px-4 py-2 rounded-md font-medium text-[var(--ink-dim)] hover:text-[#f7f3eb] transition-colors group"
               >
                 {link.label}
-                <span className="absolute left-4 right-4 -bottom-0.5 h-px bg-gradient-to-r from-[var(--syn-keyword)] to-[var(--syn-function)] scale-x-0 group-hover:scale-x-100 transition-transform origin-left" />
+                <span className="absolute left-3 right-3 -bottom-0.5 h-[2px] bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#E8C97A] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full" />
               </Link>
             </li>
           ))}
@@ -88,11 +90,11 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
               title="Open Course Assignments"
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-mono border transition-all cursor-pointer shrink-0 ${
                 activeAssignment
-                  ? "bg-purple-500/10 border-purple-500/30 text-purple-300 font-semibold"
-                  : "glass text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[var(--border-strong)]"
+                  ? "bg-[rgba(212,175,55,0.15)] border-[rgba(212,175,55,0.5)] text-[#E8C97A] font-semibold shadow-[0_0_12px_rgba(212,175,55,0.2)]"
+                  : "glass text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[rgba(212,175,55,0.35)]"
               }`}
             >
-              <BookOpen className="h-3.5 w-3.5 text-[var(--syn-keyword)]" />
+              <BookOpen className="h-3.5 w-3.5 text-[#E8C97A]" />
               <span>{activeAssignment ? `Assignment: ${activeAssignment.title.slice(0, 18)}...` : "Assignments"}</span>
             </button>
           )}
@@ -102,9 +104,9 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
           ) : (
             <button
               onClick={() => openAuthModal("login")}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-mono text-xs font-medium text-[var(--ink)] glass hover:bg-white/[0.1] hover:border-[var(--syn-keyword)]/40 border border-white/10 transition-all hover:shadow-[0_0_12px_rgba(184,146,255,0.2)] transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-mono text-xs font-medium text-[var(--ink)] glass hover:bg-white/[0.1] hover:border-[rgba(212,175,55,0.4)] border border-[rgba(212,175,55,0.2)] transition-all hover:shadow-[0_0_14px_rgba(212,175,55,0.2)] transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
-              <LogIn className="w-3.5 h-3.5 text-[var(--syn-keyword)]" />
+              <LogIn className="w-3.5 h-3.5 text-[#E8C97A]" />
               <span>Sign In</span>
             </button>
           )}
@@ -112,7 +114,7 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
           <Link
             href="/compiler"
             prefetch={true}
-            className="relative inline-flex items-center gap-2 rounded-lg px-4 py-2 text-[13px] font-bold text-[#07090e] bg-gradient-to-r from-[var(--syn-keyword)] via-[var(--syn-function)] to-[var(--syn-string)] hover:brightness-110 shadow-[0_0_22px_rgba(108,182,255,0.35)] hover:shadow-[0_0_32px_rgba(108,182,255,0.55)] transition-all transform hover:scale-[1.03] active:scale-[0.98]"
+            className="btn-gold px-4 py-2 text-[13px] font-bold text-white shadow-[0_0_22px_rgba(212,175,55,0.4)] hover:shadow-[0_0_32px_rgba(232,201,122,0.65)]"
           >
             Start Coding
           </Link>
@@ -127,7 +129,7 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
             aria-label="Toggle navigation menu"
             aria-expanded={open}
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {open ? <X className="h-5 w-5 text-[#E8C97A]" /> : <Menu className="h-5 w-5 text-[#E8C97A]" />}
           </button>
         </div>
       </nav>
@@ -140,7 +142,7 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: "easeInOut" }}
-            className="md:hidden overflow-hidden glass-strong border-t border-[var(--border)]"
+            className="md:hidden overflow-hidden glass-strong border-t border-[rgba(212,175,55,0.2)]"
           >
             <ul className="flex flex-col px-5 py-4 gap-1 font-sans text-sm">
               {NAV_LINKS.map((link) => (
@@ -148,7 +150,7 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
                   <Link
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className="block px-3 py-2.5 rounded-md font-medium text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5 transition-colors"
+                    className="block px-3 py-2.5 rounded-md font-medium text-[var(--ink-dim)] hover:text-[#f7f3eb] hover:bg-[rgba(212,175,55,0.08)] transition-colors"
                   >
                     {link.label}
                   </Link>
@@ -165,11 +167,11 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
                     }}
                     className={`w-full flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-mono transition-colors ${
                       activeAssignment
-                        ? "bg-purple-500/10 text-purple-300 font-semibold"
+                        ? "bg-[rgba(212,175,55,0.15)] text-[#E8C97A] font-semibold"
                         : "text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5"
                     }`}
                   >
-                    <BookOpen className="w-4 h-4 text-[var(--syn-keyword)]" />
+                    <BookOpen className="w-4 h-4 text-[#E8C97A]" />
                     <span>{activeAssignment ? `Assignment: ${activeAssignment.title.slice(0, 18)}...` : "Assignments"}</span>
                   </button>
                 </li>
@@ -182,9 +184,9 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
                       setOpen(false);
                       openAuthModal("login");
                     }}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-mono text-[var(--ink)] glass border border-white/10"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-mono text-[var(--ink)] glass border border-[rgba(212,175,55,0.25)]"
                   >
-                    <LogIn className="w-4 h-4 text-[var(--syn-keyword)]" />
+                    <LogIn className="w-4 h-4 text-[#E8C97A]" />
                     <span>Sign In / Create Account</span>
                   </button>
                 </li>
@@ -194,7 +196,7 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
                 <Link
                   href="/compiler"
                   onClick={() => setOpen(false)}
-                  className="block text-center rounded-lg px-4 py-2.5 text-sm font-medium text-[#0a0d13] bg-gradient-to-r from-[var(--syn-keyword)] via-[var(--syn-function)] to-[var(--syn-string)]"
+                  className="btn-gold w-full block text-center py-2.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(212,175,55,0.4)]"
                 >
                   Start Coding
                 </Link>

@@ -16,6 +16,7 @@ export default function MermaidDiagram({ definition }: { definition: string }) {
         const mermaid = (await import("mermaid")).default;
         mermaid.initialize({
           startOnLoad: false,
+          suppressErrorRendering: true,
           theme: "dark",
           themeVariables: {
             background: "#0d1119",
@@ -31,15 +32,48 @@ export default function MermaidDiagram({ definition }: { definition: string }) {
           securityLevel: "strict",
         });
 
-        const { svg: rendered } = await mermaid.render(elementId, definition);
-        if (!cancelled) setSvg(rendered);
+        let formattedCode = (definition || "")
+          .replace(/\\n/g, "\n")
+          .replace(/\\t/g, "  ")
+          .trim();
+
+        if (
+          !formattedCode.startsWith("graph") &&
+          !formattedCode.startsWith("flowchart") &&
+          !formattedCode.startsWith("sequenceDiagram") &&
+          !formattedCode.startsWith("classDiagram") &&
+          !formattedCode.startsWith("stateDiagram")
+        ) {
+          formattedCode = `flowchart TD\n  ${formattedCode}`;
+        }
+
+        // Validate syntax first without rendering to DOM
+        const isValid = await mermaid.parse(formattedCode, { suppressErrors: true }).catch(() => false);
+        if (!isValid) {
+          // Attempt simple fallback flowchart if custom parse fails
+          formattedCode = `flowchart TD\n  A["Start Execution"] --> B["Process Statements"] --> C["Complete Program"]`;
+        }
+
+        const { svg: rendered } = await mermaid.render(elementId, formattedCode);
+        if (!cancelled) {
+          setError(null);
+          setSvg(rendered);
+        }
       } catch {
         if (!cancelled) setError("Couldn't render this flowchart.");
+      } finally {
+        // Clean up any stray error elements injected into document.body by Mermaid
+        if (typeof document !== "undefined") {
+          document.querySelectorAll('[id^="dmermaid"], .error-icon, svg[id^="dmermaid"]').forEach((el) => el.remove());
+        }
       }
     })();
 
     return () => {
       cancelled = true;
+      if (typeof document !== "undefined") {
+        document.querySelectorAll('[id^="dmermaid"], .error-icon, svg[id^="dmermaid"]').forEach((el) => el.remove());
+      }
     };
   }, [definition, elementId]);
 

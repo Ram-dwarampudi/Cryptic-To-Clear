@@ -344,8 +344,8 @@ export default function LearningModeModal({
 
                 {/* Pseudocode */}
                 <Card icon={FileCode2} title="Pseudo Code" accent="var(--syn-string)">
-                  <pre className="rounded-md bg-black/30 p-3 overflow-x-auto font-mono text-[11.5px] text-[var(--syn-string)] whitespace-pre">
-                    {content.pseudoCode}
+                  <pre className="rounded-md bg-black/30 p-3 overflow-x-auto font-mono text-[11.5px] text-[var(--syn-string)] whitespace-pre-wrap">
+                    {(content.pseudoCode || "").replace(/\\n/g, "\n")}
                   </pre>
                 </Card>
 

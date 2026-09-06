@@ -7,7 +7,6 @@ import ThemeToggle from "@/components/ThemeToggle";
 import UserMenu from "@/components/auth/UserMenu";
 import { useAuth } from "@/context/AuthContext";
 import {
-  Terminal,
   LayoutDashboard,
   Users,
   AlertTriangle,
@@ -60,13 +59,20 @@ export default function FacultyLayout({ children }: { children: React.ReactNode 
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            <Link href="/" className="flex items-center gap-2 group">
-              <span className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--syn-keyword)] via-[var(--syn-function)] to-[var(--syn-string)] shadow-[0_0_18px_rgba(184,146,255,0.35)]">
-                <Terminal className="h-4 w-4 text-[#0a0d13]" strokeWidth={2.5} />
-              </span>
-              <span className="font-display font-semibold text-[15px] tracking-tight text-[var(--ink)] hidden sm:inline">
-                Cryptic <span className="text-gradient">to Clear</span>
-              </span>
+            <Link href="/" className="flex items-center gap-3 group py-1">
+              <img
+                src="/logo-icon.png"
+                alt="Cryptic to Clear Logo"
+                className="h-10 sm:h-11 w-auto object-contain filter drop-shadow-[0_0_14px_rgba(255,255,255,0.25)] group-hover:scale-105 transition-transform"
+              />
+              <div className="flex flex-col justify-center leading-none">
+                <span className="font-logo-title font-bold text-[17px] sm:text-[19px] tracking-[0.06em] text-[var(--ink)] group-hover:text-[#E8C97A] transition-colors">
+                  CRYPTIC
+                </span>
+                <span className="font-sans font-semibold text-[9px] sm:text-[10px] tracking-[0.3em] text-[#E8C97A] mt-0.5">
+                  TO CLEAR
+                </span>
+              </div>
             </Link>
 
             <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-purple-500/10 border border-purple-500/20 text-purple-300 font-medium flex items-center gap-1.5 ml-2">
@@ -129,9 +135,23 @@ export default function FacultyLayout({ children }: { children: React.ReactNode 
             <div className="fixed inset-0 z-50 lg:hidden flex">
               <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
               <div className="relative w-64 bg-[var(--panel)] border-r border-[var(--border)] p-4 flex flex-col h-full z-10 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-display font-semibold text-sm text-[var(--ink)]">Faculty Navigation</span>
-                  <button onClick={() => setMobileOpen(false)} className="p-1 text-[var(--ink-dim)]">
+                <div className="flex items-center justify-between pb-3 border-b border-[var(--border)]">
+                  <Link href="/" className="flex items-center gap-2.5 group">
+                    <img
+                      src="/logo-icon.png"
+                      alt="Cryptic to Clear Logo"
+                      className="h-8 w-auto object-contain filter drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+                    />
+                    <div className="flex flex-col justify-center leading-none">
+                      <span className="font-logo-title font-bold text-[15px] tracking-[0.06em] text-[var(--ink)]">
+                        CRYPTIC
+                      </span>
+                      <span className="font-sans font-semibold text-[8px] tracking-[0.3em] text-[#E8C97A] mt-0.5">
+                        TO CLEAR
+                      </span>
+                    </div>
+                  </Link>
+                  <button onClick={() => setMobileOpen(false)} className="p-1 rounded-lg text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                 </div>

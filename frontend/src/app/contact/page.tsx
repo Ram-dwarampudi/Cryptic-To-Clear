@@ -39,8 +39,8 @@ export default function ContactPage() {
           <span className="font-mono text-xs text-[var(--syn-function)] uppercase tracking-widest">
             // Get In Touch
           </span>
-          <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight mt-3">
-            Contact & <span className="text-gradient">Support</span>
+          <h1 className="font-display text-4xl sm:text-6xl font-bold leading-[1.35] py-3 mt-3">
+            Contact & <span className="text-gradient inline-block px-3 py-1">Support</span>
           </h1>
           <p className="mt-4 text-lg text-[var(--ink-dim)] leading-relaxed max-w-2xl mx-auto">
             Have questions about Cryptic to Clear, feedback on compiler error explanations, or integration requests? Send us a message below.

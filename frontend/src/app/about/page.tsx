@@ -22,9 +22,9 @@ export default function AboutPage() {
           <span className="font-mono text-xs text-[var(--syn-function)] uppercase tracking-widest">
             // Our Mission & Vision
           </span>
-          <h1 className="font-display text-4xl sm:text-6xl font-bold tracking-tight mt-3">
+          <h1 className="font-display text-4xl sm:text-6xl font-bold leading-[1.35] py-3 mt-3">
             Transforming Compiler Errors <br />
-            Into <span className="text-gradient">Clear Learning Moments</span>
+            Into <span className="text-gradient inline-block px-3 py-1">Clear Learning Moments</span>
           </h1>
           <p className="mt-6 text-lg text-[var(--ink-dim)] leading-relaxed max-w-2xl mx-auto">
             Traditional online compilers present cryptic stack traces and move on. Cryptic to Clear is built from the ground up to explain why code fails, how to fix it, and how to write production-grade software.

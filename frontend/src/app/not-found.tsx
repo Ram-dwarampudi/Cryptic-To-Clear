@@ -1,12 +1,16 @@
 import Link from "next/link";
-import { Terminal, Home } from "lucide-react";
+import { Home } from "lucide-react";
 
 export default function NotFound() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-[var(--bg)] px-5">
       <div className="glass-strong rounded-xl p-8 max-w-md w-full text-center">
-        <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--syn-keyword)] via-[var(--syn-function)] to-[var(--syn-string)]">
-          <Terminal className="h-6 w-6 text-[#0a0d13]" />
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center">
+          <img
+            src="/logo-icon.png"
+            alt="Cryptic to Clear Logo"
+            className="h-12 w-auto object-contain filter drop-shadow-[0_0_14px_rgba(255,255,255,0.25)]"
+          />
         </div>
         <p className="font-mono text-[13px] text-[var(--syn-const)] mb-2">404</p>
         <h1 className="font-display text-lg font-semibold text-[var(--ink)] mb-2">
