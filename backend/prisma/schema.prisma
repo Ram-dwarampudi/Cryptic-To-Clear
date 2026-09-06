@@ -47,7 +47,7 @@ model User {
   avatar       String?
   rollNo       String?
   batchYear    Int?        // e.g. 2024, 2025, 2026
-  karmaPoints  Int         @default(10)
+  karmaPoints  Int         @default(0)
   bio          String?
 
   // Academic & Profile Details
@@ -65,7 +65,7 @@ model User {
 
   // Synced External Metrics & Unified Rating
   externalStats   String?     // JSON string storing leetcode, codechef, codeforces metrics
-  overallScore    Int         @default(750)
+  overallScore    Int         @default(0)
 
   universityId String?
   university   University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
