@@ -69,7 +69,7 @@ Thumbs.db
 !.vscode/extensions.json
 
 # Ignore local npm debug logs and lockfiles from other package managers
-package-lock.json
+# NOTE: package-lock.json is intentionally NOT ignored — Railway needs it for reproducible installs
 yarn.lock
 pnpm-lock.yaml
 

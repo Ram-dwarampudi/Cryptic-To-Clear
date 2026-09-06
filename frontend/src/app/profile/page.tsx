@@ -1,0 +1,1491 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import {
+  fetchStudentDashboard,
+  updateStudentProfile,
+  syncExternalPlatforms,
+  StudentDashboardData,
+  ProblemItem,
+} from "@/lib/api";
+import {
+  Zap,
+  Star,
+  Clock,
+  Sparkles,
+  Edit3,
+  RefreshCw,
+  ExternalLink,
+  Code2,
+  BookOpen,
+  HelpCircle,
+  Award,
+  Search,
+  Building,
+  GraduationCap,
+  X,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Flame,
+  Target,
+  BarChart3,
+  TrendingUp,
+  Cpu,
+  Layers,
+  ArrowUpRight,
+  ShieldCheck,
+  Compass,
+} from "lucide-react";
+
+export default function StudentProfileDashboard() {
+  const router = useRouter();
+  const { user, token, loading: authLoading } = useAuth();
+
+  const [dashboard, setDashboard] = useState<StudentDashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Active Workspace Tab
+  const [activeTab, setActiveTab] = useState<"problems" | "coursework" | "community" | "analytics">("problems");
+
+  // Modals
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // Edit Profile Form State
+  const [editForm, setEditForm] = useState<{
+    name: string;
+    bio: string;
+    rollNo: string;
+    collegeName: string;
+    stream: string;
+    primaryLanguage: string;
+    graduationYear: number | string;
+  }>({
+    name: "",
+    bio: "",
+    rollNo: "",
+    collegeName: "",
+    stream: "",
+    primaryLanguage: "",
+    graduationYear: "",
+  });
+
+  // External Handles State
+  const [handlesForm, setHandlesForm] = useState({
+    leetcodeHandle: "",
+    codeforcesHandle: "",
+    codechefHandle: "",
+    hackerrankHandle: "",
+    githubHandle: "",
+  });
+
+  // Problem Filters
+  const [problemSearch, setProblemSearch] = useState("");
+  const [difficultyFilter, setDifficultyFilter] = useState<string>("All");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+
+  // Load Dashboard
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetchStudentDashboard(token);
+      if (res.success && res.data) {
+        setDashboard(res.data);
+        const p = res.data.profile;
+        setEditForm({
+          name: p.name || "",
+          bio: p.bio || "",
+          rollNo: p.rollNo || "",
+          collegeName: p.collegeName || "",
+          stream: p.stream || "",
+          primaryLanguage: p.primaryLanguage || "",
+          graduationYear: p.graduationYear || "",
+        });
+        setHandlesForm({
+          leetcodeHandle: p.handles?.leetcode || "",
+          codeforcesHandle: p.handles?.codeforces || "",
+          codechefHandle: p.handles?.codechef || "",
+          hackerrankHandle: p.handles?.hackerrank || "",
+          githubHandle: p.handles?.github || "",
+        });
+      } else {
+        setError(res.message || "Failed to load developer dashboard.");
+      }
+    } catch {
+      setError("Network error loading dashboard.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login?redirect=/profile");
+      return;
+    }
+    if (user) {
+      loadDashboard();
+    }
+  }, [user, authLoading, token, router]);
+
+  // Save Profile
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading(true);
+    setActionSuccess(null);
+    try {
+      const res = await updateStudentProfile(
+        {
+          ...editForm,
+          graduationYear:
+            typeof editForm.graduationYear === "number"
+              ? editForm.graduationYear
+              : editForm.graduationYear
+              ? parseInt(editForm.graduationYear, 10)
+              : undefined,
+        },
+        token
+      );
+      if (res.success) {
+        setActionSuccess("Profile updated successfully!");
+        setTimeout(() => {
+          setIsEditModalOpen(false);
+          setActionSuccess(null);
+          loadDashboard();
+        }, 700);
+      } else {
+        alert(res.message || "Failed to update profile.");
+      }
+    } catch {
+      alert("Error updating profile.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Sync Platforms
+  const handleSyncPlatforms = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setActionLoading(true);
+    setActionSuccess(null);
+    try {
+      const res = await syncExternalPlatforms(handlesForm, token);
+      if (res.success) {
+        setActionSuccess("Coding accounts linked & DevScore recalculated!");
+        setTimeout(() => {
+          setIsSyncModalOpen(false);
+          setActionSuccess(null);
+          loadDashboard();
+        }, 900);
+      } else {
+        alert(res.message || "Failed to sync platforms.");
+      }
+    } catch {
+      alert("Error syncing platforms.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (authLoading || (loading && !dashboard)) {
+    return (
+      <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center font-mono text-[#E8C97A]">
+        <Loader2 className="w-8 h-8 animate-spin mb-3 text-[#D4AF37]" />
+        <p className="text-xs tracking-wider uppercase">Loading Student Profile...</p>
+      </div>
+    );
+  }
+
+  if (error && !dashboard) {
+    return (
+      <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center p-6 text-center">
+        <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
+        <h2 className="text-lg font-bold text-white mb-1">Could Not Load Dashboard</h2>
+        <p className="text-xs text-[var(--ink-dim)] font-mono mb-4">{error}</p>
+        <button onClick={loadDashboard} className="btn-gold px-4 py-2 text-xs font-bold">
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  const p = dashboard?.profile;
+  const s = dashboard?.summary;
+  const breakdown = dashboard?.scoreBreakdown;
+  const problemsList: ProblemItem[] = dashboard?.problems || [];
+  const coursework = dashboard?.coursework?.assignments || [];
+  const doubts = dashboard?.doubtsStats;
+  const platforms = dashboard?.platforms || {};
+  const submissions = dashboard?.submissions;
+  const ratingGraph = dashboard?.ratingGraph || [];
+
+  // Filtered problems
+  const filteredProblems = problemsList.filter((item) => {
+    const matchesSearch =
+      item.title.toLowerCase().includes(problemSearch.toLowerCase()) ||
+      item.category.toLowerCase().includes(problemSearch.toLowerCase());
+    const matchesDiff = difficultyFilter === "All" || item.difficulty === difficultyFilter;
+    const matchesStatus = statusFilter === "All" || item.status === statusFilter;
+    return matchesSearch && matchesDiff && matchesStatus;
+  });
+
+  return (
+    <div className="min-h-screen bg-[#070b14] text-[var(--ink)] flex flex-col selection:bg-[#D4AF37]/20 selection:text-[#E8C97A]">
+      <Navbar />
+
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 pb-20 space-y-10">
+        {/* =========================================================================
+            SECTION 1: HERO COMMAND DECK (Identity + Unified Developer Score)
+           ========================================================================= */}
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+          {/* Left: Student Identity & Academic Profile Card */}
+          <div className="lg:col-span-7 glass-strong rounded-3xl border border-white/10 p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden shadow-2xl">
+            {/* Background Ambient Glow */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none" />
+
+            <div>
+              {/* Header: Status Pill & Edit CTA */}
+              <div className="flex items-center justify-between gap-4 mb-6">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span>Student Profile</span>
+                </div>
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-[var(--ink-dim)] hover:text-white transition-all cursor-pointer"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>Edit Profile</span>
+                </button>
+              </div>
+
+              {/* Profile Avatar & Names */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 mb-6">
+                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-[#D4AF37] via-[#9c784f] to-[#16213b] p-0.5 shadow-xl flex-shrink-0">
+                  <div className="h-full w-full rounded-[14px] bg-[#070b14] flex items-center justify-center text-3xl font-bold font-serif text-[#E8C97A] overflow-hidden">
+                    {p?.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.avatar} alt={p.name} className="h-full w-full object-cover" />
+                    ) : (
+                      p?.name?.charAt(0).toUpperCase() || "S"
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-display">
+                    {p?.name || "Student"}
+                  </h1>
+                  <p className="text-xs font-mono text-[var(--ink-dim)]">
+                    {p?.rollNo ? (
+                      <span className="text-[#E8C97A] font-semibold">{p.rollNo} • </span>
+                    ) : null}
+                    {p?.email}
+                  </p>
+                  <p className="text-xs text-[var(--ink-dim)] italic font-serif pt-1 max-w-xl line-clamp-2">
+                    {p?.bio || "No bio added yet. Click Edit Profile to add your developer headline."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Academic Credentials Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 py-4 border-y border-white/5 font-mono text-xs">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase text-[var(--ink-faint)] tracking-wider block">University</span>
+                  <p className="font-semibold text-white truncate" title={p?.collegeName || "Not Specified"}>
+                    {p?.collegeName || "Not Specified"}
+                  </p>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase text-[var(--ink-faint)] tracking-wider block">Department</span>
+                  <p className="font-semibold text-white truncate" title={p?.stream || "Not Specified"}>
+                    {p?.stream || "Not Specified"}
+                  </p>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase text-[var(--ink-faint)] tracking-wider block">Primary Tech</span>
+                  <p className="font-bold text-[#E8C97A]">{p?.primaryLanguage || "Not Specified"}</p>
+                </div>
+
+                <div className="space-y-0.5">
+                  <span className="text-[10px] uppercase text-[var(--ink-faint)] tracking-wider block">Class Of</span>
+                  <p className="font-semibold text-white">{p?.graduationYear || "Not Specified"}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions Footer */}
+            <div className="pt-5 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-[var(--ink-faint)]">Status:</span>
+                <span className="text-xs font-mono text-emerald-400 font-semibold">Active Account</span>
+              </div>
+
+              <button
+                onClick={() => setIsSyncModalOpen(true)}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[rgba(212,175,55,0.12)] hover:bg-[rgba(212,175,55,0.2)] border border-[rgba(212,175,55,0.35)] text-[#E8C97A] text-xs font-mono font-medium transition-all cursor-pointer"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Link Platforms</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Right: Unified Developer Score (DevScore / UDR) Hero */}
+          <div className="lg:col-span-5 glass-strong rounded-3xl border border-[rgba(212,175,55,0.3)] p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden shadow-2xl bg-gradient-to-b from-[#0d1527] to-[#070b14]">
+            {/* Top Rating Tier Badge */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
+                <span className="text-xs font-mono uppercase tracking-wider text-[#E8C97A] font-bold">
+                  Unified Developer Score (UDS)
+                </span>
+              </div>
+              <span
+                className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider border shadow-sm"
+                style={{
+                  backgroundColor: `${breakdown?.tierColor || "#94a3b8"}15`,
+                  borderColor: `${breakdown?.tierColor || "#94a3b8"}40`,
+                  color: breakdown?.tierColor || "#94a3b8",
+                }}
+              >
+                {breakdown?.tier || "Novice"} Tier
+              </span>
+            </div>
+
+            {/* Score Ring & Value */}
+            <div className="my-auto py-3 flex items-center justify-between gap-6">
+              <div>
+                <div className="text-5xl sm:text-6xl font-black font-mono tracking-tight text-white flex items-baseline gap-2">
+                  <span className="bg-gradient-to-r from-white via-[#E8C97A] to-[#D4AF37] bg-clip-text text-transparent">
+                    {breakdown?.overallScore ?? s?.overallScore ?? 0}
+                  </span>
+                  <span className="text-xs font-mono text-[var(--ink-faint)] font-normal">/ 2500 pts</span>
+                </div>
+                <p className="text-xs font-mono text-[var(--ink-dim)] mt-1 flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>Next Rank: <strong className="text-white">{breakdown?.nextTier || "Apprentice"}</strong> at {breakdown?.nextTierTarget || 500} pts</span>
+                </p>
+              </div>
+
+              {/* Circular Mini Visual */}
+              <div className="relative w-20 h-20 flex-shrink-0 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    className="text-white/10"
+                    strokeWidth="3.5"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className="text-[#D4AF37]"
+                    strokeDasharray={`${breakdown?.progressPercentage || 0}, 100`}
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-xs font-mono font-bold text-white">{breakdown?.progressPercentage || 0}%</span>
+                  <span className="text-[8px] font-mono text-[var(--ink-faint)] uppercase">Tier</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Score Composition Transparency Breakdown */}
+            <div className="space-y-2.5 pt-4 border-t border-white/10 font-mono text-xs">
+              <span className="text-[10px] uppercase text-[var(--ink-faint)] tracking-wider block font-semibold">
+                Score Synthesis Breakdown
+              </span>
+
+              <div className="space-y-2">
+                {breakdown?.components?.map((c) => (
+                  <div key={c.id} className="space-y-1">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="text-[var(--ink-dim)] truncate max-w-[220px]">{c.label}</span>
+                      <span className="font-bold text-white">+{c.points} <span className="text-[var(--ink-faint)] font-normal text-[10px]">pts</span></span>
+                    </div>
+                    <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min((c.points / c.max) * 100, 100)}%`,
+                          backgroundColor: c.color,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION 2: MULTI-PLATFORM CONNECTED ECOSYSTEM
+           ========================================================================= */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-white font-display flex items-center gap-2">
+                <Layers className="w-4 h-4 text-[#D4AF37]" />
+                <span>Connected Coding Ecosystem</span>
+              </h2>
+              <p className="text-xs text-[var(--ink-dim)] font-mono">
+                Real-time external competitive profiles synced into your Cryptic-to-Clear score.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsSyncModalOpen(true)}
+              className="text-xs font-mono text-[#E8C97A] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>Manage Handles</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* LeetCode Card */}
+            <div className="glass-panel p-4 rounded-2xl border border-white/5 hover:border-amber-500/30 transition-all flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-bold text-xs text-amber-400 font-mono tracking-wide">LeetCode</span>
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      platforms.leetcode?.connected ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-white/20"
+                    }`}
+                  />
+                </div>
+                {platforms.leetcode?.connected ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-bold text-white truncate font-mono">
+                      @{platforms.leetcode.handle}
+                    </p>
+                    <div className="flex items-baseline justify-between text-xs font-mono pt-1">
+                      <span className="text-[var(--ink-dim)]">Solved:</span>
+                      <span className="text-white font-bold">{platforms.leetcode.totalSolved || 0}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 text-[10px] font-mono text-center pt-1">
+                      <div className="bg-emerald-500/10 text-emerald-400 py-0.5 rounded">E: {platforms.leetcode.easy || 0}</div>
+                      <div className="bg-amber-500/10 text-amber-400 py-0.5 rounded">M: {platforms.leetcode.medium || 0}</div>
+                      <div className="bg-rose-500/10 text-rose-400 py-0.5 rounded">H: {platforms.leetcode.hard || 0}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 space-y-2">
+                    <p className="text-xs text-[var(--ink-faint)] font-mono">Not Connected</p>
+                    <button
+                      onClick={() => setIsSyncModalOpen(true)}
+                      className="text-[11px] font-mono text-amber-400 hover:underline"
+                    >
+                      + Connect LeetCode
+                    </button>
+                  </div>
+                )}
+              </div>
+              {platforms.leetcode?.connected && (
+                <a
+                  href={`https://leetcode.com/${platforms.leetcode.handle}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 pt-2 border-t border-white/5 text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-amber-400 flex items-center justify-between"
+                >
+                  <span>Public Profile</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+
+            {/* Codeforces Card */}
+            <div className="glass-panel p-4 rounded-2xl border border-white/5 hover:border-cyan-500/30 transition-all flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-bold text-xs text-cyan-400 font-mono tracking-wide">Codeforces</span>
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      platforms.codeforces?.connected ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-white/20"
+                    }`}
+                  />
+                </div>
+                {platforms.codeforces?.connected ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-bold text-white truncate font-mono">
+                      @{platforms.codeforces.handle}
+                    </p>
+                    <div className="flex items-baseline justify-between text-xs font-mono pt-1">
+                      <span className="text-[var(--ink-dim)]">Rating:</span>
+                      <span className="text-cyan-400 font-bold">{platforms.codeforces.rating || "Unrated"}</span>
+                    </div>
+                    <div className="flex items-baseline justify-between text-xs font-mono">
+                      <span className="text-[var(--ink-dim)]">Rank:</span>
+                      <span className="text-white capitalize font-semibold">{platforms.codeforces.rank || "Newbie"}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 space-y-2">
+                    <p className="text-xs text-[var(--ink-faint)] font-mono">Not Connected</p>
+                    <button
+                      onClick={() => setIsSyncModalOpen(true)}
+                      className="text-[11px] font-mono text-cyan-400 hover:underline"
+                    >
+                      + Connect Codeforces
+                    </button>
+                  </div>
+                )}
+              </div>
+              {platforms.codeforces?.connected && (
+                <a
+                  href={`https://codeforces.com/profile/${platforms.codeforces.handle}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 pt-2 border-t border-white/5 text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-cyan-400 flex items-center justify-between"
+                >
+                  <span>Public Profile</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+
+            {/* CodeChef Card */}
+            <div className="glass-panel p-4 rounded-2xl border border-white/5 hover:border-amber-600/30 transition-all flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-bold text-xs text-amber-500 font-mono tracking-wide">CodeChef</span>
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      platforms.codechef?.connected ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-white/20"
+                    }`}
+                  />
+                </div>
+                {platforms.codechef?.connected ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-bold text-white truncate font-mono">
+                      @{platforms.codechef.handle}
+                    </p>
+                    <div className="flex items-baseline justify-between text-xs font-mono pt-1">
+                      <span className="text-[var(--ink-dim)]">Stars:</span>
+                      <span className="text-amber-400 font-bold">{platforms.codechef.stars || "Unrated"}</span>
+                    </div>
+                    <div className="flex items-baseline justify-between text-xs font-mono">
+                      <span className="text-[var(--ink-dim)]">Rating:</span>
+                      <span className="text-white font-semibold">{platforms.codechef.rating || "N/A"}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 space-y-2">
+                    <p className="text-xs text-[var(--ink-faint)] font-mono">Not Connected</p>
+                    <button
+                      onClick={() => setIsSyncModalOpen(true)}
+                      className="text-[11px] font-mono text-amber-500 hover:underline"
+                    >
+                      + Connect CodeChef
+                    </button>
+                  </div>
+                )}
+              </div>
+              {platforms.codechef?.connected && (
+                <a
+                  href={`https://www.codechef.com/users/${platforms.codechef.handle}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 pt-2 border-t border-white/5 text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-amber-500 flex items-center justify-between"
+                >
+                  <span>Public Profile</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+
+            {/* HackerRank Card */}
+            <div className="glass-panel p-4 rounded-2xl border border-white/5 hover:border-emerald-500/30 transition-all flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-bold text-xs text-emerald-400 font-mono tracking-wide">HackerRank</span>
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      platforms.hackerrank?.connected ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-white/20"
+                    }`}
+                  />
+                </div>
+                {platforms.hackerrank?.connected ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-bold text-white truncate font-mono">
+                      @{platforms.hackerrank.handle}
+                    </p>
+                    <div className="flex items-baseline justify-between text-xs font-mono pt-1">
+                      <span className="text-[var(--ink-dim)]">Status:</span>
+                      <span className="text-emerald-400 font-bold">Connected</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-[var(--ink-faint)] truncate">
+                      Profile Active
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 space-y-2">
+                    <p className="text-xs text-[var(--ink-faint)] font-mono">Not Connected</p>
+                    <button
+                      onClick={() => setIsSyncModalOpen(true)}
+                      className="text-[11px] font-mono text-emerald-400 hover:underline"
+                    >
+                      + Connect HackerRank
+                    </button>
+                  </div>
+                )}
+              </div>
+              {platforms.hackerrank?.connected && (
+                <a
+                  href={`https://www.hackerrank.com/${platforms.hackerrank.handle}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 pt-2 border-t border-white/5 text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-emerald-400 flex items-center justify-between"
+                >
+                  <span>Public Profile</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+
+            {/* GitHub Card */}
+            <div className="glass-panel p-4 rounded-2xl border border-white/5 hover:border-purple-500/30 transition-all flex flex-col justify-between group">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-bold text-xs text-purple-400 font-mono tracking-wide">GitHub</span>
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      platforms.github?.connected ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "bg-white/20"
+                    }`}
+                  />
+                </div>
+                {platforms.github?.connected ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-bold text-white truncate font-mono">
+                      @{platforms.github.handle}
+                    </p>
+                    <div className="flex items-baseline justify-between text-xs font-mono pt-1">
+                      <span className="text-[var(--ink-dim)]">Status:</span>
+                      <span className="text-purple-400 font-bold">Connected</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-emerald-400 truncate">
+                      Profile Active
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 space-y-2">
+                    <p className="text-xs text-[var(--ink-faint)] font-mono">Not Connected</p>
+                    <button
+                      onClick={() => setIsSyncModalOpen(true)}
+                      className="text-[11px] font-mono text-purple-400 hover:underline"
+                    >
+                      + Connect GitHub
+                    </button>
+                  </div>
+                )}
+              </div>
+              {platforms.github?.connected && (
+                <a
+                  href={`https://github.com/${platforms.github.handle}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 pt-2 border-t border-white/5 text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-purple-400 flex items-center justify-between"
+                >
+                  <span>Public Profile</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION 3: 4-PILLAR CORE METRICS DECK
+           ========================================================================= */}
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Metric 1: Total Problems Solved */}
+          <div className="glass-panel p-5 rounded-2xl border border-white/5 space-y-3 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-[var(--ink-dim)] uppercase tracking-wider">Problems Solved</span>
+              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+                <Code2 className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold font-mono text-white">
+                {s?.problemsSolved ?? 0}
+              </div>
+              <p className="text-xs font-mono text-[var(--ink-faint)] mt-1">
+                Out of <span className="text-white font-semibold">{s?.problemsAttempted ?? 0}</span> attempted
+              </p>
+            </div>
+            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div
+                className="h-full bg-amber-400 rounded-full"
+                style={{
+                  width: s?.problemsAttempted ? `${Math.min(((s?.problemsSolved || 0) / s.problemsAttempted) * 100, 100)}%` : "0%",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Metric 2: Evaluation Accuracy */}
+          <div className="glass-panel p-5 rounded-2xl border border-white/5 space-y-3 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-[var(--ink-dim)] uppercase tracking-wider">Precision Ratio</span>
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+                <Target className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold font-mono text-white">
+                {s?.accuracy ?? 0}%
+              </div>
+              <p className="text-xs font-mono text-emerald-400 mt-1">
+                Optimal time & memory complexity
+              </p>
+            </div>
+            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${s?.accuracy || 0}%` }} />
+            </div>
+          </div>
+
+          {/* Metric 3: Active Coding Streak */}
+          <div className="glass-panel p-5 rounded-2xl border border-white/5 space-y-3 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-[var(--ink-dim)] uppercase tracking-wider">Coding Streak</span>
+              <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400">
+                <Flame className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold font-mono text-white flex items-center gap-2">
+                <span>{s?.currentStreak ?? 0} Days</span>
+                <span className="text-xs font-normal text-rose-400 font-mono">🔥</span>
+              </div>
+              <p className="text-xs font-mono text-[var(--ink-faint)] mt-1">
+                Personal record: <span className="text-white font-semibold">{s?.longestStreak ?? 0} days</span>
+              </p>
+            </div>
+            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div className="h-full bg-rose-500 rounded-full" style={{ width: s?.currentStreak ? "100%" : "0%" }} />
+            </div>
+          </div>
+
+          {/* Metric 4: Community Karma & Doubts */}
+          <div className="glass-panel p-5 rounded-2xl border border-white/5 space-y-3 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono text-[var(--ink-dim)] uppercase tracking-wider">Community Karma</span>
+              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400">
+                <Award className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold font-mono text-white flex items-center gap-1.5">
+                <span className="text-purple-400 font-black">{doubts?.karma ?? p?.karmaPoints ?? 0}</span>
+                <span className="text-xs font-mono text-[var(--ink-faint)] font-normal">pts</span>
+              </div>
+              <p className="text-xs font-mono text-[var(--ink-faint)] mt-1">
+                <span className="text-white font-semibold">{doubts?.accepted ?? 0}</span> endorsed solutions provided
+              </p>
+            </div>
+            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
+              <div className="h-full bg-purple-500 rounded-full" style={{ width: doubts?.karma ? "100%" : "0%" }} />
+            </div>
+          </div>
+        </section>
+
+        {/* =========================================================================
+            SECTION 4: COMMAND CENTER WORKSPACE (4 TABS)
+           ========================================================================= */}
+        <section className="space-y-6">
+          {/* Navigation Bar */}
+          <div className="flex items-center justify-between border-b border-white/10 pb-4 overflow-x-auto gap-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab("problems")}
+                className={`px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+                  activeTab === "problems"
+                    ? "bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20"
+                    : "bg-white/5 text-[var(--ink-dim)] hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Code2 className="w-3.5 h-3.5" />
+                <span>Problem Archives ({problemsList.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("coursework")}
+                className={`px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+                  activeTab === "coursework"
+                    ? "bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20"
+                    : "bg-white/5 text-[var(--ink-dim)] hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Academic Labs ({coursework.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("community")}
+                className={`px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+                  activeTab === "community"
+                    ? "bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20"
+                    : "bg-white/5 text-[var(--ink-dim)] hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Community & Karma ({doubts?.asked || 0} asked, {doubts?.answered || 0} solved)</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("analytics")}
+                className={`px-4 py-2 rounded-xl text-xs font-mono font-semibold transition-all cursor-pointer flex items-center gap-2 ${
+                  activeTab === "analytics"
+                    ? "bg-[#D4AF37] text-black shadow-lg shadow-[#D4AF37]/20"
+                    : "bg-white/5 text-[var(--ink-dim)] hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span>Skill Radar & Analytics</span>
+              </button>
+            </div>
+          </div>
+
+          {/* TAB 1: PROBLEM ARCHIVES & SOLVES */}
+          {activeTab === "problems" && (
+            <div className="space-y-4">
+              {/* Search & Filters */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 glass-panel p-3.5 rounded-2xl border border-white/5">
+                <div className="relative w-full sm:w-80">
+                  <Search className="w-4 h-4 text-[var(--ink-faint)] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    placeholder="Search by title or topic (e.g. Binary Search, DP)..."
+                    value={problemSearch}
+                    onChange={(e) => setProblemSearch(e.target.value)}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-3 py-1.5 text-xs font-mono text-white placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[#D4AF37]"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
+                  {/* Difficulty Filter */}
+                  <select
+                    value={difficultyFilter}
+                    onChange={(e) => setDifficultyFilter(e.target.value)}
+                    aria-label="Filter problems by difficulty"
+                    className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#D4AF37]"
+                  >
+                    <option value="All">All Difficulties</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                  </select>
+
+                  {/* Status Filter */}
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    aria-label="Filter problems by status"
+                    className="bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-[#D4AF37]"
+                  >
+                    <option value="All">All Statuses</option>
+                    <option value="Accepted">Accepted Only</option>
+                    <option value="Attempted">Attempted Only</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Problems Cards Table */}
+              <div className="glass-strong rounded-2xl border border-white/5 overflow-hidden">
+                <div className="divide-y divide-white/5">
+                  {filteredProblems.length > 0 ? (
+                    filteredProblems.map((prob) => (
+                      <div
+                        key={prob.id}
+                        className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-white/[0.02] transition-colors"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                                prob.difficulty === "Easy"
+                                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                  : prob.difficulty === "Medium"
+                                  ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                  : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                              }`}
+                            >
+                              {prob.difficulty}
+                            </span>
+                            <span className="text-sm font-bold text-white font-mono hover:text-[#E8C97A] transition-colors">
+                              {prob.title}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-white/5 text-[10px] font-mono text-[var(--ink-dim)]">
+                              {prob.category}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-4 text-xs font-mono text-[var(--ink-faint)]">
+                            <span>Origin: <strong className="text-white">{prob.source}</strong></span>
+                            <span>Time: <strong className="text-[#E8C97A]">{prob.timeComplexity}</strong></span>
+                            <span>Accuracy: <strong className="text-emerald-400">{prob.accuracy}</strong></span>
+                            <span>{prob.solvedAt}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                          <span
+                            className={`text-xs font-mono px-2.5 py-1 rounded-lg ${
+                              prob.status === "Accepted"
+                                ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20"
+                                : "text-amber-400 bg-amber-500/10 border border-amber-500/20"
+                            }`}
+                          >
+                            {prob.status}
+                          </span>
+
+                          <Link
+                            href={prob.problemUrl || "/compiler"}
+                            className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#D4AF37] hover:text-black border border-white/10 text-xs font-mono text-white transition-all flex items-center gap-1.5"
+                          >
+                            <span>Solve</span>
+                            <ArrowUpRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-16 text-center space-y-3">
+                      <Code2 className="w-10 h-10 text-[var(--ink-faint)] mx-auto opacity-40" />
+                      <h4 className="text-sm font-bold text-white font-mono">No Problems Solved Yet</h4>
+                      <p className="text-xs font-mono text-[var(--ink-dim)] max-w-md mx-auto">
+                        Solve coding problems in the Cryptic to Clear compiler or link your LeetCode / Codeforces accounts to see your solved archive here.
+                      </p>
+                      <div className="pt-2">
+                        <Link
+                          href="/compiler"
+                          className="btn-gold px-4 py-2 rounded-xl text-xs font-bold text-black inline-flex items-center gap-2"
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                          <span>Open Code Compiler</span>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: ACADEMIC LABS & COURSEWORK */}
+          {activeTab === "coursework" && (
+            <div>
+              {coursework.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {coursework.map((lab: any) => (
+                    <div
+                      key={lab.id}
+                      className="glass-panel p-5 rounded-2xl border border-white/5 hover:border-[#D4AF37]/30 transition-all flex flex-col justify-between space-y-4"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] font-mono text-[var(--ink-faint)] uppercase tracking-wider">
+                            {lab.courseName}
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                              lab.status === "Graded"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : lab.status === "Submitted"
+                                ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+                                : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            }`}
+                          >
+                            {lab.status}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-bold text-white font-mono">{lab.title}</h3>
+                        <p className="text-xs font-mono text-[var(--ink-dim)]">
+                          Deadline: <span className="text-white">{lab.deadline}</span>
+                        </p>
+                      </div>
+
+                      <div className="pt-3 border-t border-white/5 flex items-center justify-between">
+                        <div>
+                          {lab.grade ? (
+                            <span className="text-xs font-mono text-[#E8C97A] font-bold">Grade: {lab.grade}</span>
+                          ) : (
+                            <span className="text-xs font-mono text-[var(--ink-faint)]">Pending Submission</span>
+                          )}
+                        </div>
+                        <Link
+                          href="/compiler"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-[#D4AF37] hover:text-black border border-white/10 text-xs font-mono text-white transition-all"
+                        >
+                          <span>Open in Compiler</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="glass-panel p-16 rounded-2xl border border-white/5 text-center space-y-3">
+                  <BookOpen className="w-10 h-10 text-[var(--ink-faint)] mx-auto opacity-40" />
+                  <h4 className="text-sm font-bold text-white font-mono">No Lab Assignments Assigned Yet</h4>
+                  <p className="text-xs font-mono text-[var(--ink-dim)] max-w-md mx-auto">
+                    When instructors publish coursework or laboratory tasks for your class, they will appear here with live evaluation status.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 3: COMMUNITY & DOUBTS */}
+          {activeTab === "community" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Community Summary */}
+              <div className="glass-panel p-6 rounded-2xl border border-white/5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <Award className="w-5 h-5 text-purple-400" />
+                  <h3 className="font-bold text-white font-mono text-sm">Karma Reputation</h3>
+                </div>
+                <div className="text-4xl font-black font-mono text-purple-400">
+                  {doubts?.karma ?? 0} <span className="text-xs font-normal text-[var(--ink-faint)]">Karma</span>
+                </div>
+                <p className="text-xs font-mono text-[var(--ink-dim)] leading-relaxed">
+                  Earn karma by answering fellow students’ coding queries, resolving bugs, and having your solutions accepted.
+                </p>
+                <div className="pt-2">
+                  <Link
+                    href="/doubts"
+                    className="w-full inline-flex items-center justify-center gap-2 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-mono font-bold transition-all"
+                  >
+                    <span>Browse Campus Doubts</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Doubts Asked Ledger */}
+              <div className="glass-panel p-6 rounded-2xl border border-white/5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-white font-mono text-sm">Questions Asked</h3>
+                  <span className="text-sm font-bold text-white font-mono">{doubts?.asked ?? 0}</span>
+                </div>
+                <p className="text-xs font-mono text-[var(--ink-dim)]">
+                  Your questions resolved by instructors and peers.
+                </p>
+                <div className="p-8 text-center border border-dashed border-white/10 rounded-xl">
+                  <p className="text-xs font-mono text-[var(--ink-faint)]">
+                    No doubts asked yet. Need help with an algorithm? Ask in the community!
+                  </p>
+                </div>
+              </div>
+
+              {/* Doubts Answered Ledger */}
+              <div className="glass-panel p-6 rounded-2xl border border-white/5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-white font-mono text-sm">Answers Provided</h3>
+                  <span className="text-sm font-bold text-emerald-400 font-mono">{doubts?.answered ?? 0}</span>
+                </div>
+                <p className="text-xs font-mono text-[var(--ink-dim)]">
+                  Solutions accepted & upvoted by classmates.
+                </p>
+                <div className="p-8 text-center border border-dashed border-white/10 rounded-xl">
+                  <p className="text-xs font-mono text-[var(--ink-faint)]">
+                    No answers posted yet. Help your peers resolve doubts to gain karma!
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: ANALYTICS & SKILL RADAR */}
+          {activeTab === "analytics" && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              {/* Rating Timeline Graph */}
+              <div className="lg:col-span-8 glass-panel p-6 rounded-2xl border border-white/5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-[#D4AF37]" />
+                      <span>Rating Progression Trajectory</span>
+                    </h3>
+                    <p className="text-xs text-[var(--ink-dim)] font-mono">
+                      Algorithmic skill score progression over past competition seasons.
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono text-[#E8C97A] font-bold">
+                    Current: {breakdown?.overallScore ?? 0}
+                  </span>
+                </div>
+
+                {ratingGraph.length > 0 ? (
+                  <div className="h-56 w-full pt-4">
+                    <svg className="w-full h-full overflow-visible" viewBox="0 0 700 200">
+                      <defs>
+                        <linearGradient id="curveGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#D4AF37" stopOpacity="0.3" />
+                          <stop offset="100%" stopColor="#D4AF37" stopOpacity="0.0" />
+                        </linearGradient>
+                      </defs>
+
+                      <line x1="0" y1="40" x2="700" y2="40" stroke="rgba(255,255,255,0.05)" strokeDasharray="4 4" />
+                      <line x1="0" y1="100" x2="700" y2="100" stroke="rgba(255,255,255,0.05)" strokeDasharray="4 4" />
+                      <line x1="0" y1="160" x2="700" y2="160" stroke="rgba(255,255,255,0.05)" strokeDasharray="4 4" />
+
+                      {ratingGraph.map((item, idx) => {
+                        const x = 350;
+                        const y = 100;
+                        return (
+                          <g key={item.month}>
+                            <circle cx={x} cy={y} r="6" fill="#070b14" stroke="#E8C97A" strokeWidth="3" />
+                            <text x={x} y="190" textAnchor="middle" fill="#94a3b8" fontSize="12" fontFamily="monospace">
+                              {item.month}
+                            </text>
+                            <text x={x} y={y - 14} textAnchor="middle" fill="#ffffff" fontSize="12" fontFamily="monospace" fontWeight="bold">
+                              {item.rating} pts
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  </div>
+                ) : (
+                  <div className="h-56 flex flex-col items-center justify-center text-center p-8 border border-dashed border-white/10 rounded-xl space-y-2">
+                    <BarChart3 className="w-8 h-8 text-[var(--ink-faint)] opacity-40" />
+                    <p className="text-xs font-mono text-[var(--ink-dim)]">
+                      Rating progression will activate as you solve problems and link competitive coding platforms.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Language Mastery */}
+              <div className="lg:col-span-4 glass-panel p-6 rounded-2xl border border-white/5 space-y-4">
+                <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-cyan-400" />
+                  <span>Language Proficiency</span>
+                </h3>
+                {submissions?.languages && submissions.languages.length > 0 ? (
+                  <div className="space-y-3 pt-2">
+                    {submissions.languages.map((lang) => (
+                      <div key={lang.language} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs font-mono">
+                          <span className="text-white font-semibold">{lang.language}</span>
+                          <span className="text-[var(--ink-dim)]">{lang.submissions} submissions ({lang.percentage}%)</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${lang.percentage}%`,
+                              backgroundColor: lang.color || "#D4AF37",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-xs font-mono text-[var(--ink-dim)] border border-dashed border-white/10 rounded-xl">
+                    No submissions recorded yet. Execute code in the compiler to track languages.
+                  </div>
+                )}
+              </div>
+
+              {/* DSA Topic Mastery Radar */}
+              <div className="lg:col-span-12 glass-panel p-6 rounded-2xl border border-white/5 space-y-4">
+                <h3 className="text-sm font-bold text-white font-mono flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-emerald-400" />
+                  <span>Data Structures & Algorithmic Domain Mastery</span>
+                </h3>
+                {submissions?.topics && submissions.topics.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 pt-1 font-mono text-xs">
+                    {submissions.topics.map((top) => (
+                      <div key={top.tag} className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
+                        <span className="text-[10px] uppercase text-[var(--ink-faint)] block truncate">{top.tag}</span>
+                        <p className="text-base font-bold text-white">{top.count} <span className="text-[10px] font-normal text-[var(--ink-dim)]">solved</span></p>
+                        <span
+                          className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold"
+                          style={{ backgroundColor: `${top.color}15`, color: top.color }}
+                        >
+                          {top.proficiency}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-xs font-mono text-[var(--ink-dim)] border border-dashed border-white/10 rounded-xl">
+                    Algorithmic domain tags will populate as you solve challenges across different data structure categories.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+      </main>
+
+      <Footer />
+
+      {/* =========================================================================
+          MODAL 1: EDIT STUDENT PROFILE
+         ========================================================================= */}
+      <AnimatePresence>
+        {isEditModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0b1120] border border-white/10 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-5"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <h3 className="text-lg font-bold text-white font-display">Edit Student Profile</h3>
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="p-1 rounded-lg text-[var(--ink-dim)] hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveProfile} className="space-y-4 font-mono text-xs">
+                <div>
+                  <label className="block text-[var(--ink-dim)] mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#D4AF37]"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[var(--ink-dim)] mb-1">Developer Bio / Headline</label>
+                  <textarea
+                    rows={2}
+                    value={editForm.bio}
+                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#D4AF37]"
+                    placeholder="e.g. Software engineering student passionate about algorithms and systems"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[var(--ink-dim)] mb-1">College Roll / Reg No</label>
+                    <input
+                      type="text"
+                      value={editForm.rollNo}
+                      onChange={(e) => setEditForm({ ...editForm, rollNo: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#D4AF37]"
+                      placeholder="e.g. CS-2024-001"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[var(--ink-dim)] mb-1">Primary Language</label>
+                    <select
+                      value={editForm.primaryLanguage}
+                      onChange={(e) => setEditForm({ ...editForm, primaryLanguage: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#D4AF37]"
+                    >
+                      <option value="">Select language...</option>
+                      <option value="Java">Java</option>
+                      <option value="C++">C++</option>
+                      <option value="Python">Python</option>
+                      <option value="JavaScript">JavaScript</option>
+                      <option value="TypeScript">TypeScript</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[var(--ink-dim)] mb-1">College / University Name</label>
+                  <input
+                    type="text"
+                    value={editForm.collegeName}
+                    onChange={(e) => setEditForm({ ...editForm, collegeName: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#D4AF37]"
+                    placeholder="e.g. University School of Engineering"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[var(--ink-dim)] mb-1">Stream / Department</label>
+                    <input
+                      type="text"
+                      value={editForm.stream}
+                      onChange={(e) => setEditForm({ ...editForm, stream: e.target.value })}
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#D4AF37]"
+                      placeholder="e.g. Computer Science"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[var(--ink-dim)] mb-1">Graduation Year</label>
+                    <input
+                      type="number"
+                      value={editForm.graduationYear}
+                      onChange={(e) => setEditForm({ ...editForm, graduationYear: e.target.value ? parseInt(e.target.value, 10) : "" })}
+                      placeholder="e.g. 2026"
+                      className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-[#D4AF37]"
+                    />
+                  </div>
+                </div>
+
+                {actionSuccess && (
+                  <p className="text-emerald-400 font-semibold text-center">{actionSuccess}</p>
+                )}
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-mono"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="btn-gold px-5 py-2 rounded-xl text-black font-bold font-mono"
+                  >
+                    {actionLoading ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          MODAL 2: LINK EXTERNAL CODING PLATFORMS
+         ========================================================================= */}
+      <AnimatePresence>
+        {isSyncModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0b1120] border border-white/10 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-5"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white font-display">Link Coding Platforms</h3>
+                  <p className="text-xs text-[var(--ink-dim)] font-mono mt-0.5">
+                    Connect your public profiles to recalculate your Unified Developer Score.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsSyncModalOpen(false)}
+                  className="p-1 rounded-lg text-[var(--ink-dim)] hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSyncPlatforms} className="space-y-4 font-mono text-xs">
+                <div>
+                  <label className="block text-amber-400 font-bold mb-1">LeetCode Username</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. your_leetcode_handle"
+                    value={handlesForm.leetcodeHandle}
+                    onChange={(e) => setHandlesForm({ ...handlesForm, leetcodeHandle: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-cyan-400 font-bold mb-1">Codeforces Handle</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. your_codeforces_handle"
+                    value={handlesForm.codeforcesHandle}
+                    onChange={(e) => setHandlesForm({ ...handlesForm, codeforcesHandle: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-amber-500 font-bold mb-1">CodeChef Username</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. your_codechef_handle"
+                    value={handlesForm.codechefHandle}
+                    onChange={(e) => setHandlesForm({ ...handlesForm, codechefHandle: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-emerald-400 font-bold mb-1">HackerRank Username</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. your_hackerrank_handle"
+                    value={handlesForm.hackerrankHandle}
+                    onChange={(e) => setHandlesForm({ ...handlesForm, hackerrankHandle: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-purple-400 font-bold mb-1">GitHub Username</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. your_github_username"
+                    value={handlesForm.githubHandle}
+                    onChange={(e) => setHandlesForm({ ...handlesForm, githubHandle: e.target.value })}
+                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-400"
+                  />
+                </div>
+
+                {actionSuccess && (
+                  <p className="text-emerald-400 font-semibold text-center">{actionSuccess}</p>
+                )}
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsSyncModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-mono"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="btn-gold px-5 py-2 rounded-xl text-black font-bold font-mono"
+                  >
+                    {actionLoading ? "Syncing Platforms..." : "Sync & Calculate Score"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}

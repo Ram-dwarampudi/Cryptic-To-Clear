@@ -14,9 +14,10 @@ import { AssignmentItem } from "@/lib/api";
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Compiler", href: "/compiler" },
+  { label: "Interviews", href: "/interviews" },
+  { label: "Doubt Forum", href: "/doubts" },
   { label: "Features", href: "/features" },
   { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
 ];
 
 interface NavbarProps {
@@ -67,7 +68,7 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
         </Link>
 
         {/* Desktop nav */}
-        <ul className="hidden md:flex items-center gap-1 font-sans text-[14px]">
+        <ul className="hidden md:flex items-center gap-2 font-sans text-[14px]">
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
               <Link
@@ -102,22 +103,14 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
           {user ? (
             <UserMenu />
           ) : (
-            <button
-              onClick={() => openAuthModal("login")}
+            <Link
+              href="/login"
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-mono text-xs font-medium text-[var(--ink)] glass hover:bg-white/[0.1] hover:border-[rgba(212,175,55,0.4)] border border-[rgba(212,175,55,0.2)] transition-all hover:shadow-[0_0_14px_rgba(212,175,55,0.2)] transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               <LogIn className="w-3.5 h-3.5 text-[#E8C97A]" />
               <span>Sign In</span>
-            </button>
+            </Link>
           )}
-
-          <Link
-            href="/compiler"
-            prefetch={true}
-            className="btn-gold px-4 py-2 text-[13px] font-bold text-white shadow-[0_0_22px_rgba(212,175,55,0.4)] hover:shadow-[0_0_32px_rgba(232,201,122,0.65)]"
-          >
-            Start Coding
-          </Link>
         </div>
 
         {/* Mobile toggle */}
@@ -179,28 +172,16 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
 
               {!user && (
                 <li className="pt-1">
-                  <button
-                    onClick={() => {
-                      setOpen(false);
-                      openAuthModal("login");
-                    }}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-mono text-[var(--ink)] glass border border-[rgba(212,175,55,0.25)]"
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-mono text-[var(--ink)] glass border border-[rgba(212,175,55,0.25)] hover:border-[rgba(212,175,55,0.5)]"
                   >
                     <LogIn className="w-4 h-4 text-[#E8C97A]" />
                     <span>Sign In / Create Account</span>
-                  </button>
+                  </Link>
                 </li>
               )}
-
-              <li className="pt-2">
-                <Link
-                  href="/compiler"
-                  onClick={() => setOpen(false)}
-                  className="btn-gold w-full block text-center py-2.5 text-sm font-bold text-white shadow-[0_0_20px_rgba(212,175,55,0.4)]"
-                >
-                  Start Coding
-                </Link>
-              </li>
             </ul>
           </motion.div>
         )}

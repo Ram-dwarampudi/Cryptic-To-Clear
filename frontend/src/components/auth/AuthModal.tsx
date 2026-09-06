@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import LoginForm from "./LoginForm";
 import FacultyLoginForm from "./FacultyLoginForm";
@@ -119,9 +120,17 @@ export default function AuthModal() {
             {activeTab === "forgot" && <ForgotPassword onSwitchTab={() => setActiveTab("login")} />}
           </div>
 
-          {/* Guest Footer */}
-          <div className="mt-6 pt-4 border-t border-white/10 text-center">
+          {/* Guest Footer & Full Screen Portal Link */}
+          <div className="mt-6 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono">
             <GuestButton />
+            <Link
+              href="/login"
+              onClick={closeAuthModal}
+              className="text-[#E8C97A] hover:underline flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-white/5 transition-colors"
+            >
+              <span>Full Page Portal</span>
+              <span>↗</span>
+            </Link>
           </div>
         </motion.div>
       </div>

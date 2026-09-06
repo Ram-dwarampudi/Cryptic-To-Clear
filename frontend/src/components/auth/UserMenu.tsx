@@ -62,6 +62,15 @@ export default function UserMenu() {
 
           <div className="py-1">
             <Link
+              href="/profile"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-xs font-mono text-[#E8C97A] hover:bg-[var(--border)] rounded-lg transition-colors font-semibold"
+            >
+              <UserIcon className="w-4 h-4 text-[#D4AF37]" />
+              <span>Student Profile</span>
+            </Link>
+
+            <Link
               href="/compiler"
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 px-3 py-2 text-xs font-mono text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-[var(--border)] rounded-lg transition-colors"

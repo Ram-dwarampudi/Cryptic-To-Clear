@@ -1,0 +1,174 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model University {
+  id          String   @id @default(uuid())
+  name        String
+  code        String   @unique
+  domain      String?
+  city        String?
+  state       String?
+  country     String   @default("India")
+  logo        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  departments Department[]
+  users       User[]
+  interviews  InterviewExperience[]
+  doubts      Doubt[]
+}
+
+model Department {
+  id           String     @id @default(uuid())
+  name         String
+  code         String
+  universityId String
+  university   University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  users        User[]
+
+  @@unique([universityId, code])
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String
+  name         String
+  role         String      @default("STUDENT") // STUDENT, FACULTY, ADMIN
+  avatar       String?
+  rollNo       String?
+  batchYear    Int?        // e.g. 2024, 2025, 2026
+  karmaPoints  Int         @default(10)
+  bio          String?
+
+  // Academic & Profile Details
+  collegeName     String?
+  stream          String?     // e.g. "Computer Science & Engineering"
+  primaryLanguage String?     // e.g. "Java", "C++", "Python"
+  graduationYear  Int?        // e.g. 2026
+
+  // External Coding Platform Handles
+  leetcodeHandle   String?
+  codechefHandle   String?
+  codeforcesHandle String?
+  hackerrankHandle String?
+  githubHandle     String?
+
+  // Synced External Metrics & Unified Rating
+  externalStats   String?     // JSON string storing leetcode, codechef, codeforces metrics
+  overallScore    Int         @default(750)
+
+  universityId String?
+  university   University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
+
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  interviews   InterviewExperience[]
+  doubts       Doubt[]
+  answers      DoubtAnswer[]
+  upvotes      DoubtUpvote[]
+}
+
+model InterviewExperience {
+  id              String      @id @default(uuid())
+  companyName     String
+  companyLogo     String?
+  roleTitle       String      // e.g. "Software Development Engineer - I", "Associate Software Engineer"
+  jobType         String      @default("FULL_TIME") // FULL_TIME, INTERNSHIP
+  packageCTC      String?     // e.g. "18 LPA", "45,000 / month"
+  location        String?     // e.g. "Bangalore", "Hyderabad", "Remote"
+  driveType       String      @default("ON_CAMPUS") // ON_CAMPUS, OFF_CAMPUS, POOL_CAMPUS
+  difficulty      String      @default("MEDIUM") // EASY, MEDIUM, HARD
+  selectionStatus String      @default("SELECTED") // SELECTED, REJECTED, WAITING
+  graduationYear  Int?        // e.g. 2025
+
+  summary         String
+  roundsData      String      // JSON array of rounds
+  tips            String?     // Advice for juniors
+  preparationResources String?
+
+  isAnonymous     Boolean     @default(false)
+  isVerified      Boolean     @default(true)
+
+  studentId       String
+  student         User        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  universityId    String?
+  university      University? @relation(fields: [universityId], references: [id], onDelete: SetNull)
+
+  upvotes         Int         @default(0)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Doubt {
+  id               String        @id @default(uuid())
+  title            String
+  description      String
+  codeSnippet      String?
+  language         String?       // "python", "cpp", "java", "c", "javascript"
+  tags             String        // JSON array of strings: ["Recursion", "Trees", "CompilerError"]
+  
+  // Privacy & Audience
+  privacy          String        @default("PUBLIC") // PUBLIC, ANONYMOUS_PEERS, FACULTY_ONLY
+  status           String        @default("OPEN")   // OPEN, RESOLVED
+
+  resolvedAnswerId String?      // Pointer to the accepted answer
+
+  authorId         String
+  author           User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  universityId     String?
+  university       University?   @relation(fields: [universityId], references: [id], onDelete: SetNull)
+
+  views            Int           @default(0)
+  answers          DoubtAnswer[]
+  upvotes          DoubtUpvote[]
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+}
+
+model DoubtAnswer {
+  id                    String        @id @default(uuid())
+  content               String
+  codeSnippet           String?
+  isAccepted            Boolean       @default(false)
+  isFacultyEndorsed     Boolean       @default(false)
+  endorsedByFacultyName String?
+
+  doubtId               String
+  doubt                 Doubt         @relation(fields: [doubtId], references: [id], onDelete: Cascade)
+
+  authorId              String
+  author                User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  upvotes               Int           @default(0)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+}
+
+model DoubtUpvote {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  doubtId   String?
+  doubt     Doubt?   @relation(fields: [doubtId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, doubtId])
+}

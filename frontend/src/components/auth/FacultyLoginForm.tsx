@@ -3,17 +3,19 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, Loader2, AlertCircle, CheckSquare, Square, Sparkles, GraduationCap } from "lucide-react";
+import { Mail, Lock, Loader2, AlertCircle, CheckSquare, Square, Sparkles, GraduationCap, Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 interface FacultyLoginFormProps {
   onSwitchTab: (tab: "register" | "forgot") => void;
+  onSuccess?: () => void;
 }
 
-export default function FacultyLoginForm({ onSwitchTab }: FacultyLoginFormProps) {
+export default function FacultyLoginForm({ onSwitchTab, onSuccess }: FacultyLoginFormProps) {
   const { login, loginAsFacultyDemo, closeAuthModal } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
@@ -32,6 +34,7 @@ export default function FacultyLoginForm({ onSwitchTab }: FacultyLoginFormProps)
       const res = await login(email, password);
       if (res.success) {
         closeAuthModal();
+        if (onSuccess) onSuccess();
         router.push("/faculty");
       } else {
         setError(res.message || "Failed to authenticate faculty credentials.");
@@ -50,6 +53,7 @@ export default function FacultyLoginForm({ onSwitchTab }: FacultyLoginFormProps)
       const res = await loginAsFacultyDemo();
       if (res.success) {
         closeAuthModal();
+        if (onSuccess) onSuccess();
         router.push("/faculty");
       } else {
         setError(res.message || "Failed to initialize Faculty Demo Mode.");
@@ -63,29 +67,50 @@ export default function FacultyLoginForm({ onSwitchTab }: FacultyLoginFormProps)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-mono flex items-center gap-2">
-        <GraduationCap className="w-4 h-4 text-purple-400 shrink-0" />
-        <span>Institutional Faculty & Department Admin Portal</span>
+      <div className="p-3 rounded-xl bg-gradient-to-r from-purple-500/10 via-[rgba(212,175,55,0.1)] to-purple-500/10 border border-purple-500/25 text-purple-200 text-xs font-mono flex items-center gap-2.5">
+        <GraduationCap className="w-4 h-4 text-[#E8C97A] shrink-0" />
+        <div>
+          <span className="font-semibold text-white">Faculty & Institutional Access</span>
+          <p className="text-[11px] text-[var(--ink-dim)] mt-0.5">Includes Assignment Manager, Doubt Resolution & Analytics</p>
+        </div>
       </div>
 
+      {/* 1-Click Faculty Demo CTA */}
+      <button
+        type="button"
+        onClick={handleTryFacultyDemo}
+        disabled={loading || demoLoading}
+        className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-purple-900/30 via-[rgba(212,175,55,0.12)] to-purple-900/30 border border-purple-500/30 hover:border-[#D4AF37] text-xs font-mono transition-all group cursor-pointer shadow-[0_0_15px_rgba(168,85,247,0.15)] hover:shadow-[0_0_22px_rgba(212,175,55,0.25)]"
+      >
+        <span className="flex items-center gap-2 text-[#E8C97A] font-semibold">
+          <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] group-hover:scale-110 transition-transform" />
+          <span>Instant Faculty Demo (Dr. B.V. N. Rani)</span>
+        </span>
+        <span className="text-[10px] text-purple-300 bg-purple-500/15 px-2 py-0.5 rounded border border-purple-400/20">
+          {demoLoading ? <Loader2 className="w-3 h-3 animate-spin inline" /> : "1-Click"}
+        </span>
+      </button>
+
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-mono">
+        <div className="flex items-center gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs font-mono">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       <div>
-        <label htmlFor="faculty-email" className="block text-xs font-mono text-[var(--ink-dim)] mb-1.5">Institutional Email</label>
+        <label htmlFor="faculty-email" className="block text-xs font-mono text-[var(--ink-dim)] mb-1.5 font-medium">
+          Institutional Email (.edu / campus domain)
+        </label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
+          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
           <input
             id="faculty-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="professor@institution.edu"
-            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg pl-9 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] focus:outline-none focus:border-[var(--syn-keyword)] transition-colors font-mono"
+            className="w-full bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2.5 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none"
             required
           />
         </div>
@@ -93,81 +118,87 @@ export default function FacultyLoginForm({ onSwitchTab }: FacultyLoginFormProps)
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label htmlFor="faculty-password" className="block text-xs font-mono text-[var(--ink-dim)]">Password</label>
+          <label htmlFor="faculty-password" className="block text-xs font-mono text-[var(--ink-dim)] font-medium">
+            Password
+          </label>
           <button
             type="button"
             onClick={() => onSwitchTab("forgot")}
-            className="text-xs font-mono text-[var(--syn-keyword)] hover:underline cursor-pointer"
+            className="text-xs font-mono text-[#E8C97A] hover:underline cursor-pointer"
           >
             Forgot Password?
           </button>
         </div>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
+          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
           <input
             id="faculty-password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg pl-9 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] focus:outline-none focus:border-[var(--syn-keyword)] transition-colors font-mono"
+            className="w-full bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-10 py-2.5 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none"
             required
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--ink-faint)] hover:text-[#E8C97A] transition-colors p-0.5 cursor-pointer"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-xs font-mono text-[var(--ink-dim)]">
-        <label className="flex items-center gap-2 cursor-pointer select-none" onClick={() => setRememberMe(!rememberMe)}>
+      <div className="flex items-center justify-between text-xs font-mono text-[var(--ink-dim)] pt-0.5">
+        <label
+          className="flex items-center gap-2 cursor-pointer select-none group"
+          onClick={() => setRememberMe(!rememberMe)}
+        >
           {rememberMe ? (
-            <CheckSquare className="w-4 h-4 text-[var(--syn-keyword)]" />
+            <CheckSquare className="w-4 h-4 text-[#D4AF37]" />
           ) : (
-            <Square className="w-4 h-4 text-[var(--ink-faint)]" />
+            <Square className="w-4 h-4 text-[var(--ink-faint)] group-hover:text-[var(--ink-dim)]" />
           )}
           <span>Remember Me</span>
         </label>
+
+        <button
+          type="button"
+          onClick={() => {
+            setEmail("faculty@cryptictoclear.io");
+            setPassword("Faculty123!");
+          }}
+          className="text-[11px] text-[#E8C97A] hover:underline font-mono"
+        >
+          Autofill Demo
+        </button>
       </div>
 
       <button
         type="submit"
         disabled={loading || demoLoading}
-        className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 px-4 text-xs font-mono font-medium text-[#0a0d13] bg-gradient-to-r from-[var(--syn-keyword)] via-[var(--syn-function)] to-[var(--syn-string)] hover:brightness-110 transition-all shadow-[0_0_20px_rgba(184,146,255,0.25)] disabled:opacity-50 cursor-pointer"
+        className="w-full btn-gold flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-mono font-bold text-white shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_28px_rgba(232,201,122,0.55)] transition-all disabled:opacity-50 cursor-pointer"
       >
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign In to Faculty Portal"}
-      </button>
-
-      <div className="relative my-4">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-[var(--border)]" />
-        </div>
-        <div className="relative flex justify-center text-[10px] uppercase font-mono tracking-wider">
-          <span className="bg-[var(--panel)] px-2 text-[var(--ink-faint)]">Instant Faculty Preview</span>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={handleTryFacultyDemo}
-        disabled={loading || demoLoading}
-        className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 px-4 text-xs font-mono font-medium text-[var(--syn-keyword)] glass border border-[var(--syn-keyword)]/30 hover:bg-[var(--syn-keyword)]/10 transition-all cursor-pointer shadow-[0_0_15px_rgba(184,146,255,0.15)] disabled:opacity-50"
-      >
-        {demoLoading ? (
+        {loading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
           <>
-            <Sparkles className="w-4 h-4 text-[var(--syn-keyword)]" />
-            <span>Try Faculty Demo (No Account Required)</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-white/90" />
+            <span>Sign In to Faculty Portal</span>
           </>
         )}
       </button>
 
       <p className="text-center text-xs font-mono text-[var(--ink-dim)] mt-3">
-        Need an institutional account?{" "}
+        Need campus onboarding for your institution?{" "}
         <button
           type="button"
           onClick={() => onSwitchTab("register")}
-          className="text-[var(--syn-keyword)] hover:underline font-semibold cursor-pointer"
+          className="text-[#E8C97A] hover:underline font-semibold cursor-pointer"
         >
-          Contact Institution Admin
+          Institutional Inquiry
         </button>
       </p>
     </form>

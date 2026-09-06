@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, loginUser, loginFacultyDemo, registerUser, logoutUser, fetchMe, requestForgotPassword } from "@/lib/api";
+import { User, loginUser, loginFacultyDemo, registerUser, logoutUser, fetchMe, requestForgotPassword, RegisterOptions } from "@/lib/api";
 
 type AuthTab = "login" | "register" | "forgot" | "faculty";
 
@@ -16,7 +16,7 @@ interface AuthContextType {
   closeAuthModal: () => void;
   login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
   loginAsFacultyDemo: () => Promise<{ success: boolean; message?: string }>;
-  register: (name: string, email: string, pass: string, role?: "student" | "faculty") => Promise<{ success: boolean; message?: string }>;
+  register: (name: string, email: string, pass: string, options?: "student" | "faculty" | RegisterOptions) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   continueAsGuest: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; message: string; demoNote?: string }>;
@@ -100,8 +100,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: false, message: res.message || "Failed to sign into faculty demo." };
   };
 
-  const register = async (name: string, email: string, pass: string, role: "student" | "faculty" = "student") => {
-    const res = await registerUser(name, email, pass, role);
+  const register = async (
+    name: string,
+    email: string,
+    pass: string,
+    options: "student" | "faculty" | RegisterOptions = "student"
+  ) => {
+    const res = await registerUser(name, email, pass, options);
     if (res.success && res.user) {
       setUser(res.user);
       setIsGuest(false);

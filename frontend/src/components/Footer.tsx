@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Code2, Globe, Mail, ArrowUpRight, MessageSquare, BookOpen, ShieldCheck } from "lucide-react";
 

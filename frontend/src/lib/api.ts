@@ -591,6 +591,8 @@ export interface User {
   role: "student" | "faculty" | "admin" | "user";
   institutionId?: string;
   departmentId?: string;
+  university?: string;
+  department?: string;
   title?: string;
   isDemoAccount?: boolean;
   plan: "free" | "pro" | "team" | "enterprise";
@@ -609,12 +611,12 @@ export interface AuthResponse {
   token?: string;
 }
 
-export async function loginUser(email: string, password: string): Promise<AuthResponse> {
+export async function loginUser(identifier: string, password: string): Promise<AuthResponse> {
   try {
     const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email: identifier, identifier, rollNo: identifier, password }),
       credentials: "include",
     });
     const data = await res.json().catch(() => null);
@@ -656,12 +658,34 @@ export async function loginFacultyDemo(): Promise<AuthResponse> {
   }
 }
 
-export async function registerUser(name: string, email: string, password: string, role: "student" | "faculty" = "student"): Promise<AuthResponse> {
+export interface RegisterOptions {
+  role?: "student" | "faculty";
+  rollNo?: string;
+  departmentId?: string;
+  batchYear?: number;
+}
+
+export async function registerUser(
+  name: string,
+  email: string,
+  password: string,
+  optionsOrRole?: "student" | "faculty" | RegisterOptions
+): Promise<AuthResponse> {
+  const payload: Record<string, any> = { name, email, password };
+  if (typeof optionsOrRole === "string") {
+    payload.role = optionsOrRole;
+  } else if (optionsOrRole && typeof optionsOrRole === "object") {
+    Object.assign(payload, optionsOrRole);
+    if (!payload.role) payload.role = "student";
+  } else {
+    payload.role = "student";
+  }
+
   try {
     const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role }),
+      body: JSON.stringify(payload),
       credentials: "include",
     });
     const data = await res.json().catch(() => null);
@@ -1216,6 +1240,180 @@ export async function fetchFacultySubscription(token?: string | null): Promise<{
     return json;
   } catch {
     return { success: false, message: "Network error fetching subscription info." };
+  }
+}
+
+export interface StudentProfileData {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string | null;
+  rollNo?: string;
+  bio?: string;
+  collegeName?: string;
+  stream?: string;
+  primaryLanguage?: string;
+  graduationYear?: number;
+  karmaPoints?: number;
+  handles: {
+    leetcode: string;
+    codeforces: string;
+    codechef: string;
+    hackerrank: string;
+    github: string;
+  };
+}
+
+export interface StudentDashboardSummary {
+  problemsSolved: number;
+  problemsAttempted: number;
+  contestsParticipated: number;
+  accuracy: number;
+  maxSolvedInADay: number;
+  longestStreak: number;
+  currentStreak: number;
+  overallScore: number;
+  lastSubmission: string;
+}
+
+export interface ProblemItem {
+  id: string;
+  title: string;
+  difficulty: "Easy" | "Medium" | "Hard";
+  category: string;
+  source: string;
+  status: "Accepted" | "Attempted";
+  accuracy: string;
+  timeComplexity: string;
+  solvedAt: string;
+  problemUrl?: string;
+}
+
+export interface ScoreComponent {
+  id: string;
+  label: string;
+  points: number;
+  max: number;
+  badge: string;
+  color: string;
+}
+
+export interface ScoreBreakdown {
+  overallScore: number;
+  tier: string;
+  tierColor: string;
+  nextTier: string;
+  nextTierTarget: number;
+  progressPercentage: number;
+  components: ScoreComponent[];
+}
+
+export interface StudentDashboardData {
+  profile: StudentProfileData;
+  summary: StudentDashboardSummary;
+  scoreBreakdown?: ScoreBreakdown;
+  ratingGraph: Array<{ month: string; rating: number; solves?: number }>;
+  problems?: ProblemItem[];
+  solvedProblems?: string[];
+  unsolvedProblems?: string[];
+  contests?: string[];
+  coursework: {
+    totalAssignments: number;
+    submittedAssignments: number;
+    assignments: any[];
+  };
+  doubtsStats: {
+    asked: number;
+    answered: number;
+    accepted: number;
+    karma: number;
+  };
+  submissions: {
+    verdicts: Array<{ label: string; count: number; color: string }>;
+    languages: Array<{ language: string; submissions: number; percentage: number; color?: string }>;
+    topics?: Array<{ tag: string; count: number; proficiency: string; color: string }>;
+    tags?: Array<{ tag: string; count: number; color: string }>;
+  };
+  platforms: Record<string, { handle: string; connected: boolean; [key: string]: any }>;
+}
+
+export async function fetchStudentDashboard(
+  token?: string | null
+): Promise<{ success: boolean; data?: StudentDashboardData; message?: string } & Partial<StudentDashboardData>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/users/dashboard`, {
+      headers: getAuthHeaders(token),
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, message: json?.message || "Failed to fetch student dashboard data." };
+    }
+    return { success: true, data: json, ...json };
+  } catch {
+    return { success: false, message: "Network error fetching student dashboard data." };
+  }
+}
+
+export async function updateStudentProfile(
+  payload: {
+    name?: string;
+    avatar?: string;
+    bio?: string;
+    rollNo?: string;
+    collegeName?: string;
+    stream?: string;
+    primaryLanguage?: string;
+    graduationYear?: number;
+    leetcodeHandle?: string;
+    codechefHandle?: string;
+    codeforcesHandle?: string;
+    hackerrankHandle?: string;
+    githubHandle?: string;
+  },
+  token?: string | null
+): Promise<{ success: boolean; user?: any; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/users/profile`, {
+      method: "PUT",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, message: json?.message || "Failed to update profile." };
+    }
+    return json;
+  } catch {
+    return { success: false, message: "Network error updating student profile." };
+  }
+}
+
+export async function syncExternalPlatforms(
+  handles: {
+    leetcodeHandle?: string;
+    codechefHandle?: string;
+    codeforcesHandle?: string;
+    hackerrankHandle?: string;
+    githubHandle?: string;
+  },
+  token?: string | null
+): Promise<{ success: boolean; externalStats?: any; user?: any; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/users/sync-external`, {
+      method: "POST",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      body: JSON.stringify(handles),
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, message: json?.message || "Failed to sync external platforms." };
+    }
+    return json;
+  } catch {
+    return { success: false, message: "Network error syncing external platforms." };
   }
 }
 

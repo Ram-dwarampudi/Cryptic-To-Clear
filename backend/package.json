@@ -4,13 +4,15 @@
   "description": "Express API that connects Cryptic to Clear to the Groq AI execution engine",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "start": "npx prisma migrate deploy && node src/server.js",
+    "dev": "nodemon src/server.js",
+    "build": "npx prisma generate"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^6.4.1",
     "axios": "^1.18.1",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
@@ -22,6 +24,7 @@
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "prisma": "^6.4.1"
   }
 }

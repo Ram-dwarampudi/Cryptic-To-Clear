@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(requireAuth);
 router.get("/profile", usersController.getProfile);
 router.put("/profile", usersController.updateProfile);
+router.post("/sync-external", usersController.syncExternal);
 router.get("/dashboard", usersController.getDashboard);
 
 module.exports = router;

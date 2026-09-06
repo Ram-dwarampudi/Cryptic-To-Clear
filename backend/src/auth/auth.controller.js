@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const env = require("../config/env");
 const userModel = require("../models/user.model");
+const { resolveStudentFromRegistration } = require("../utils/studentLookup");
 
 /**
  * Generate JWT token for user
@@ -41,12 +42,25 @@ const sendTokenResponse = (user, statusCode, res, message) => {
 };
 
 /**
+ * @route GET /api/auth/lookup-student
+ * @desc Auto-fetch student details from registration number & email
+ */
+exports.lookupStudent = (req, res) => {
+  const { rollNo, email } = req.query;
+  const result = resolveStudentFromRegistration(rollNo, email);
+  return res.status(200).json({
+    success: true,
+    data: result,
+  });
+};
+
+/**
  * @route POST /api/auth/register
- * @desc Register new user account
+ * @desc Register new user account with auto-fetched academic details
  */
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role = "student", rollNo } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -62,10 +76,29 @@ exports.register = async (req, res, next) => {
       });
     }
 
+    // Auto-fetch and resolve student details from Registration / Roll Number
+    let academicDetails = {
+      rollNo: rollNo ? rollNo.trim().toUpperCase() : null,
+      collegeName: null,
+      stream: null,
+      batchYear: null,
+      graduationYear: null,
+    };
+
+    if (rollNo) {
+      academicDetails = resolveStudentFromRegistration(rollNo, email);
+    }
+
     const newUser = await userModel.create({
-      name,
-      email,
+      name: name ? name.trim() : "Student",
+      email: email.trim().toLowerCase(),
       password,
+      role,
+      rollNo: academicDetails.rollNo || rollNo,
+      collegeName: academicDetails.collegeName,
+      stream: academicDetails.stream,
+      batchYear: academicDetails.batchYear,
+      graduationYear: academicDetails.graduationYear,
       provider: "local",
     });
 
@@ -80,25 +113,26 @@ exports.register = async (req, res, next) => {
 
 /**
  * @route POST /api/auth/login
- * @desc Authenticate user and issue token
+ * @desc Authenticate user via College Email OR Registration Number and issue token
  */
 exports.login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, identifier, rollNo, password } = req.body;
+    const loginIdentifier = (email || identifier || rollNo || "").trim();
 
-    if (!email || !password) {
+    if (!loginIdentifier || !password) {
       return res.status(400).json({
         success: false,
-        message: "Please provide both email and password.",
+        message: "Please provide your Registration Number / College Email and password.",
       });
     }
 
-    const user = await userModel.findByEmail(email);
+    const user = await userModel.findByEmailOrRollNo(loginIdentifier);
 
     if (!user || !user.passwordHash) {
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials. Please check your email and password.",
+        message: "Invalid credentials. Please verify your Registration Number / Email and password.",
       });
     }
 
@@ -106,7 +140,7 @@ exports.login = async (req, res, next) => {
     if (!isMatch) {
       return res.status(401).json({
         success: false,
-        message: "Invalid credentials. Please check your email and password.",
+        message: "Invalid credentials. Please verify your Registration Number / Email and password.",
       });
     }
 

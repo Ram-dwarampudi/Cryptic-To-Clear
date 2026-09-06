@@ -6,349 +6,46 @@
 class FacultyModel {
   constructor() {
     this.institution = {
-      id: "inst_mit_01",
-      name: "Apex Institute of Technology",
-      code: "AIT-CS",
-      logo: "https://api.dicebear.com/7.x/identicon/svg?seed=AIT",
+      id: "inst_01",
+      name: "Institutional Portal",
+      code: "CAMPUS",
+      logo: "",
       subscription: {
-        plan: "Enterprise Institutional",
+        plan: "Standard",
         status: "active",
-        facultySeatsMax: 25,
-        facultySeatsUsed: 12,
-        studentSeatsMax: 1500,
-        studentSeatsUsed: 840,
-        aiCreditsQuota: 500000,
-        aiCreditsUsed: 184200,
+        facultySeatsMax: 0,
+        facultySeatsUsed: 0,
+        studentSeatsMax: 0,
+        studentSeatsUsed: 0,
+        aiCreditsQuota: 0,
+        aiCreditsUsed: 0,
         billingCycle: "Annual",
-        nextRenewal: "2027-08-01",
+        nextRenewal: "",
       },
     };
 
-    this.departments = [
-      { id: "dept_cs_01", name: "Computer Science & Engineering", code: "CSE" },
-      { id: "dept_it_02", name: "Information Technology", code: "IT" },
-    ];
-
-    this.classes = [
-      { id: "cls_cs3a", institutionId: "inst_mit_01", facultyId: "usr_faculty_demo", name: "CS 301 - Data Structures & Algorithms", section: "CS-3A", year: 3, studentCount: 38 },
-      { id: "cls_cs3b", institutionId: "inst_mit_01", facultyId: "usr_faculty_demo", name: "CS 302 - Object Oriented Programming", section: "CS-3B", year: 3, studentCount: 32 },
-      { id: "cls_cs2a", institutionId: "inst_mit_01", facultyId: "usr_faculty_demo", name: "CS 201 - Fundamentals of C & C++", section: "CS-2A", year: 2, studentCount: 42 },
-    ];
-
-    this.students = [
-      {
-        id: "std_001",
-        userId: "usr_std_001",
-        name: "Alex Rivera",
-        rollNumber: "21CS001",
-        email: "alex.rivera@ait.edu",
-        branch: "CSE",
-        year: 3,
-        section: "CS-3A",
-        institutionId: "inst_mit_01",
-        programsAttempted: 142,
-        successfulExecutions: 118,
-        compilerErrors: 24,
-        aiExplanations: 31,
-        codingScore: 92,
-        lastActive: "10 mins ago",
-        status: "Active",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
-        frequentMistakes: ["Dangling Pointers in C", "Missing Return in Non-Void Function", "Array Index Out of Bounds"],
-        languageStats: { c: 30, cpp: 55, java: 40, python: 17 },
-      },
-      {
-        id: "std_002",
-        userId: "usr_std_002",
-        name: "Priya Sharma",
-        rollNumber: "21CS042",
-        email: "priya.sharma@ait.edu",
-        branch: "CSE",
-        year: 3,
-        section: "CS-3A",
-        institutionId: "inst_mit_01",
-        programsAttempted: 168,
-        successfulExecutions: 152,
-        compilerErrors: 16,
-        aiExplanations: 22,
-        codingScore: 96,
-        lastActive: "2 hours ago",
-        status: "Active",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Priya",
-        frequentMistakes: ["Unchecked Null References", "Import Resolution Failures"],
-        languageStats: { c: 20, cpp: 40, java: 80, python: 28 },
-      },
-      {
-        id: "std_003",
-        userId: "usr_std_003",
-        name: "Rohan Patel",
-        rollNumber: "21CS089",
-        email: "rohan.patel@ait.edu",
-        branch: "CSE",
-        year: 3,
-        section: "CS-3B",
-        institutionId: "inst_mit_01",
-        programsAttempted: 89,
-        successfulExecutions: 48,
-        compilerErrors: 41,
-        aiExplanations: 56,
-        codingScore: 61,
-        lastActive: "Yesterday",
-        status: "At Risk",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Rohan",
-        frequentMistakes: ["Segmentation Faults (Core Dumped)", "Infinite Loops in While Statement", "Missing Semicolon"],
-        languageStats: { c: 45, cpp: 30, java: 10, python: 4 },
-      },
-      {
-        id: "std_004",
-        userId: "usr_std_004",
-        name: "Emily Chen",
-        rollNumber: "22CS014",
-        email: "emily.chen@ait.edu",
-        branch: "CSE",
-        year: 2,
-        section: "CS-2A",
-        institutionId: "inst_mit_01",
-        programsAttempted: 110,
-        successfulExecutions: 94,
-        compilerErrors: 16,
-        aiExplanations: 18,
-        codingScore: 88,
-        lastActive: "5 mins ago",
-        status: "Active",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-        frequentMistakes: ["Indentation Error in Python", "Type Incompatibility"],
-        languageStats: { c: 35, cpp: 20, java: 15, python: 40 },
-      },
-      {
-        id: "std_005",
-        userId: "usr_std_005",
-        name: "David Kim",
-        rollNumber: "21CS105",
-        email: "david.kim@ait.edu",
-        branch: "CSE",
-        year: 3,
-        section: "CS-3B",
-        institutionId: "inst_mit_01",
-        programsAttempted: 74,
-        successfulExecutions: 38,
-        compilerErrors: 36,
-        aiExplanations: 45,
-        codingScore: 54,
-        lastActive: "3 days ago",
-        status: "At Risk",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
-        frequentMistakes: ["Memory Leak (Unfreed malloc)", "Stack Overflow in Recursion"],
-        languageStats: { c: 50, cpp: 24, java: 0, python: 0 },
-      },
-      {
-        id: "std_006",
-        userId: "usr_std_006",
-        name: "Sophia Martinez",
-        rollNumber: "22CS077",
-        email: "sophia.m@ait.edu",
-        branch: "IT",
-        year: 2,
-        section: "CS-2A",
-        institutionId: "inst_mit_01",
-        programsAttempted: 135,
-        successfulExecutions: 119,
-        compilerErrors: 16,
-        aiExplanations: 29,
-        codingScore: 91,
-        lastActive: "1 hour ago",
-        status: "Active",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sophia",
-        frequentMistakes: ["Scope Variable Shadowing", "Comparison operator vs Assignment"],
-        languageStats: { c: 15, cpp: 30, java: 40, python: 50 },
-      },
-      {
-        id: "std_007",
-        userId: "usr_std_007",
-        name: "Vikram Malhotra",
-        rollNumber: "21CS112",
-        email: "vikram.m@ait.edu",
-        branch: "CSE",
-        year: 3,
-        section: "CS-3A",
-        institutionId: "inst_mit_01",
-        programsAttempted: 95,
-        successfulExecutions: 82,
-        compilerErrors: 13,
-        aiExplanations: 14,
-        codingScore: 84,
-        lastActive: "4 hours ago",
-        status: "Active",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Vikram",
-        frequentMistakes: ["Off-by-one errors", "Header File Inclusion missing"],
-        languageStats: { c: 40, cpp: 45, java: 10, python: 0 },
-      },
-      {
-        id: "std_008",
-        userId: "usr_std_008",
-        name: "Marcus Vance",
-        rollNumber: "22CS091",
-        email: "marcus.v@ait.edu",
-        branch: "CSE",
-        year: 2,
-        section: "CS-2A",
-        institutionId: "inst_mit_01",
-        programsAttempted: 52,
-        successfulExecutions: 21,
-        compilerErrors: 31,
-        aiExplanations: 38,
-        codingScore: 48,
-        lastActive: "5 days ago",
-        status: "Inactive",
-        avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Marcus",
-        frequentMistakes: ["Syntax Error: Expected semicolon", "NameError: variable not defined"],
-        languageStats: { c: 30, cpp: 10, java: 0, python: 12 },
-      },
-    ];
-
-    this.assignments = [
-      {
-        id: "asg_01",
-        facultyId: "usr_faculty_demo",
-        classId: "cls_cs3a",
-        className: "CS 301 (CS-3A)",
-        title: "Binary Search Tree Implementation & Traversal",
-        description: "Implement a BST with in-order, pre-order, and post-order traversal functions. Handle memory allocation cleanly.",
-        instructions: "Implement all 3 tree traversal routines. Ensure all allocated nodes are freed before program termination.",
-        assignmentType: "coding",
-        languageMode: "ANY",
-        allowedLanguages: [],
-        testCases: [
-          { id: "tc_01_1", input: "5\n10 20 30 40 50", expectedOutput: "10 20 30 40 50", isHidden: false, explanation: "Revealed: Standard tree insertion" },
-          { id: "tc_01_2", input: "1\n99", expectedOutput: "99", isHidden: false, explanation: "Revealed: Single node tree" },
-          { id: "tc_01_3", input: "0", expectedOutput: "Empty Tree", isHidden: true, explanation: "Hidden: Empty root tree edge case" },
-          { id: "tc_01_4", input: "7\n45 12 78 3 24 67 91", expectedOutput: "3 12 24 45 67 78 91", isHidden: true, explanation: "Hidden: Unbalanced multi-branch BST" },
-        ],
-        points: 100,
-        difficulty: "medium",
-        startDate: "2026-08-01T00:00:00Z",
-        deadline: "2026-08-20T23:59:00Z",
-        maxAttempts: 5,
-        totalAssigned: 38,
-        submissionsCount: 29,
-        avgScore: 86.4,
-        createdAt: "2026-08-01T10:00:00Z",
-      },
-      {
-        id: "asg_02",
-        facultyId: "usr_faculty_demo",
-        classId: "cls_cs3b",
-        className: "CS 302 (CS-3B)",
-        title: "Polymorphism & Interface Hierarchies",
-        description: "Build a payment processing class structure using interfaces, abstract classes, and exception handling.",
-        instructions: "Define a base CreditCard/DebitCard interface. Implement custom PaymentException for invalid card numbers.",
-        assignmentType: "coding",
-        languageMode: "RESTRICTED",
-        allowedLanguages: ["java", "cpp"],
-        testCases: [
-          { id: "tc_02_1", input: "VISA 4111111111111111 250.00", expectedOutput: "Approved: $250.00", isHidden: false, explanation: "Revealed: Valid Visa Transaction" },
-          { id: "tc_02_2", input: "AMEX 1234 10.00", expectedOutput: "PaymentException: Invalid Card Number", isHidden: false, explanation: "Revealed: Invalid Card Length" },
-          { id: "tc_02_3", input: "MASTER 5500000000000004 0.00", expectedOutput: "PaymentException: Invalid Amount", isHidden: true, explanation: "Hidden: Zero Amount Edge Case" },
-        ],
-        points: 100,
-        difficulty: "hard",
-        startDate: "2026-08-05T00:00:00Z",
-        deadline: "2026-08-25T23:59:00Z",
-        maxAttempts: 3,
-        totalAssigned: 32,
-        submissionsCount: 18,
-        avgScore: 79.1,
-        createdAt: "2026-08-05T09:30:00Z",
-      },
-      {
-        id: "asg_03",
-        facultyId: "usr_faculty_demo",
-        classId: "cls_cs2a",
-        className: "CS 201 (CS-2A)",
-        title: "Dynamic Memory Management & Pointers",
-        description: "Write a program that dynamically allocates 2D matrices, performs multiplication, and properly frees all allocated memory.",
-        instructions: "Must use dynamic memory allocation functions (malloc/calloc/new).",
-        assignmentType: "coding",
-        languageMode: "RESTRICTED",
-        allowedLanguages: ["c", "cpp"],
-        testCases: [
-          { id: "tc_03_1", input: "2 2\n1 2\n3 4\n2 2\n5 6\n7 8", expectedOutput: "19 22\n43 50", isHidden: false, explanation: "Revealed: 2x2 Matrix Multiplication" },
-          { id: "tc_03_2", input: "1 3\n2 3 4\n3 1\n1\n2\n3", expectedOutput: "20", isHidden: true, explanation: "Hidden: Row and Column Vector Dot Product" },
-        ],
-        points: 50,
-        difficulty: "medium",
-        startDate: "2026-08-02T00:00:00Z",
-        deadline: "2026-08-18T23:59:00Z",
-        maxAttempts: 10,
-        totalAssigned: 42,
-        submissionsCount: 35,
-        avgScore: 74.5,
-        createdAt: "2026-08-02T14:00:00Z",
-      },
-    ];
-
-    this.submissions = [
-      { id: "sub_101", assignmentId: "asg_01", studentId: "std_001", studentName: "Alex Rivera", rollNumber: "21CS001", language: "cpp", status: "Success", score: 95, submittedAt: "2026-08-02T14:20:00Z", executionTime: "14ms", compilerErrors: "", aiExplanation: "" },
-      { id: "sub_102", assignmentId: "asg_01", studentId: "std_002", studentName: "Priya Sharma", rollNumber: "21CS042", language: "java", status: "Success", score: 92, submittedAt: "2026-08-02T16:45:00Z", executionTime: "35ms", compilerErrors: "", aiExplanation: "" },
-      { id: "sub_103", assignmentId: "asg_01", studentId: "std_004", studentName: "Emily Chen", rollNumber: "22CS014", language: "python", status: "Success", score: 100, submittedAt: "2026-08-03T09:10:00Z", executionTime: "22ms", compilerErrors: "", aiExplanation: "" },
-      { id: "sub_104", assignmentId: "asg_01", studentId: "std_003", studentName: "Rohan Patel", rollNumber: "21CS089", language: "c", status: "Success", score: 85, submittedAt: "2026-08-04T11:30:00Z", executionTime: "10ms", compilerErrors: "", aiExplanation: "" },
-      { id: "sub_105", assignmentId: "asg_02", studentId: "std_002", studentName: "Priya Sharma", rollNumber: "21CS042", language: "java", status: "Success", score: 90, submittedAt: "2026-08-06T10:15:00Z", executionTime: "40ms", compilerErrors: "", aiExplanation: "" },
-      { id: "sub_106", assignmentId: "asg_02", studentId: "std_001", studentName: "Alex Rivera", rollNumber: "21CS001", language: "cpp", status: "Success", score: 88, submittedAt: "2026-08-07T15:20:00Z", executionTime: "18ms", compilerErrors: "", aiExplanation: "" },
-      { id: "sub_107", assignmentId: "asg_03", studentId: "std_004", studentName: "Emily Chen", rollNumber: "22CS014", language: "cpp", status: "Success", score: 92, submittedAt: "2026-08-03T14:10:00Z", executionTime: "12ms", compilerErrors: "", aiExplanation: "" },
-      { id: "sub_108", assignmentId: "asg_03", studentId: "std_005", studentName: "David Kim", rollNumber: "21CS105", language: "c", status: "Compile Error", score: 50, submittedAt: "2026-08-04T18:00:00Z", executionTime: "0ms", compilerErrors: "Implicit declaration of function 'malloc'", aiExplanation: "Include <stdlib.h> header before using malloc." },
-    ];
-
-    this.recentActivity = [
-      { id: "act_101", studentName: "Rohan Patel", rollNumber: "21CS089", section: "CS-3B", language: "c", status: "Compile Error", detail: "Segmentation fault: Null pointer dereference in free_list()", timestamp: "4 mins ago" },
-      { id: "act_102", studentName: "Alex Rivera", rollNumber: "21CS001", section: "CS-3A", language: "cpp", status: "Success", detail: "Executed BST Traversal test suite in 14ms", timestamp: "12 mins ago" },
-      { id: "act_103", studentName: "Priya Sharma", rollNumber: "21CS042", section: "CS-3A", language: "java", status: "AI Explanation Requested", detail: "Asked AI to clarify java.lang.NullPointerException fix", timestamp: "25 mins ago" },
-      { id: "act_104", studentName: "Emily Chen", rollNumber: "22CS014", section: "CS-2A", language: "python", status: "Success", detail: "Passed 8/8 test cases for Matrix Multiplication", timestamp: "40 mins ago" },
-      { id: "act_105", studentName: "David Kim", rollNumber: "21CS105", section: "CS-3B", language: "c", status: "Compile Error", detail: "Implicit declaration of function 'malloc'", timestamp: "1 hour ago" },
-    ];
+    this.departments = [];
+    this.classes = [];
+    this.students = [];
+    this.assignments = [];
+    this.submissions = [];
+    this.recentActivity = [];
 
     this._migrateAssignments();
   }
 
   // Institutional overview data
   getOverview() {
-    const totalStudents = 112; // Enrolled across faculty classes
-    const activeStudents = 94;
-    const atRiskStudents = 18;
-    const programsExecuted = 1845;
-    const compilationErrors = 342;
-    const aiExplanationsUsed = 412;
-    const averageCodingScore = 81.6;
-
-    const insights = [
-      {
-        id: "ins_1",
-        type: "warning",
-        title: "High Pointer Error Frequency in C",
-        description: "23 students in Section CS-3B are repeatedly encountering segmentation faults and null pointer dereference errors in C.",
-        actionable: "Consider scheduling a dedicated lab session on dynamic memory allocation and gdb debugging.",
-      },
-      {
-        id: "ins_2",
-        type: "critical",
-        title: "Multiple Execution Failures Without Success",
-        description: "12 students attempted assignments 5+ times without successful execution during the past 48 hours.",
-        actionable: "Flagged students (Rohan Patel, David Kim, Marcus Vance) need direct TA intervention.",
-      },
-      {
-        id: "ins_3",
-        type: "info",
-        title: "Section Performance Variance",
-        description: "Section CS-3A maintains an average coding score of 88.5, whereas Section CS-3B trails at 71.2.",
-        actionable: "Review assignment submission pacing and concept mastery in CS-3B.",
-      },
-      {
-        id: "ins_4",
-        type: "trend",
-        title: "Runtime Error Surge",
-        description: "Runtime errors increased by 18% overall this week, largely driven by recursion overflow in C++ assignments.",
-        actionable: "Provide recursion stack overflow visual examples in class lectures.",
-      },
-    ];
+    const totalStudents = this.students.length;
+    const activeStudents = this.students.filter((s) => s.status === "Active").length;
+    const atRiskStudents = this.students.filter((s) => s.status === "At Risk").length;
+    const programsExecuted = this.submissions.length;
+    const compilationErrors = this.submissions.filter((s) => s.status === "Compile Error").length;
+    const aiExplanationsUsed = 0;
+    const averageCodingScore =
+      this.submissions.length > 0
+        ? Number((this.submissions.reduce((a, b) => a + (b.score || 0), 0) / this.submissions.length).toFixed(1))
+        : 0;
 
     return {
       totalStudents,
@@ -358,7 +55,7 @@ class FacultyModel {
       compilationErrors,
       aiExplanationsUsed,
       averageCodingScore,
-      insights,
+      insights: [],
       recentActivity: this.recentActivity,
       institution: this.institution,
     };

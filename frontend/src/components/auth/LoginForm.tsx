@@ -3,16 +3,18 @@
 import React, { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import OAuthButtons from "./OAuthButtons";
-import { Mail, Lock, Loader2, AlertCircle, CheckSquare, Square } from "lucide-react";
+import { Mail, Lock, Loader2, AlertCircle, CheckSquare, Square, Eye, EyeOff, Sparkles, Zap } from "lucide-react";
 
 interface LoginFormProps {
   onSwitchTab: (tab: "register" | "forgot") => void;
+  onSuccess?: () => void;
 }
 
-export default function LoginForm({ onSwitchTab }: LoginFormProps) {
+export default function LoginForm({ onSwitchTab, onSuccess }: LoginFormProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export default function LoginForm({ onSwitchTab }: LoginFormProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError("Please fill in both email and password.");
+      setError("Please fill in both your Registration Number / College Email and password.");
       return;
     }
     setError(null);
@@ -28,42 +30,40 @@ export default function LoginForm({ onSwitchTab }: LoginFormProps) {
 
     try {
       const res = await login(email, password);
-      if (!res.success) {
-        setError(res.message || "Failed to sign in.");
+      if (res.success) {
+        if (onSuccess) onSuccess();
+      } else {
+        setError(res.message || "Failed to sign in. Please verify your credentials.");
       }
     } catch {
-      setError("An unexpected error occurred.");
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFillDemo = () => {
-    setEmail("demo@cryptictoclear.io");
-    setPassword("Password123!");
-    setError(null);
-  };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-mono">
+        <div className="flex items-center gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs font-mono">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       <div>
-        <label htmlFor="login-email" className="block text-xs font-mono text-[var(--ink-dim)] mb-1.5">Email Address</label>
+        <label htmlFor="login-email" className="block text-xs font-mono text-[var(--ink-dim)] mb-1.5 font-medium">
+          Registration Number or College Email
+        </label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
+          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
           <input
             id="login-email"
-            type="email"
+            type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="developer@example.com"
-            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg pl-9 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] focus:outline-none focus:border-[var(--syn-keyword)] transition-colors font-mono"
+            placeholder="e.g. 24CSE104 or student@college.edu"
+            className="w-full bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2.5 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none"
             required
           />
         </div>
@@ -71,75 +71,87 @@ export default function LoginForm({ onSwitchTab }: LoginFormProps) {
 
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <label htmlFor="login-password" className="block text-xs font-mono text-[var(--ink-dim)]">Password</label>
+          <label htmlFor="login-password" className="block text-xs font-mono text-[var(--ink-dim)] font-medium">
+            Password
+          </label>
           <button
             type="button"
             onClick={() => onSwitchTab("forgot")}
-            className="text-xs font-mono text-[var(--syn-keyword)] hover:underline cursor-pointer"
+            className="text-xs font-mono text-[#E8C97A] hover:underline cursor-pointer"
           >
             Forgot Password?
           </button>
         </div>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
+          <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
           <input
             id="login-password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
-            className="w-full bg-[var(--bg)] border border-[var(--border)] rounded-lg pl-9 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] focus:outline-none focus:border-[var(--syn-keyword)] transition-colors font-mono"
+            className="w-full bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-10 py-2.5 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none"
             required
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--ink-faint)] hover:text-[#E8C97A] transition-colors p-0.5 cursor-pointer"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-xs font-mono text-[var(--ink-dim)]">
-        <label className="flex items-center gap-2 cursor-pointer select-none" onClick={() => setRememberMe(!rememberMe)}>
+      <div className="flex items-center justify-between text-xs font-mono text-[var(--ink-dim)] pt-0.5">
+        <label
+          className="flex items-center gap-2 cursor-pointer select-none group"
+          onClick={() => setRememberMe(!rememberMe)}
+        >
           {rememberMe ? (
-            <CheckSquare className="w-4 h-4 text-[var(--syn-keyword)]" />
+            <CheckSquare className="w-4 h-4 text-[#D4AF37]" />
           ) : (
-            <Square className="w-4 h-4 text-[var(--ink-faint)]" />
+            <Square className="w-4 h-4 text-[var(--ink-faint)] group-hover:text-[var(--ink-dim)]" />
           )}
           <span>Remember Me</span>
         </label>
-
-        <button
-          type="button"
-          onClick={handleFillDemo}
-          className="text-[11px] text-[var(--syn-string)] hover:underline font-mono"
-        >
-          Use Demo Account
-        </button>
       </div>
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 px-4 text-xs font-mono font-medium text-[#0a0d13] bg-gradient-to-r from-[var(--syn-keyword)] via-[var(--syn-function)] to-[var(--syn-string)] hover:brightness-110 transition-all shadow-[0_0_20px_rgba(108,182,255,0.2)] disabled:opacity-50 cursor-pointer"
+        className="w-full btn-gold flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-mono font-bold text-white shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_28px_rgba(232,201,122,0.55)] transition-all disabled:opacity-50 cursor-pointer"
       >
-        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign In"}
+        {loading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <>
+            <Sparkles className="w-3.5 h-3.5 text-white/90" />
+            <span>Sign In to Student Portal</span>
+          </>
+        )}
       </button>
 
-      <div className="relative my-4">
+      <div className="relative my-3">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-[var(--border)]" />
+          <div className="w-full border-t border-[rgba(212,175,55,0.18)]" />
         </div>
         <div className="relative flex justify-center text-[10px] uppercase font-mono tracking-wider">
-          <span className="bg-[var(--panel)] px-2 text-[var(--ink-faint)]">Or continue with</span>
+          <span className="bg-[#0b101c] px-2 text-[var(--ink-faint)]">Or continue with</span>
         </div>
       </div>
 
       <OAuthButtons />
 
-      <p className="text-center text-xs font-mono text-[var(--ink-dim)] mt-4">
+      <p className="text-center text-xs font-mono text-[var(--ink-dim)] mt-3">
         Don&apos;t have an account?{" "}
         <button
           type="button"
           onClick={() => onSwitchTab("register")}
-          className="text-[var(--syn-keyword)] hover:underline font-semibold cursor-pointer"
+          className="text-[#E8C97A] hover:underline font-semibold cursor-pointer"
         >
-          Create Account
+          Create Free Account
         </button>
       </p>
     </form>

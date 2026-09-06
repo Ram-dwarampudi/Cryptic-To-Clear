@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
-:root {
+:root,
+:root.dark,
+html.dark {
   /* Core surfaces — Deep luxury midnight navy */
   --bg: #070b14;
   --bg-elevated: #0d1527;
@@ -100,12 +102,15 @@
 
 html {
   scroll-behavior: smooth;
+  background-color: var(--bg);
+  color: var(--ink);
 }
 
 body {
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--ink);
   font-family: var(--font-body), system-ui, sans-serif;
+  min-height: 100vh;
 }
 
 .font-serif-heading {

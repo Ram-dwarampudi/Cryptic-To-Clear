@@ -100,8 +100,8 @@ export default function FacultyLayout({ children }: { children: React.ReactNode 
           <aside className="w-64 border-r border-[var(--border)] glass hidden lg:flex flex-col shrink-0 p-4 space-y-6">
             <div className="px-3 py-2 rounded-xl bg-white/[0.03] border border-[var(--border)]">
               <p className="text-[11px] font-mono text-[var(--ink-dim)] uppercase tracking-wider">Institution</p>
-              <p className="text-xs font-bold text-[var(--ink)] truncate mt-0.5">Apex Institute of Tech</p>
-              <p className="text-[10px] font-mono text-[var(--syn-keyword)]">Dept. of Computer Science</p>
+              <p className="text-xs font-bold text-[var(--ink)] truncate mt-0.5">{user?.university || "Institutional Faculty Portal"}</p>
+              <p className="text-[10px] font-mono text-[var(--syn-keyword)]">{user?.department || "Academic Department"}</p>
             </div>
 
             <nav className="flex-1 space-y-1 font-mono text-xs">
