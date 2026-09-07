@@ -113,47 +113,34 @@ async function fetchCodeforcesStats(handle) {
 }
 
 /**
- * Helper to fetch LeetCode stats via cloud-friendly Alfa API with GraphQL fallback
+ * Helper to fetch LeetCode stats with resilient multi-layer fallback
  */
 async function fetchLeetCodeStats(handle) {
   if (!handle) return null;
   const username = handle.trim().replace(/^https?:\/\/(www\.)?leetcode\.com\/(u\/)?/i, "").replace(/\/$/, "");
   if (!username) return null;
 
-  // Strategy 1: Cloud-friendly API (bypasses Cloudflare block on server IPs)
+  // Strategy 1: High-speed serverless LeetCode API (no rate limits, bypasses cloudflare)
   try {
-    const res = await fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(username)}/solved`, {
+    const res = await fetch(`https://leetcode-api-faisalshohag.vercel.app/${encodeURIComponent(username)}`, {
       signal: AbortSignal.timeout(6000),
     });
     if (res.ok) {
       const data = await res.json();
-      if (data && (data.solvedProblem !== undefined || data.easySolved !== undefined)) {
-        let ranking = null;
-        try {
-          const profRes = await fetch(`https://alfa-leetcode-api.onrender.com/userProfile/${encodeURIComponent(username)}`, {
-            signal: AbortSignal.timeout(3000),
-          });
-          if (profRes.ok) {
-            const profData = await profRes.json();
-            ranking = profData.ranking || null;
-          }
-        } catch {
-          // non-critical
-        }
-
+      if (data && data.totalSolved !== undefined) {
         return {
           handle: username,
-          totalSolved: data.solvedProblem || 0,
+          totalSolved: data.totalSolved || 0,
           easySolved: data.easySolved || 0,
           mediumSolved: data.mediumSolved || 0,
           hardSolved: data.hardSolved || 0,
-          ranking,
+          ranking: data.ranking || null,
           acceptanceRate: 75,
         };
       }
     }
   } catch (err) {
-    console.warn("Alfa LeetCode API attempt error, trying GraphQL fallback:", err.message);
+    console.warn("LeetCode Vercel API error, trying fallback:", err.message);
   }
 
   // Strategy 2: Direct LeetCode GraphQL
@@ -195,14 +182,37 @@ async function fetchLeetCodeStats(handle) {
       }
     }
   } catch (err) {
-    console.warn("LeetCode GraphQL error:", err.message);
+    console.warn("LeetCode GraphQL error, trying Alfa fallback:", err.message);
+  }
+
+  // Strategy 3: Alfa LeetCode API
+  try {
+    const res = await fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(username)}/solved`, {
+      signal: AbortSignal.timeout(6000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && (data.solvedProblem !== undefined || data.easySolved !== undefined)) {
+        return {
+          handle: username,
+          totalSolved: data.solvedProblem || 0,
+          easySolved: data.easySolved || 0,
+          mediumSolved: data.mediumSolved || 0,
+          hardSolved: data.hardSolved || 0,
+          ranking: null,
+          acceptanceRate: 75,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("Alfa LeetCode API error:", err.message);
   }
 
   return null;
 }
 
 /**
- * Helper to fetch CodeChef stats
+ * Helper to fetch CodeChef stats via live scraper
  */
 async function fetchCodeChefStats(handle) {
   if (!handle) return null;
@@ -211,24 +221,63 @@ async function fetchCodeChefStats(handle) {
 
   try {
     const res = await fetch(`https://www.codechef.com/users/${encodeURIComponent(username)}`, {
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
-      signal: AbortSignal.timeout(8000),
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+      signal: AbortSignal.timeout(9000),
     });
+    if (!res.ok) return null;
     const html = await res.text();
-    const ratingMatch = html.match(/class="rating-number"\s*>\s*(\d+)/i);
-    const starSpans = html.match(/<span style="background-color:[^"]*">&#9733;<\/span>/g);
-    const solvedMatch = html.match(/Fully Solved \((\d+)\)/) || html.match(/Problems Solved[^0-9]*(\d+)/i);
 
-    return {
-      handle: username,
-      rating: ratingMatch ? parseInt(ratingMatch[1], 10) : null,
-      stars: starSpans ? `${starSpans.length}★` : null,
-      totalSolved: solvedMatch ? parseInt(solvedMatch[1], 10) : 0,
-    };
+    // 1. Rating
+    const ratingMatch = html.match(/class="rating-number"[^>]*>([\s\S]*?)<\/div>/i);
+    let rating = null;
+    if (ratingMatch) {
+      const raw = ratingMatch[1].replace(/[^0-9]/g, "");
+      if (raw) rating = parseInt(raw, 10);
+    }
+
+    // 2. Stars
+    const starSpans = html.match(/<span style="background-color:[^"]*">&#9733;<\/span>/g);
+    let stars = starSpans && starSpans.length > 0 ? `${starSpans.length}★` : null;
+    if (!stars && rating) {
+      if (rating >= 2500) stars = "7★";
+      else if (rating >= 2200) stars = "6★";
+      else if (rating >= 2000) stars = "5★";
+      else if (rating >= 1800) stars = "4★";
+      else if (rating >= 1600) stars = "3★";
+      else if (rating >= 1400) stars = "2★";
+      else stars = "1★";
+    }
+
+    // 3. Solved count
+    const totalSolvedMatch = html.match(/Total Problems Solved:\s*(\d+)/i);
+    const fullySolvedMatch = html.match(/Fully Solved\s*\(([0-9]+)\)/i);
+    const partiallySolvedMatch = html.match(/Partially Solved\s*\(([0-9]+)\)/i);
+    let totalSolved = 0;
+    if (totalSolvedMatch) {
+      totalSolved = parseInt(totalSolvedMatch[1], 10);
+    } else if (fullySolvedMatch) {
+      totalSolved = parseInt(fullySolvedMatch[1], 10) + (partiallySolvedMatch ? parseInt(partiallySolvedMatch[1], 10) : 0);
+    }
+
+    // 4. Global Rank
+    const globalRankMatch = html.match(/<strong>\s*([0-9]+)\s*<\/strong>\s*<\/a>\s*Global Rank/i) || html.match(/class="rating-ranks"[\s\S]*?<strong>([0-9]+)<\/strong>/i);
+    const globalRank = globalRankMatch ? parseInt(globalRankMatch[1], 10) : null;
+
+    if (rating || totalSolved > 0 || stars) {
+      return {
+        handle: username,
+        rating,
+        stars,
+        totalSolved,
+        globalRank,
+      };
+    }
   } catch (err) {
     console.warn("CodeChef fetch error:", err.message);
-    return null;
   }
+  return null;
 }
 
 /**
