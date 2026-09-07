@@ -58,8 +58,14 @@ export default function StudentProfileDashboard() {
   // Modals
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<"leetcode" | "codeforces" | "codechef" | "hackerrank" | "github">("codechef");
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  const openPlatformModal = (platform: "leetcode" | "codeforces" | "codechef" | "hackerrank" | "github") => {
+    setSelectedPlatform(platform);
+    setIsSyncModalOpen(true);
+  };
 
   // Edit Profile Form State
   const [editForm, setEditForm] = useState<{
@@ -452,7 +458,7 @@ export default function StudentProfileDashboard() {
               </p>
             </div>
             <button
-              onClick={() => setIsSyncModalOpen(true)}
+              onClick={() => openPlatformModal("leetcode")}
               className="text-xs font-mono text-[#E8C97A] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <span>Manage Handles</span>
@@ -491,7 +497,7 @@ export default function StudentProfileDashboard() {
                   <div className="text-center py-4 space-y-2">
                     <p className="text-xs text-[var(--ink-faint)] font-mono">Not Connected</p>
                     <button
-                      onClick={() => setIsSyncModalOpen(true)}
+                      onClick={() => openPlatformModal("leetcode")}
                       className="text-[11px] font-mono text-amber-400 hover:underline"
                     >
                       + Connect LeetCode
@@ -500,15 +506,23 @@ export default function StudentProfileDashboard() {
                 )}
               </div>
               {platforms.leetcode?.connected && (
-                <a
-                  href={`https://leetcode.com/${platforms.leetcode.handle}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 pt-2 border-t border-white/5 text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-amber-400 flex items-center justify-between"
-                >
-                  <span>Public Profile</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-[var(--ink-faint)]">
+                  <a
+                    href={`https://leetcode.com/${platforms.leetcode.handle}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-amber-400 flex items-center gap-1"
+                  >
+                    <span>Public Profile</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    onClick={() => openPlatformModal("leetcode")}
+                    className="text-amber-400/80 hover:text-amber-400 underline text-[10px]"
+                  >
+                    Edit
+                  </button>
+                </div>
               )}
             </div>
 
@@ -541,7 +555,7 @@ export default function StudentProfileDashboard() {
                   <div className="text-center py-4 space-y-2">
                     <p className="text-xs text-[var(--ink-faint)] font-mono">Not Connected</p>
                     <button
-                      onClick={() => setIsSyncModalOpen(true)}
+                      onClick={() => openPlatformModal("codeforces")}
                       className="text-[11px] font-mono text-cyan-400 hover:underline"
                     >
                       + Connect Codeforces
@@ -550,15 +564,23 @@ export default function StudentProfileDashboard() {
                 )}
               </div>
               {platforms.codeforces?.connected && (
-                <a
-                  href={`https://codeforces.com/profile/${platforms.codeforces.handle}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 pt-2 border-t border-white/5 text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-cyan-400 flex items-center justify-between"
-                >
-                  <span>Public Profile</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-[var(--ink-faint)]">
+                  <a
+                    href={`https://codeforces.com/profile/${platforms.codeforces.handle}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-cyan-400 flex items-center gap-1"
+                  >
+                    <span>Public Profile</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    onClick={() => openPlatformModal("codeforces")}
+                    className="text-cyan-400/80 hover:text-cyan-400 underline text-[10px]"
+                  >
+                    Edit
+                  </button>
+                </div>
               )}
             </div>
 
@@ -591,7 +613,7 @@ export default function StudentProfileDashboard() {
                   <div className="text-center py-4 space-y-2">
                     <p className="text-xs text-[var(--ink-faint)] font-mono">Not Connected</p>
                     <button
-                      onClick={() => setIsSyncModalOpen(true)}
+                      onClick={() => openPlatformModal("codechef")}
                       className="text-[11px] font-mono text-amber-500 hover:underline"
                     >
                       + Connect CodeChef
@@ -600,15 +622,23 @@ export default function StudentProfileDashboard() {
                 )}
               </div>
               {platforms.codechef?.connected && (
-                <a
-                  href={`https://www.codechef.com/users/${platforms.codechef.handle}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 pt-2 border-t border-white/5 text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-amber-500 flex items-center justify-between"
-                >
-                  <span>Public Profile</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-[var(--ink-faint)]">
+                  <a
+                    href={`https://www.codechef.com/users/${platforms.codechef.handle}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-amber-500 flex items-center gap-1"
+                  >
+                    <span>Public Profile</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    onClick={() => openPlatformModal("codechef")}
+                    className="text-amber-400/80 hover:text-amber-400 underline text-[10px]"
+                  >
+                    Edit
+                  </button>
+                </div>
               )}
             </div>
 
@@ -640,7 +670,7 @@ export default function StudentProfileDashboard() {
                   <div className="text-center py-4 space-y-2">
                     <p className="text-xs text-[var(--ink-faint)] font-mono">Not Connected</p>
                     <button
-                      onClick={() => setIsSyncModalOpen(true)}
+                      onClick={() => openPlatformModal("hackerrank")}
                       className="text-[11px] font-mono text-emerald-400 hover:underline"
                     >
                       + Connect HackerRank
@@ -649,15 +679,23 @@ export default function StudentProfileDashboard() {
                 )}
               </div>
               {platforms.hackerrank?.connected && (
-                <a
-                  href={`https://www.hackerrank.com/${platforms.hackerrank.handle}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 pt-2 border-t border-white/5 text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-emerald-400 flex items-center justify-between"
-                >
-                  <span>Public Profile</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-[var(--ink-faint)]">
+                  <a
+                    href={`https://www.hackerrank.com/${platforms.hackerrank.handle}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-emerald-400 flex items-center gap-1"
+                  >
+                    <span>Public Profile</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    onClick={() => openPlatformModal("hackerrank")}
+                    className="text-emerald-400/80 hover:text-emerald-400 underline text-[10px]"
+                  >
+                    Edit
+                  </button>
+                </div>
               )}
             </div>
 
@@ -689,7 +727,7 @@ export default function StudentProfileDashboard() {
                   <div className="text-center py-4 space-y-2">
                     <p className="text-xs text-[var(--ink-faint)] font-mono">Not Connected</p>
                     <button
-                      onClick={() => setIsSyncModalOpen(true)}
+                      onClick={() => openPlatformModal("github")}
                       className="text-[11px] font-mono text-purple-400 hover:underline"
                     >
                       + Connect GitHub
@@ -698,15 +736,23 @@ export default function StudentProfileDashboard() {
                 )}
               </div>
               {platforms.github?.connected && (
-                <a
-                  href={`https://github.com/${platforms.github.handle}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-3 pt-2 border-t border-white/5 text-[11px] font-mono text-[var(--ink-faint)] group-hover:text-purple-400 flex items-center justify-between"
-                >
-                  <span>Public Profile</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-[var(--ink-faint)]">
+                  <a
+                    href={`https://github.com/${platforms.github.handle}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-purple-400 flex items-center gap-1"
+                  >
+                    <span>Public Profile</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <button
+                    onClick={() => openPlatformModal("github")}
+                    className="text-purple-400/80 hover:text-purple-400 underline text-[10px]"
+                  >
+                    Edit
+                  </button>
+                </div>
               )}
             </div>
           </div>
@@ -1388,100 +1434,220 @@ export default function StudentProfileDashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#0b1120] border border-white/10 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-5"
+              className="bg-[#0b1120] border border-white/10 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-6"
             >
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-white font-display">Link Coding Platforms</h3>
-                  <p className="text-xs text-[var(--ink-dim)] font-mono mt-0.5">
-                    Connect your public profiles to recalculate your Unified Developer Score.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setIsSyncModalOpen(false)}
-                  className="p-1 rounded-lg text-[var(--ink-dim)] hover:text-white"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+              {(() => {
+                const configMap = {
+                  leetcode: {
+                    name: "LeetCode",
+                    title: "Connect LeetCode Account",
+                    subtitle: "Enter your public LeetCode handle to sync solved problems, submissions, and contest rating.",
+                    labelColor: "text-amber-400",
+                    accentBorder: "focus:border-amber-400",
+                    badgeClass: "bg-amber-500/10 text-amber-400 border-amber-500/30",
+                    activeTabClass: "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-[0_0_12px_rgba(245,158,11,0.25)]",
+                    field: "leetcodeHandle" as const,
+                    placeholder: "e.g. your_leetcode_handle",
+                    connected: !!platforms.leetcode?.connected,
+                    handle: platforms.leetcode?.handle,
+                    profileUrl: platforms.leetcode?.handle ? `https://leetcode.com/${platforms.leetcode.handle}` : null,
+                    benefits: "Syncs Easy, Medium, Hard problem solves and platform acceptance rate into your DevScore.",
+                  },
+                  codeforces: {
+                    name: "Codeforces",
+                    title: "Connect Codeforces Account",
+                    subtitle: "Enter your public Codeforces handle to sync competitive rating, title rank, and contest solves.",
+                    labelColor: "text-cyan-400",
+                    accentBorder: "focus:border-cyan-400",
+                    badgeClass: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
+                    activeTabClass: "bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_12px_rgba(34,211,238,0.25)]",
+                    field: "codeforcesHandle" as const,
+                    placeholder: "e.g. your_codeforces_handle",
+                    connected: !!platforms.codeforces?.connected,
+                    handle: platforms.codeforces?.handle,
+                    profileUrl: platforms.codeforces?.handle ? `https://codeforces.com/profile/${platforms.codeforces.handle}` : null,
+                    benefits: "Syncs live rating, ranking tier (Pupil, Specialist, Master), and contest submission records.",
+                  },
+                  codechef: {
+                    name: "CodeChef",
+                    title: "Connect CodeChef Account",
+                    subtitle: "Enter your public CodeChef handle to sync your star division, rating, and global ranking.",
+                    labelColor: "text-amber-500",
+                    accentBorder: "focus:border-amber-500",
+                    badgeClass: "bg-amber-600/10 text-amber-500 border-amber-500/30",
+                    activeTabClass: "bg-amber-600/20 text-amber-400 border-amber-500/50 shadow-[0_0_12px_rgba(217,119,6,0.25)]",
+                    field: "codechefHandle" as const,
+                    placeholder: "e.g. your_codechef_handle",
+                    connected: !!platforms.codechef?.connected,
+                    handle: platforms.codechef?.handle,
+                    profileUrl: platforms.codechef?.handle ? `https://www.codechef.com/users/${platforms.codechef.handle}` : null,
+                    benefits: "Syncs star tier (1★ to 7★), rating, and contest achievements into your Unified Developer Score.",
+                  },
+                  hackerrank: {
+                    name: "HackerRank",
+                    title: "Connect HackerRank Account",
+                    subtitle: "Enter your public HackerRank username to sync verified problem solves and domain certifications.",
+                    labelColor: "text-emerald-400",
+                    accentBorder: "focus:border-emerald-400",
+                    badgeClass: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
+                    activeTabClass: "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-[0_0_12px_rgba(52,211,153,0.25)]",
+                    field: "hackerrankHandle" as const,
+                    placeholder: "e.g. your_hackerrank_handle",
+                    connected: !!platforms.hackerrank?.connected,
+                    handle: platforms.hackerrank?.handle,
+                    profileUrl: platforms.hackerrank?.handle ? `https://www.hackerrank.com/${platforms.hackerrank.handle}` : null,
+                    benefits: "Syncs skill badges, solved challenges, and verified domain badges.",
+                  },
+                  github: {
+                    name: "GitHub",
+                    title: "Connect GitHub Account",
+                    subtitle: "Enter your public GitHub handle to sync public repositories, open-source activity, and contributions.",
+                    labelColor: "text-purple-400",
+                    accentBorder: "focus:border-purple-400",
+                    badgeClass: "bg-purple-500/10 text-purple-400 border-purple-500/30",
+                    activeTabClass: "bg-purple-500/20 text-purple-300 border-purple-500/50 shadow-[0_0_12px_rgba(192,132,252,0.25)]",
+                    field: "githubHandle" as const,
+                    placeholder: "e.g. your_github_username",
+                    connected: !!platforms.github?.connected,
+                    handle: platforms.github?.handle,
+                    profileUrl: platforms.github?.handle ? `https://github.com/${platforms.github.handle}` : null,
+                    benefits: "Syncs public repositories, stars, commit activity, and open-source contributions.",
+                  },
+                };
 
-              <form onSubmit={handleSyncPlatforms} className="space-y-4 font-mono text-xs">
-                <div>
-                  <label className="block text-amber-400 font-bold mb-1">LeetCode Username</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. your_leetcode_handle"
-                    value={handlesForm.leetcodeHandle}
-                    onChange={(e) => setHandlesForm({ ...handlesForm, leetcodeHandle: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-400"
-                  />
-                </div>
+                const current = configMap[selectedPlatform];
+                const platformsList: (keyof typeof configMap)[] = [
+                  "leetcode",
+                  "codeforces",
+                  "codechef",
+                  "hackerrank",
+                  "github",
+                ];
 
-                <div>
-                  <label className="block text-cyan-400 font-bold mb-1">Codeforces Handle</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. your_codeforces_handle"
-                    value={handlesForm.codeforcesHandle}
-                    onChange={(e) => setHandlesForm({ ...handlesForm, codeforcesHandle: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400"
-                  />
-                </div>
+                return (
+                  <>
+                    {/* Modal Header */}
+                    <div className="flex items-start justify-between border-b border-white/10 pb-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase border ${current.badgeClass}`}>
+                            {current.name}
+                          </span>
+                          {current.connected && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-mono text-emerald-400">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Connected</span>
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-lg font-bold text-white font-display">
+                          {current.title}
+                        </h3>
+                        <p className="text-xs text-[var(--ink-dim)] font-mono mt-1">
+                          {current.subtitle}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setIsSyncModalOpen(false)}
+                        className="p-1 rounded-lg text-[var(--ink-dim)] hover:text-white"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
 
-                <div>
-                  <label className="block text-amber-500 font-bold mb-1">CodeChef Username</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. your_codechef_handle"
-                    value={handlesForm.codechefHandle}
-                    onChange={(e) => setHandlesForm({ ...handlesForm, codechefHandle: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
-                  />
-                </div>
+                    {/* Platform Selector Pill Switcher */}
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-mono text-[var(--ink-faint)]">Select Platform to Connect:</p>
+                      <div className="flex flex-wrap gap-1.5 p-1 rounded-2xl bg-black/40 border border-white/5">
+                        {platformsList.map((platformKey) => {
+                          const pMeta = configMap[platformKey];
+                          const isActive = selectedPlatform === platformKey;
+                          return (
+                            <button
+                              key={platformKey}
+                              type="button"
+                              onClick={() => setSelectedPlatform(platformKey)}
+                              className={`flex-1 min-w-[75px] py-1.5 px-2 rounded-xl text-xs font-mono font-bold transition-all flex items-center justify-center gap-1 border ${
+                                isActive
+                                  ? pMeta.activeTabClass
+                                  : "text-[var(--ink-dim)] border-transparent hover:text-white hover:bg-white/5"
+                              }`}
+                            >
+                              <span>{pMeta.name}</span>
+                              {pMeta.connected && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                <div>
-                  <label className="block text-emerald-400 font-bold mb-1">HackerRank Username</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. your_hackerrank_handle"
-                    value={handlesForm.hackerrankHandle}
-                    onChange={(e) => setHandlesForm({ ...handlesForm, hackerrankHandle: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-emerald-400"
-                  />
-                </div>
+                    {/* Single Platform Input Form */}
+                    <form onSubmit={handleSyncPlatforms} className="space-y-4 font-mono text-xs">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className={`block font-bold ${current.labelColor}`}>
+                            {current.name} Username
+                          </label>
+                          {current.connected && current.profileUrl && (
+                            <a
+                              href={current.profileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] text-[var(--ink-dim)] hover:text-white flex items-center gap-1"
+                            >
+                              <span>View Profile</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
 
-                <div>
-                  <label className="block text-purple-400 font-bold mb-1">GitHub Username</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. your_github_username"
-                    value={handlesForm.githubHandle}
-                    onChange={(e) => setHandlesForm({ ...handlesForm, githubHandle: e.target.value })}
-                    className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-purple-400"
-                  />
-                </div>
+                        <input
+                          type="text"
+                          placeholder={current.placeholder}
+                          value={handlesForm[current.field]}
+                          onChange={(e) =>
+                            setHandlesForm({
+                              ...handlesForm,
+                              [current.field]: e.target.value.trim(),
+                            })
+                          }
+                          className={`w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors ${current.accentBorder}`}
+                          autoFocus
+                        />
 
-                {actionSuccess && (
-                  <p className="text-emerald-400 font-semibold text-center">{actionSuccess}</p>
-                )}
+                        <p className="mt-2 text-[11px] text-[var(--ink-dim)] leading-relaxed">
+                          {current.benefits}
+                        </p>
+                      </div>
 
-                <div className="pt-2 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsSyncModalOpen(false)}
-                    className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-mono"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={actionLoading}
-                    className="btn-gold px-5 py-2 rounded-xl text-black font-bold font-mono"
-                  >
-                    {actionLoading ? "Syncing Platforms..." : "Sync & Calculate Score"}
-                  </button>
-                </div>
-              </form>
+                      {actionSuccess && (
+                        <p className="text-emerald-400 font-semibold text-center text-xs py-1">
+                          {actionSuccess}
+                        </p>
+                      )}
+
+                      <div className="pt-2 flex justify-end gap-2 border-t border-white/5">
+                        <button
+                          type="button"
+                          onClick={() => setIsSyncModalOpen(false)}
+                          className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-mono"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={actionLoading}
+                          className="btn-gold px-5 py-2 rounded-xl text-black font-bold font-mono shadow-lg hover:shadow-[#D4AF37]/20"
+                        >
+                          {actionLoading ? "Syncing Platform..." : `Sync & Save ${current.name}`}
+                        </button>
+                      </div>
+                    </form>
+                  </>
+                );
+              })()}
             </motion.div>
           </div>
         )}
