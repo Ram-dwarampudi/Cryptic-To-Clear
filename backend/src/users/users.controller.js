@@ -120,30 +120,7 @@ async function fetchLeetCodeStats(handle) {
   const username = handle.trim().replace(/^https?:\/\/(www\.)?leetcode\.com\/(u\/)?/i, "").replace(/\/$/, "");
   if (!username) return null;
 
-  // Strategy 1: High-speed serverless LeetCode API (no rate limits, bypasses cloudflare)
-  try {
-    const res = await fetch(`https://leetcode-api-faisalshohag.vercel.app/${encodeURIComponent(username)}`, {
-      signal: AbortSignal.timeout(6000),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.totalSolved !== undefined) {
-        return {
-          handle: username,
-          totalSolved: data.totalSolved || 0,
-          easySolved: data.easySolved || 0,
-          mediumSolved: data.mediumSolved || 0,
-          hardSolved: data.hardSolved || 0,
-          ranking: data.ranking || null,
-          acceptanceRate: 75,
-        };
-      }
-    }
-  } catch (err) {
-    console.warn("LeetCode Vercel API error, trying fallback:", err.message);
-  }
-
-  // Strategy 2: Direct LeetCode GraphQL
+  // Strategy 1: Direct official LeetCode GraphQL (Official API, fastest, most accurate)
   try {
     const query = `query userProblemsSolved($username: String!) {
       matchedUser(username: $username) {
@@ -157,7 +134,7 @@ async function fetchLeetCodeStats(handle) {
       headers: {
         "Content-Type": "application/json",
         "Referer": "https://leetcode.com",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
       },
       body: JSON.stringify({ query, variables: { username } }),
       signal: AbortSignal.timeout(6000),
@@ -182,13 +159,36 @@ async function fetchLeetCodeStats(handle) {
       }
     }
   } catch (err) {
-    console.warn("LeetCode GraphQL error, trying Alfa fallback:", err.message);
+    console.warn("Direct LeetCode GraphQL error, trying proxies:", err.message);
+  }
+
+  // Strategy 2: High-speed serverless LeetCode API
+  try {
+    const res = await fetch(`https://leetcode-api-faisalshohag.vercel.app/${encodeURIComponent(username)}`, {
+      signal: AbortSignal.timeout(4000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.totalSolved !== undefined) {
+        return {
+          handle: username,
+          totalSolved: data.totalSolved || 0,
+          easySolved: data.easySolved || 0,
+          mediumSolved: data.mediumSolved || 0,
+          hardSolved: data.hardSolved || 0,
+          ranking: data.ranking || null,
+          acceptanceRate: 75,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("LeetCode Vercel API error, trying Alfa fallback:", err.message);
   }
 
   // Strategy 3: Alfa LeetCode API
   try {
     const res = await fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(username)}/solved`, {
-      signal: AbortSignal.timeout(6000),
+      signal: AbortSignal.timeout(4000),
     });
     if (res.ok) {
       const data = await res.json();
@@ -222,9 +222,11 @@ async function fetchCodeChefStats(handle) {
   try {
     const res = await fetch(`https://www.codechef.com/users/${encodeURIComponent(username)}`, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
       },
-      signal: AbortSignal.timeout(9000),
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;
     const html = await res.text();
@@ -352,10 +354,31 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
     fetchGitHubStats(ghHandle),
   ]);
 
-  const finalLc = lcStats || (prevPlatforms.leetcode?.handle === lcHandle && prevPlatforms.leetcode?.totalSolved > 0 ? prevPlatforms.leetcode : null);
-  const finalCf = cfStats || (prevPlatforms.codeforces?.handle === cfHandle && prevPlatforms.codeforces?.rating ? prevPlatforms.codeforces : null);
-  const finalCc = ccStats || (prevPlatforms.codechef?.handle === ccHandle && prevPlatforms.codechef?.rating ? prevPlatforms.codechef : null);
-  const finalGh = ghStats || (prevPlatforms.github?.handle === ghHandle && prevPlatforms.github?.repos > 0 ? prevPlatforms.github : null);
+  const isMatch = (h1, h2) => Boolean(h1 && h2 && h1.toString().trim().toLowerCase() === h2.toString().trim().toLowerCase());
+
+  const finalLc = (lcStats && lcStats.totalSolved > 0)
+    ? lcStats
+    : (isMatch(prevPlatforms.leetcode?.handle, lcHandle) && prevPlatforms.leetcode?.totalSolved > 0
+        ? prevPlatforms.leetcode
+        : (lcStats || prevPlatforms.leetcode || null));
+
+  const finalCf = (cfStats && cfStats.rating)
+    ? cfStats
+    : (isMatch(prevPlatforms.codeforces?.handle, cfHandle) && prevPlatforms.codeforces?.rating
+        ? prevPlatforms.codeforces
+        : (cfStats || prevPlatforms.codeforces || null));
+
+  const finalCc = (ccStats && (ccStats.totalSolved > 0 || ccStats.rating))
+    ? ccStats
+    : (isMatch(prevPlatforms.codechef?.handle, ccHandle) && (prevPlatforms.codechef?.totalSolved > 0 || prevPlatforms.codechef?.rating)
+        ? prevPlatforms.codechef
+        : (ccStats || prevPlatforms.codechef || null));
+
+  const finalGh = (ghStats && ghStats.repos > 0)
+    ? ghStats
+    : (isMatch(prevPlatforms.github?.handle, ghHandle) && prevPlatforms.github?.repos > 0
+        ? prevPlatforms.github
+        : (ghStats || prevPlatforms.github || null));
 
   const lcSolved = finalLc?.totalSolved || 0;
   const ccSolved = finalCc?.totalSolved || 0;
