@@ -74,6 +74,7 @@ export default function RootLayout({
         {/* Applies the stored theme synchronously, before paint, so there's
             no flash of the wrong theme on load. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
       </head>
       <body
         className={`${playfair.variable} ${merriweather.variable} ${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} ${cinzel.variable} ${jakarta.variable} antialiased bg-[var(--bg)] text-[var(--ink)]`}

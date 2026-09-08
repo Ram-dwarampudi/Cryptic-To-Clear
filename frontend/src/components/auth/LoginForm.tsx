@@ -142,7 +142,7 @@ export default function LoginForm({ onSwitchTab, onSuccess }: LoginFormProps) {
         </div>
       </div>
 
-      <OAuthButtons />
+      <OAuthButtons onSuccess={onSuccess} />
 
       <p className="text-center text-xs font-mono text-[var(--ink-dim)] mt-3">
         Don&apos;t have an account?{" "}

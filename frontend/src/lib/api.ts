@@ -658,6 +658,41 @@ export async function loginFacultyDemo(): Promise<AuthResponse> {
   }
 }
 
+export interface GoogleAuthPayload {
+  credential?: string;
+  accessToken?: string;
+  userInfo?: {
+    email: string;
+    name?: string;
+    picture?: string;
+  };
+  isDemoGoogle?: boolean;
+}
+
+export async function loginWithGoogle(data: GoogleAuthPayload): Promise<AuthResponse> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "include",
+    });
+    const result = await res.json().catch(() => null);
+    if (!res.ok || !result || result.success === false) {
+      return {
+        success: false,
+        message: result?.message || "Google authentication failed.",
+      };
+    }
+    return result as AuthResponse;
+  } catch {
+    return {
+      success: false,
+      message: "Could not connect to authentication server for Google Sign-In.",
+    };
+  }
+}
+
 export interface RegisterOptions {
   role?: "student" | "faculty";
   rollNo?: string;

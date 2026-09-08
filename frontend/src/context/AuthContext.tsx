@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { User, loginUser, loginFacultyDemo, registerUser, logoutUser, fetchMe, requestForgotPassword, RegisterOptions } from "@/lib/api";
+import { User, loginUser, loginFacultyDemo, registerUser, logoutUser, fetchMe, requestForgotPassword, RegisterOptions, GoogleAuthPayload, loginWithGoogle } from "@/lib/api";
 
 type AuthTab = "login" | "register" | "forgot" | "faculty";
 
@@ -16,6 +16,7 @@ interface AuthContextType {
   closeAuthModal: () => void;
   login: (email: string, pass: string) => Promise<{ success: boolean; message?: string }>;
   loginAsFacultyDemo: () => Promise<{ success: boolean; message?: string }>;
+  loginWithGoogleAccount: (data: GoogleAuthPayload) => Promise<{ success: boolean; message?: string }>;
   register: (name: string, email: string, pass: string, options?: "student" | "faculty" | RegisterOptions) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   continueAsGuest: () => void;
@@ -100,6 +101,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: false, message: res.message || "Failed to sign into faculty demo." };
   };
 
+  const loginWithGoogleAccount = async (data: GoogleAuthPayload) => {
+    const res = await loginWithGoogle(data);
+    if (res.success && res.user) {
+      setUser(res.user);
+      setIsGuest(false);
+      localStorage.setItem("c2c_guest", "false");
+      if (res.token) {
+        setToken(res.token);
+        localStorage.setItem("c2c_token", res.token);
+      }
+      setIsAuthModalOpen(false);
+      return { success: true, message: res.message };
+    }
+    return { success: false, message: res.message || "Google sign-in failed." };
+  };
+
   const register = async (
     name: string,
     email: string,
@@ -157,6 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         closeAuthModal,
         login,
         loginAsFacultyDemo,
+        loginWithGoogleAccount,
         register,
         logout,
         continueAsGuest,

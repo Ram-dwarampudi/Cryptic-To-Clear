@@ -267,7 +267,7 @@ export default function RegisterForm({ onSwitchTab, onSuccess }: RegisterFormPro
         </div>
       </div>
 
-      <OAuthButtons />
+      <OAuthButtons onSuccess={onSuccess} />
 
       <p className="text-center text-xs font-mono text-[var(--ink-dim)] mt-3">
         Already have an account?{" "}

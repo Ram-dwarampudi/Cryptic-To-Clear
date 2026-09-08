@@ -1,4 +1,6 @@
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const axios = require("axios");
 const env = require("../config/env");
 const userModel = require("../models/user.model");
 const { resolveStudentFromRegistration } = require("../utils/studentLookup");
@@ -226,4 +228,89 @@ exports.forgotPassword = async (req, res) => {
     message: "Password reset link has been dispatched to your email address.",
     demoNote: "In development/demo mode, use Demo account credentials: demo@cryptictoclear.io / Password123! or faculty@cryptictoclear.io / Faculty123!",
   });
+};
+
+/**
+ * @route POST /api/auth/google
+ * @desc Authenticate with Google ID Token, Access Token, or OAuth Profile
+ */
+exports.googleAuth = async (req, res, next) => {
+  try {
+    const { credential, accessToken, userInfo, isDemoGoogle } = req.body;
+    let googleUser = null;
+
+    if (credential) {
+      // Verify Google ID Token via Google's tokeninfo endpoint
+      const response = await axios.get(
+        `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`,
+        { timeout: 8000 }
+      );
+      googleUser = {
+        email: response.data.email,
+        name: response.data.name || response.data.given_name || "Google User",
+        picture: response.data.picture,
+        sub: response.data.sub,
+      };
+    } else if (accessToken) {
+      // Fetch user profile from Google's userinfo endpoint
+      const response = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        timeout: 8000,
+      });
+      googleUser = {
+        email: response.data.email,
+        name: response.data.name || response.data.given_name || "Google User",
+        picture: response.data.picture,
+        sub: response.data.sub,
+      };
+    } else if (isDemoGoogle && userInfo && userInfo.email) {
+      // Instant development/preview test mode
+      googleUser = {
+        email: userInfo.email,
+        name: userInfo.name || "Google Student",
+        picture: userInfo.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(userInfo.email)}`,
+        sub: "demo-google-" + Date.now(),
+      };
+    }
+
+    if (!googleUser || !googleUser.email) {
+      return res.status(400).json({
+        success: false,
+        message: "Unable to verify Google credentials. Please try signing in again.",
+      });
+    }
+
+    const normalizedEmail = googleUser.email.trim().toLowerCase();
+    let user = await userModel.findByEmail(normalizedEmail);
+
+    if (!user) {
+      // Create new user account in database from Google profile
+      const tempPassword = crypto.randomBytes(32).toString("hex");
+      user = await userModel.create({
+        name: googleUser.name || "Student",
+        email: normalizedEmail,
+        password: tempPassword,
+        avatar: googleUser.picture || null,
+        role: "student",
+        provider: "google",
+      });
+    } else {
+      // If user exists, update avatar if currently placeholder
+      if (googleUser.picture && (!user.avatar || user.avatar.includes("dicebear"))) {
+        await userModel.updateUser(user.id, { avatar: googleUser.picture });
+        user.avatar = googleUser.picture;
+      }
+      if (typeof userModel.updateLastLogin === "function") {
+        await userModel.updateLastLogin(user.id);
+      }
+    }
+
+    sendTokenResponse(user, 200, res, `Signed in successfully with Google as ${user.name}!`);
+  } catch (error) {
+    console.error("Google Auth error:", error.response?.data || error.message);
+    return res.status(401).json({
+      success: false,
+      message: error.response?.data?.error_description || "Google authentication failed. Please try again.",
+    });
+  }
 };
