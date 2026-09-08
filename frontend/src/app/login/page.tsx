@@ -31,11 +31,17 @@ function LoginContent() {
 
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<"login" | "faculty" | "register" | "forgot">("login");
+  const [registerRole, setRegisterRole] = useState<"student" | "faculty">("student");
 
   useEffect(() => {
     if (tabParam === "faculty") setActiveTab("faculty");
-    else if (tabParam === "register") setActiveTab("register");
-    else if (tabParam === "forgot") setActiveTab("forgot");
+    else if (tabParam === "register") {
+      setActiveTab("register");
+      setRegisterRole("student");
+    } else if (tabParam === "faculty-register") {
+      setActiveTab("register");
+      setRegisterRole("faculty");
+    } else if (tabParam === "forgot") setActiveTab("forgot");
   }, [tabParam]);
 
   // If already logged in, offer quick jump or redirect
@@ -265,13 +271,13 @@ function LoginContent() {
                 <h2 className="font-display text-2xl font-bold text-[var(--ink)] tracking-tight">
                   {activeTab === "login" && "Student Sign In"}
                   {activeTab === "faculty" && "Faculty & Institutional Portal"}
-                  {activeTab === "register" && "Create Student Account"}
+                  {activeTab === "register" && (registerRole === "faculty" ? "Create Faculty Account" : "Create Account")}
                   {activeTab === "forgot" && "Account Recovery"}
                 </h2>
                 <p className="text-xs text-[var(--ink-dim)] mt-1 font-mono">
                   {activeTab === "login" && "Sign in with your campus credentials or demo account"}
                   {activeTab === "faculty" && "Department professors, evaluators & course admins"}
-                  {activeTab === "register" && "Join your campus batch & sync lab assignments"}
+                  {activeTab === "register" && (registerRole === "faculty" ? "Register your institutional faculty or lab admin credentials" : "Join your campus batch & sync lab assignments")}
                   {activeTab === "forgot" && "Recover your institutional access credentials"}
                 </p>
               </div>
@@ -337,13 +343,17 @@ function LoginContent() {
 
                   {activeTab === "faculty" && (
                     <FacultyLoginForm
-                      onSwitchTab={(tab) => setActiveTab(tab)}
+                      onSwitchTab={(tab) => {
+                        if (tab === "register") setRegisterRole("faculty");
+                        setActiveTab(tab);
+                      }}
                       onSuccess={handleAuthSuccess}
                     />
                   )}
 
                   {activeTab === "register" && (
                     <RegisterForm
+                      initialRole={registerRole}
                       onSwitchTab={() => setActiveTab("login")}
                       onSuccess={handleAuthSuccess}
                     />

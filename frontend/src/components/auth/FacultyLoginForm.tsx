@@ -192,13 +192,13 @@ export default function FacultyLoginForm({ onSwitchTab, onSuccess }: FacultyLogi
       </button>
 
       <p className="text-center text-xs font-mono text-[var(--ink-dim)] mt-3">
-        Need campus onboarding for your institution?{" "}
+        New faculty member?{" "}
         <button
           type="button"
           onClick={() => onSwitchTab("register")}
-          className="text-[#E8C97A] hover:underline font-semibold cursor-pointer"
+          className="text-purple-300 hover:text-white hover:underline font-semibold cursor-pointer"
         >
-          Institutional Inquiry
+          Register Faculty Account
         </button>
       </p>
     </form>

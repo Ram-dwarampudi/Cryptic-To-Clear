@@ -14,9 +14,15 @@ import { X, User, GraduationCap } from "lucide-react";
 export default function AuthModal() {
   const { isAuthModalOpen, authModalTab, closeAuthModal } = useAuth();
   const [activeTab, setActiveTab] = useState<"login" | "faculty" | "register" | "forgot">(authModalTab);
+  const [registerRole, setRegisterRole] = useState<"student" | "faculty">("student");
 
   useEffect(() => {
     setActiveTab(authModalTab);
+    if (authModalTab === "faculty") {
+      setRegisterRole("faculty");
+    } else {
+      setRegisterRole("student");
+    }
   }, [authModalTab]);
 
   if (!isAuthModalOpen) return null;
@@ -74,7 +80,7 @@ export default function AuthModal() {
             <h2 className="font-display text-xl font-semibold text-[var(--ink)] tracking-tight">
               {activeTab === "login" && "Student Login"}
               {activeTab === "faculty" && "Faculty & Institutional Portal"}
-              {activeTab === "register" && "Create Student Account"}
+              {activeTab === "register" && (registerRole === "faculty" ? "Create Faculty Account" : "Create Account")}
               {activeTab === "forgot" && "Account Recovery"}
             </h2>
             <p className="text-xs text-[var(--ink-dim)] mt-1 font-medium">
@@ -115,8 +121,20 @@ export default function AuthModal() {
           {/* Form container */}
           <div className="relative z-10">
             {activeTab === "login" && <LoginForm onSwitchTab={(tab) => setActiveTab(tab)} />}
-            {activeTab === "faculty" && <FacultyLoginForm onSwitchTab={(tab) => setActiveTab(tab)} />}
-            {activeTab === "register" && <RegisterForm onSwitchTab={() => setActiveTab("login")} />}
+            {activeTab === "faculty" && (
+              <FacultyLoginForm
+                onSwitchTab={(tab) => {
+                  if (tab === "register") setRegisterRole("faculty");
+                  setActiveTab(tab);
+                }}
+              />
+            )}
+            {activeTab === "register" && (
+              <RegisterForm
+                initialRole={registerRole}
+                onSwitchTab={() => setActiveTab("login")}
+              />
+            )}
             {activeTab === "forgot" && <ForgotPassword onSwitchTab={() => setActiveTab("login")} />}
           </div>
 

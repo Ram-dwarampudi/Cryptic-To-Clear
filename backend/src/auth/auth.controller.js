@@ -78,24 +78,29 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    // Auto-fetch and resolve student details from Registration / Roll Number
+    const isFaculty = (role || "").toLowerCase() === "faculty";
     let academicDetails = {
       rollNo: rollNo ? rollNo.trim().toUpperCase() : null,
-      collegeName: null,
-      stream: null,
-      batchYear: null,
-      graduationYear: null,
+      collegeName: req.body.collegeName || null,
+      stream: req.body.stream || req.body.department || null,
+      batchYear: req.body.batchYear ? parseInt(req.body.batchYear, 10) : null,
+      graduationYear: req.body.graduationYear ? parseInt(req.body.graduationYear, 10) : null,
     };
 
-    if (rollNo) {
-      academicDetails = resolveStudentFromRegistration(rollNo, email);
+    if (rollNo && !isFaculty) {
+      const resolved = resolveStudentFromRegistration(rollNo, email);
+      academicDetails = {
+        ...academicDetails,
+        ...resolved,
+        rollNo: resolved.rollNo || rollNo.trim().toUpperCase(),
+      };
     }
 
     const newUser = await userModel.create({
-      name: name ? name.trim() : "Student",
+      name: name ? name.trim() : (isFaculty ? "Faculty Member" : "Student"),
       email: email.trim().toLowerCase(),
       password,
-      role,
+      role: isFaculty ? "FACULTY" : "STUDENT",
       rollNo: academicDetails.rollNo || rollNo,
       collegeName: academicDetails.collegeName,
       stream: academicDetails.stream,

@@ -698,6 +698,9 @@ export interface RegisterOptions {
   rollNo?: string;
   departmentId?: string;
   batchYear?: number;
+  collegeName?: string;
+  stream?: string;
+  title?: string;
 }
 
 export async function registerUser(

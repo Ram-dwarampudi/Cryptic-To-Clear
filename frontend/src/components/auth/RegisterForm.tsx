@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import OAuthButtons from "./OAuthButtons";
@@ -18,27 +19,51 @@ import {
   Building,
   GraduationCap,
   Calendar,
+  Briefcase,
+  ShieldCheck,
 } from "lucide-react";
 
 interface RegisterFormProps {
   onSwitchTab: (tab: "login") => void;
   onSuccess?: () => void;
+  initialRole?: "student" | "faculty";
 }
 
-export default function RegisterForm({ onSwitchTab, onSuccess }: RegisterFormProps) {
+export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "student" }: RegisterFormProps) {
   const { register } = useAuth();
-  const [rollNo, setRollNo] = useState("");
+  const router = useRouter();
+
+  // Role: "student" or "faculty"
+  const [role, setRole] = useState<"student" | "faculty">(initialRole);
+
+  useEffect(() => {
+    if (initialRole) {
+      setRole(initialRole);
+    }
+  }, [initialRole]);
+
+  // Common fields
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // Student specific
+  const [rollNo, setRollNo] = useState("");
+
+  // Faculty specific
+  const [facultyId, setFacultyId] = useState("");
+  const [department, setDepartment] = useState("Computer Science & Engineering");
+  const [collegeName, setCollegeName] = useState("Apex University of Technology");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Auto-resolve academic details in real-time as registration number & email change
+  // Auto-resolve student academic details in real-time
   const resolved = useMemo(() => {
+    if (role !== "student") return { rollNo: "", collegeName: "", stream: "", batchYear: null, graduationYear: null };
     return resolveStudentDetails(rollNo, email);
-  }, [rollNo, email]);
+  }, [rollNo, email, role]);
 
   // Compute password strength score (0-3)
   const getPasswordStrength = () => {
@@ -57,30 +82,56 @@ export default function RegisterForm({ onSwitchTab, onSuccess }: RegisterFormPro
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!rollNo.trim() || !name.trim() || !email.trim() || !password) {
-      setError("Please fill in Registration Number, Preferred Name, College Email, and Password.");
-      return;
+    setError(null);
+
+    if (role === "student") {
+      if (!rollNo.trim() || !name.trim() || !email.trim() || !password) {
+        setError("Please fill in Registration Number, Preferred Name, College Email, and Password.");
+        return;
+      }
+    } else {
+      if (!name.trim() || !email.trim() || !password) {
+        setError("Please fill in Full Name, Institutional Email, and Password.");
+        return;
+      }
     }
+
     if (password.length < 6) {
       setError("Password must be at least 6 characters long.");
       return;
     }
 
-    setError(null);
     setLoading(true);
 
     try {
-      const res = await register(name.trim(), email.trim(), password, {
-        role: "student",
-        rollNo: rollNo.trim().toUpperCase(),
-      });
+      const options =
+        role === "faculty"
+          ? {
+              role: "faculty" as const,
+              rollNo: facultyId.trim().toUpperCase() || "FAC-" + Math.floor(1000 + Math.random() * 9000),
+              collegeName: collegeName.trim(),
+              stream: department.trim(),
+            }
+          : {
+              role: "student" as const,
+              rollNo: rollNo.trim().toUpperCase(),
+            };
+
+      const res = await register(name.trim(), email.trim(), password, options);
+
       if (res.success) {
-        if (onSuccess) onSuccess();
+        if (onSuccess) {
+          onSuccess();
+        } else if (role === "faculty") {
+          router.push("/faculty");
+        } else {
+          router.push("/compiler");
+        }
       } else {
-        setError(res.message || "Registration failed. Please try another email or registration number.");
+        setError(res.message || "Registration failed. Please check your credentials.");
       }
     } catch {
-      setError("An unexpected error occurred. Please try again.");
+      setError("An unexpected error occurred during registration. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -88,6 +139,54 @@ export default function RegisterForm({ onSwitchTab, onSuccess }: RegisterFormPro
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Role Selection Toggle */}
+      <div className="grid grid-cols-2 gap-1.5 p-1 bg-[rgba(7,11,20,0.9)] rounded-xl border border-[rgba(212,175,55,0.25)] font-mono text-xs">
+        <button
+          type="button"
+          onClick={() => {
+            setRole("student");
+            setError(null);
+          }}
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+            role === "student"
+              ? "btn-gold text-white font-bold shadow-sm"
+              : "text-[var(--ink-dim)] hover:text-white"
+          }`}
+        >
+          <UserIcon className="w-3.5 h-3.5" />
+          <span>Student</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setRole("faculty");
+            setError(null);
+          }}
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
+            role === "faculty"
+              ? "bg-purple-700/85 text-white font-bold shadow-sm border border-purple-400/40"
+              : "text-[var(--ink-dim)] hover:text-white"
+          }`}
+        >
+          <GraduationCap className="w-3.5 h-3.5 text-purple-300" />
+          <span>Faculty / Educator</span>
+        </button>
+      </div>
+
+      {/* Role Informative Banner */}
+      {role === "faculty" ? (
+        <div className="p-3 rounded-xl bg-purple-950/40 border border-purple-500/30 text-purple-200 text-xs font-mono flex items-center gap-2.5">
+          <GraduationCap className="w-4 h-4 text-[#E8C97A] shrink-0" />
+          <div>
+            <span className="font-semibold text-white">Faculty Registration</span>
+            <p className="text-[11px] text-white/60 mt-0.5">
+              Access Doubt Resolution, Assignment Gradebook & Course Analytics
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       {error && (
         <div className="flex items-center gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs font-mono">
           <AlertCircle className="w-4 h-4 shrink-0" />
@@ -95,76 +194,140 @@ export default function RegisterForm({ onSwitchTab, onSuccess }: RegisterFormPro
         </div>
       )}
 
-      {/* 1. Registration Number */}
-      <div>
-        <label htmlFor="register-roll" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
-          Registration / Roll Number <span className="text-red-400">*</span>
-        </label>
-        <div className="relative">
-          <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
-          <input
-            id="register-roll"
-            type="text"
-            value={rollNo}
-            onChange={(e) => setRollNo(e.target.value)}
-            placeholder="e.g. 24CSE104 or 24PA1A0501"
-            className="w-full bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none uppercase"
-            required
-          />
-        </div>
-      </div>
-
-      {/* Live Auto-Fetched Details Card from Registration Number */}
-      <AnimatePresence>
-        {rollNo.trim().length >= 3 && (
-          <motion.div
-            initial={{ opacity: 0, y: -6, height: 0 }}
-            animate={{ opacity: 1, y: 0, height: "auto" }}
-            exit={{ opacity: 0, y: -6, height: 0 }}
-            className="rounded-2xl p-3.5 bg-gradient-to-br from-[rgba(212,175,55,0.08)] to-transparent border border-[rgba(212,175,55,0.25)] text-xs font-mono shadow-sm overflow-hidden"
-          >
-            <div className="flex items-center gap-1.5 text-[#E8C97A] font-bold text-[11px] mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>Details Fetched from Registration Number:</span>
+      {/* STUDENT REGISTRATION: Registration Number */}
+      {role === "student" && (
+        <>
+          <div>
+            <label htmlFor="register-roll" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
+              Registration / Roll Number <span className="text-red-400">*</span>
+            </label>
+            <div className="relative">
+              <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
+              <input
+                id="register-roll"
+                type="text"
+                value={rollNo}
+                onChange={(e) => setRollNo(e.target.value)}
+                placeholder="e.g. 24CSE104 or 24PA1A0501"
+                className="w-full bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none uppercase"
+                required
+              />
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-              <div className="flex items-start gap-1.5">
-                <GraduationCap className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-[var(--ink-faint)] block text-[10px] uppercase">Department / Stream</span>
-                  <span className="text-white font-semibold">{resolved.stream || "Engineering"}</span>
+          {/* Live Auto-Fetched Details Card */}
+          <AnimatePresence>
+            {rollNo.trim().length >= 3 && (
+              <motion.div
+                initial={{ opacity: 0, y: -6, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -6, height: 0 }}
+                className="rounded-2xl p-3.5 bg-gradient-to-br from-[rgba(212,175,55,0.08)] to-transparent border border-[rgba(212,175,55,0.25)] text-xs font-mono shadow-sm overflow-hidden"
+              >
+                <div className="flex items-center gap-1.5 text-[#E8C97A] font-bold text-[11px] mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>Auto-Fetched from Registration Number:</span>
                 </div>
-              </div>
 
-              <div className="flex items-start gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-[var(--ink-faint)] block text-[10px] uppercase">Batch &amp; Class</span>
-                  <span className="text-white font-semibold">
-                    {resolved.batchYear ? `Batch ${resolved.batchYear} • Class of ${resolved.graduationYear}` : "Auto-Calculated"}
-                  </span>
-                </div>
-              </div>
-
-              {resolved.collegeName && (
-                <div className="col-span-1 sm:col-span-2 flex items-start gap-1.5 pt-1 border-t border-white/5">
-                  <Building className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
-                  <div className="truncate">
-                    <span className="text-[var(--ink-faint)] block text-[10px] uppercase">Institution</span>
-                    <span className="text-white font-semibold truncate block">{resolved.collegeName}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                  <div className="flex items-start gap-1.5">
+                    <GraduationCap className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[var(--ink-faint)] block text-[10px] uppercase">Department / Stream</span>
+                      <span className="text-white font-semibold">{resolved.stream || "Engineering"}</span>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* 2. Preferred Name */}
+                  <div className="flex items-start gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[var(--ink-faint)] block text-[10px] uppercase">Batch & Class</span>
+                      <span className="text-white font-semibold">
+                        {resolved.batchYear ? `Batch ${resolved.batchYear} • Class of ${resolved.graduationYear}` : "Auto-Calculated"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {resolved.collegeName && (
+                    <div className="col-span-1 sm:col-span-2 flex items-start gap-1.5 pt-1 border-t border-white/5">
+                      <Building className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
+                      <div className="truncate">
+                        <span className="text-[var(--ink-faint)] block text-[10px] uppercase">Institution</span>
+                        <span className="text-white font-semibold truncate block">{resolved.collegeName}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
+      )}
+
+      {/* FACULTY REGISTRATION: Faculty ID & Department */}
+      {role === "faculty" && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="faculty-id" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
+                Faculty / Employee ID
+              </label>
+              <div className="relative">
+                <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
+                <input
+                  id="faculty-id"
+                  type="text"
+                  value={facultyId}
+                  onChange={(e) => setFacultyId(e.target.value)}
+                  placeholder="e.g. FAC-CSE-01"
+                  className="w-full bg-[rgba(10,14,24,0.7)] border border-purple-500/30 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none uppercase"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="faculty-dept" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
+                Department
+              </label>
+              <div className="relative">
+                <Briefcase className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
+                <input
+                  id="faculty-dept"
+                  type="text"
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  placeholder="e.g. Computer Science & Eng"
+                  className="w-full bg-[rgba(10,14,24,0.7)] border border-purple-500/30 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="faculty-college" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
+              Institution / College Name
+            </label>
+            <div className="relative">
+              <Building className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
+              <input
+                id="faculty-college"
+                type="text"
+                value={collegeName}
+                onChange={(e) => setCollegeName(e.target.value)}
+                placeholder="e.g. Apex University of Technology"
+                className="w-full bg-[rgba(10,14,24,0.7)] border border-purple-500/30 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none"
+                required
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Name Input */}
       <div>
         <label htmlFor="register-name" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
-          Preferred Name <span className="text-red-400">*</span>
+          {role === "faculty" ? "Full Name & Title" : "Preferred Name"} <span className="text-red-400">*</span>
         </label>
         <div className="relative">
           <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
@@ -173,17 +336,17 @@ export default function RegisterForm({ onSwitchTab, onSuccess }: RegisterFormPro
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Ram Dwarampudi"
+            placeholder={role === "faculty" ? "e.g. Dr. Rajesh Sharma" : "e.g. Ram Dwarampudi"}
             className="w-full bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none"
             required
           />
         </div>
       </div>
 
-      {/* 3. College Email */}
+      {/* Email Input */}
       <div>
         <label htmlFor="register-email" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
-          College Email <span className="text-red-400">*</span>
+          {role === "faculty" ? "Institutional Email" : "College Email"} <span className="text-red-400">*</span>
         </label>
         <div className="relative">
           <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
@@ -192,14 +355,14 @@ export default function RegisterForm({ onSwitchTab, onSuccess }: RegisterFormPro
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="e.g. student@college.edu or name@vitb.ac.in"
+            placeholder={role === "faculty" ? "e.g. professor@university.edu" : "e.g. student@college.edu"}
             className="w-full bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none"
             required
           />
         </div>
       </div>
 
-      {/* 4. Password */}
+      {/* Password Input */}
       <div>
         <label htmlFor="register-password" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
           Password <span className="text-red-400">*</span>
@@ -246,18 +409,32 @@ export default function RegisterForm({ onSwitchTab, onSuccess }: RegisterFormPro
       <button
         type="submit"
         disabled={loading}
-        className="w-full btn-gold flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-mono font-bold text-white shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_28px_rgba(232,201,122,0.55)] transition-all disabled:opacity-50 cursor-pointer mt-2"
+        className={`w-full flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-mono font-bold text-white shadow-lg transition-all disabled:opacity-50 cursor-pointer mt-2 ${
+          role === "faculty"
+            ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:opacity-95 shadow-[0_0_20px_rgba(168,85,247,0.35)]"
+            : "btn-gold shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_28px_rgba(232,201,122,0.55)]"
+        }`}
       >
         {loading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
           <>
-            <Sparkles className="w-3.5 h-3.5 text-white/90" />
-            <span>Create Student Account</span>
+            {role === "faculty" ? (
+              <>
+                <ShieldCheck className="w-4 h-4 text-purple-200" />
+                <span>Create Faculty Account</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5 text-white/90" />
+                <span>Create Student Account</span>
+              </>
+            )}
           </>
         )}
       </button>
 
+      {/* Social OAuth */}
       <div className="relative my-3">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-[rgba(212,175,55,0.18)]" />
