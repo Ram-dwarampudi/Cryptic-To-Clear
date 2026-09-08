@@ -210,7 +210,7 @@ export default function StudentProfileDashboard() {
   const handleRefreshLiveStats = async () => {
     setActionLoading(true);
     try {
-      const res = await syncExternalPlatforms({}, token);
+      const res = await syncExternalPlatforms(handlesForm, token);
       if (res.success) {
         await loadDashboard();
       } else {
