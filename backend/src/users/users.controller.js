@@ -321,147 +321,150 @@ function getTierInfo(score) {
 }
 
 /**
+ * Reusable core logic to sync external platforms for any user
+ */
+async function syncUserExternalPlatforms(userId, customHandles = {}) {
+  const user = await userModel.findById(userId);
+  if (!user) return null;
+
+  const { leetcodeHandle, codechefHandle, codeforcesHandle, hackerrankHandle, githubHandle } = customHandles;
+
+  const lcHandle = (leetcodeHandle && typeof leetcodeHandle === "string" && leetcodeHandle.trim()) ? leetcodeHandle.trim() : (user.leetcodeHandle || "");
+  const cfHandle = (codeforcesHandle && typeof codeforcesHandle === "string" && codeforcesHandle.trim()) ? codeforcesHandle.trim() : (user.codeforcesHandle || "");
+  const ccHandle = (codechefHandle && typeof codechefHandle === "string" && codechefHandle.trim()) ? codechefHandle.trim() : (user.codechefHandle || "");
+  const hrHandle = (hackerrankHandle && typeof hackerrankHandle === "string" && hackerrankHandle.trim()) ? hackerrankHandle.trim() : (user.hackerrankHandle || "");
+  const ghHandle = (githubHandle && typeof githubHandle === "string" && githubHandle.trim()) ? githubHandle.trim() : (user.githubHandle || "");
+
+  let prevPlatforms = {};
+  try {
+    if (user.externalStats) {
+      const parsed = typeof user.externalStats === "string" ? JSON.parse(user.externalStats) : user.externalStats;
+      prevPlatforms = parsed?.platforms || {};
+    }
+  } catch {
+    // ignore
+  }
+
+  const [cfStats, lcStats, ccStats, ghStats] = await Promise.all([
+    fetchCodeforcesStats(cfHandle),
+    fetchLeetCodeStats(lcHandle),
+    fetchCodeChefStats(ccHandle),
+    fetchGitHubStats(ghHandle),
+  ]);
+
+  const finalLc = lcStats || (prevPlatforms.leetcode?.handle === lcHandle && prevPlatforms.leetcode?.totalSolved > 0 ? prevPlatforms.leetcode : null);
+  const finalCf = cfStats || (prevPlatforms.codeforces?.handle === cfHandle && prevPlatforms.codeforces?.rating ? prevPlatforms.codeforces : null);
+  const finalCc = ccStats || (prevPlatforms.codechef?.handle === ccHandle && prevPlatforms.codechef?.rating ? prevPlatforms.codechef : null);
+  const finalGh = ghStats || (prevPlatforms.github?.handle === ghHandle && prevPlatforms.github?.repos > 0 ? prevPlatforms.github : null);
+
+  const lcSolved = finalLc?.totalSolved || 0;
+  const ccSolved = finalCc?.totalSolved || 0;
+  const cfRating = finalCf?.rating || 0;
+  const internalSolved = 0;
+
+  const totalSolved = lcSolved + ccSolved + internalSolved;
+  const totalAttempted = totalSolved;
+  const accuracy = totalSolved > 0 ? 88.5 : 0;
+
+  const lcScore = finalLc ? ((finalLc.easy || finalLc.easySolved || 0) * 2 + (finalLc.medium || finalLc.mediumSolved || 0) * 4 + (finalLc.hard || finalLc.hardSolved || 0) * 8) : 0;
+  const ccScore = finalCc ? (ccSolved * 2 + (finalCc.rating ? Math.round(finalCc.rating * 0.05) : 0)) : 0;
+  const cfScore = cfRating ? Math.round(cfRating * 0.2) : 0;
+  const ghScore = finalGh ? Math.min(((finalGh.repos || 0) * 5), 50) : 0;
+
+  const externalScore = Math.min(lcScore + ccScore + cfScore + ghScore, 1000);
+  const internalScore = internalSolved * 5;
+  const courseworkScore = 0;
+  const karmaScore = Math.min((user.karmaPoints || 0) * 2, 150);
+
+  const overallScore = Math.min(Math.max(externalScore + internalScore + courseworkScore + karmaScore, 0), 2500);
+
+  const externalStats = {
+    lastSyncedAt: new Date().toISOString(),
+    platforms: {
+      leetcode: {
+        handle: finalLc?.handle || lcHandle,
+        connected: Boolean((finalLc && finalLc.totalSolved > 0) || lcStats || (finalLc && finalLc.connected)),
+        totalSolved: lcSolved,
+        easy: finalLc?.easy || finalLc?.easySolved || 0,
+        medium: finalLc?.medium || finalLc?.mediumSolved || 0,
+        hard: finalLc?.hard || finalLc?.hardSolved || 0,
+        ranking: finalLc?.ranking || null,
+      },
+      codeforces: {
+        handle: finalCf?.handle || cfHandle,
+        connected: Boolean(finalCf?.rating || cfStats || (finalCf && finalCf.connected)),
+        rating: finalCf?.rating || null,
+        rank: finalCf?.rank || null,
+        maxRating: finalCf?.maxRating || null,
+      },
+      codechef: {
+        handle: finalCc?.handle || ccHandle,
+        connected: Boolean(finalCc?.rating || finalCc?.totalSolved > 0 || ccStats || (finalCc && finalCc.connected)),
+        rating: finalCc?.rating || null,
+        stars: finalCc?.stars || null,
+        totalSolved: ccSolved,
+      },
+      hackerrank: {
+        handle: hrHandle,
+        connected: Boolean(hrHandle),
+        badges: [],
+      },
+      github: {
+        handle: finalGh?.handle || ghHandle,
+        connected: Boolean((finalGh && finalGh.repos > 0) || ghStats || (finalGh && finalGh.connected)),
+        repos: finalGh?.repos || 0,
+        followers: finalGh?.followers || 0,
+      },
+    },
+    summary: {
+      problemsSolved: totalSolved,
+      problemsAttempted: totalAttempted,
+      contestsParticipated: (finalCf?.rating || finalCc?.rating) ? 1 : 0,
+      accuracy,
+      maxSolvedInADay: totalSolved > 0 ? 3 : 0,
+      longestStreak: 0,
+      currentStreak: 0,
+      overallScore,
+      lastSubmission: totalSolved > 0 ? "Recently" : "None",
+    },
+    scoreBreakdown: {
+      externalScore,
+      internalScore,
+      courseworkScore,
+      karmaScore,
+      overallScore,
+    },
+  };
+
+  const updatedUser = await userModel.updateUser(userId, {
+    leetcodeHandle: lcHandle,
+    codeforcesHandle: cfHandle,
+    codechefHandle: ccHandle,
+    hackerrankHandle: hrHandle,
+    githubHandle: ghHandle,
+    overallScore,
+    externalStats: JSON.stringify(externalStats),
+  });
+
+  return { updatedUser, externalStats };
+}
+
+/**
  * @route POST /api/users/sync-external
  * @desc Sync and recalculate external coding stats & Unified Developer Score
  */
 exports.syncExternal = async (req, res, next) => {
   try {
-    const { leetcodeHandle, codechefHandle, codeforcesHandle, hackerrankHandle, githubHandle } = req.body;
-    const user = await userModel.findById(req.user.id);
-    if (!user) {
+    const result = await syncUserExternalPlatforms(req.user.id, req.body || {});
+    if (!result) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
-
-    // Only override handle if non-empty string is provided, else keep existing DB handle
-    const lcHandle = (leetcodeHandle && typeof leetcodeHandle === "string" && leetcodeHandle.trim()) ? leetcodeHandle.trim() : (user.leetcodeHandle || "");
-    const cfHandle = (codeforcesHandle && typeof codeforcesHandle === "string" && codeforcesHandle.trim()) ? codeforcesHandle.trim() : (user.codeforcesHandle || "");
-    const ccHandle = (codechefHandle && typeof codechefHandle === "string" && codechefHandle.trim()) ? codechefHandle.trim() : (user.codechefHandle || "");
-    const hrHandle = (hackerrankHandle && typeof hackerrankHandle === "string" && hackerrankHandle.trim()) ? hackerrankHandle.trim() : (user.hackerrankHandle || "");
-    const ghHandle = (githubHandle && typeof githubHandle === "string" && githubHandle.trim()) ? githubHandle.trim() : (user.githubHandle || "");
-
-    // Existing cached platforms in user profile
-    let prevPlatforms = {};
-    try {
-      if (user.externalStats) {
-        const parsed = typeof user.externalStats === "string" ? JSON.parse(user.externalStats) : user.externalStats;
-        prevPlatforms = parsed?.platforms || {};
-      }
-    } catch {
-      // ignore
-    }
-
-    const [cfStats, lcStats, ccStats, ghStats] = await Promise.all([
-      fetchCodeforcesStats(cfHandle),
-      fetchLeetCodeStats(lcHandle),
-      fetchCodeChefStats(ccHandle),
-      fetchGitHubStats(ghHandle),
-    ]);
-
-    // Merge new stats with previous stats if new stats had an intermittent network error
-    const finalLc = lcStats || (prevPlatforms.leetcode?.handle === lcHandle && prevPlatforms.leetcode?.totalSolved > 0 ? prevPlatforms.leetcode : null);
-    const finalCf = cfStats || (prevPlatforms.codeforces?.handle === cfHandle && prevPlatforms.codeforces?.rating ? prevPlatforms.codeforces : null);
-    const finalCc = ccStats || (prevPlatforms.codechef?.handle === ccHandle && prevPlatforms.codechef?.rating ? prevPlatforms.codechef : null);
-    const finalGh = ghStats || (prevPlatforms.github?.handle === ghHandle && prevPlatforms.github?.repos > 0 ? prevPlatforms.github : null);
-
-    const lcSolved = finalLc?.totalSolved || 0;
-    const ccSolved = finalCc?.totalSolved || 0;
-    const cfRating = finalCf?.rating || 0;
-    const internalSolved = 0;
-
-    const totalSolved = lcSolved + ccSolved + internalSolved;
-    const totalAttempted = totalSolved;
-    const accuracy = totalSolved > 0 ? 88.5 : 0;
-
-    // Dynamic Unified Developer Score Formula:
-    // LeetCode: weighted difficulty (Easy: 2, Medium: 4, Hard: 8)
-    const lcScore = finalLc ? ((finalLc.easy || finalLc.easySolved || 0) * 2 + (finalLc.medium || finalLc.mediumSolved || 0) * 4 + (finalLc.hard || finalLc.hardSolved || 0) * 8) : 0;
-    // CodeChef: 2 pts per solve + rating contribution
-    const ccScore = finalCc ? (ccSolved * 2 + (finalCc.rating ? Math.round(finalCc.rating * 0.05) : 0)) : 0;
-    // Codeforces: competitive rating contribution
-    const cfScore = cfRating ? Math.round(cfRating * 0.2) : 0;
-    // GitHub: verified open source commits/repos
-    const ghScore = finalGh ? Math.min(((finalGh.repos || 0) * 5), 50) : 0;
-
-    const externalScore = Math.min(lcScore + ccScore + cfScore + ghScore, 1000);
-    const internalScore = internalSolved * 5;
-    const courseworkScore = 0;
-    const karmaScore = Math.min((user.karmaPoints || 0) * 2, 150);
-
-    const overallScore = Math.min(Math.max(externalScore + internalScore + courseworkScore + karmaScore, 0), 2500);
-
-    const externalStats = {
-      lastSyncedAt: new Date().toISOString(),
-      platforms: {
-        leetcode: {
-          handle: finalLc?.handle || lcHandle,
-          connected: Boolean((finalLc && finalLc.totalSolved > 0) || lcStats || (finalLc && finalLc.connected)),
-          totalSolved: lcSolved,
-          easy: finalLc?.easy || finalLc?.easySolved || 0,
-          medium: finalLc?.medium || finalLc?.mediumSolved || 0,
-          hard: finalLc?.hard || finalLc?.hardSolved || 0,
-          ranking: finalLc?.ranking || null,
-        },
-        codeforces: {
-          handle: finalCf?.handle || cfHandle,
-          connected: Boolean(finalCf?.rating || cfStats || (finalCf && finalCf.connected)),
-          rating: finalCf?.rating || null,
-          rank: finalCf?.rank || null,
-          maxRating: finalCf?.maxRating || null,
-        },
-        codechef: {
-          handle: finalCc?.handle || ccHandle,
-          connected: Boolean(finalCc?.rating || finalCc?.totalSolved > 0 || ccStats || (finalCc && finalCc.connected)),
-          rating: finalCc?.rating || null,
-          stars: finalCc?.stars || null,
-          totalSolved: ccSolved,
-        },
-        hackerrank: {
-          handle: hrHandle,
-          connected: Boolean(hrHandle),
-          badges: [],
-        },
-        github: {
-          handle: finalGh?.handle || ghHandle,
-          connected: Boolean((finalGh && finalGh.repos > 0) || ghStats || (finalGh && finalGh.connected)),
-          repos: finalGh?.repos || 0,
-          followers: finalGh?.followers || 0,
-        },
-      },
-      summary: {
-        problemsSolved: totalSolved,
-        problemsAttempted: totalAttempted,
-        contestsParticipated: (finalCf?.rating || finalCc?.rating) ? 1 : 0,
-        accuracy,
-        maxSolvedInADay: totalSolved > 0 ? 3 : 0,
-        longestStreak: 0,
-        currentStreak: 0,
-        overallScore,
-        lastSubmission: totalSolved > 0 ? "Recently" : "None",
-      },
-      scoreBreakdown: {
-        externalScore,
-        internalScore,
-        courseworkScore,
-        karmaScore,
-        overallScore,
-      },
-    };
-
-    const updatedUser = await userModel.updateUser(req.user.id, {
-      leetcodeHandle: lcHandle,
-      codeforcesHandle: cfHandle,
-      codechefHandle: ccHandle,
-      hackerrankHandle: hrHandle,
-      githubHandle: ghHandle,
-      overallScore,
-      externalStats: JSON.stringify(externalStats),
-    });
 
     return res.status(200).json({
       success: true,
       message: "Coding profiles linked & Unified Developer Score re-evaluated!",
-      externalStats,
-      user: userModel.sanitizeUser(updatedUser),
+      externalStats: result.externalStats,
+      user: userModel.sanitizeUser(result.updatedUser),
     });
   } catch (err) {
     next(err);
@@ -513,6 +516,26 @@ exports.getDashboard = async (req, res, next) => {
         stats = JSON.parse(stats);
       } catch {
         stats = null;
+      }
+    }
+
+    // Auto-sync handles if handles are saved but externalStats has 0 solves or unrated
+    const hasHandles = Boolean(user.leetcodeHandle || user.codechefHandle || user.codeforcesHandle || user.githubHandle);
+    const needsSync =
+      !stats ||
+      !stats.platforms ||
+      (user.leetcodeHandle && (!stats.platforms.leetcode || Number(stats.platforms.leetcode.totalSolved) === 0)) ||
+      (user.codechefHandle && (!stats.platforms.codechef || !stats.platforms.codechef.rating));
+
+    if (hasHandles && needsSync) {
+      try {
+        const synced = await syncUserExternalPlatforms(user.id);
+        if (synced) {
+          stats = synced.externalStats;
+          user.overallScore = synced.updatedUser.overallScore;
+        }
+      } catch (e) {
+        console.warn("Auto-sync error in getDashboard:", e.message);
       }
     }
 

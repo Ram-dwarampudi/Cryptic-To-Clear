@@ -204,6 +204,23 @@ export default function StudentProfileDashboard() {
     }
   };
 
+  // One-click Refresh Live External Stats
+  const handleRefreshLiveStats = async () => {
+    setActionLoading(true);
+    try {
+      const res = await syncExternalPlatforms({}, token);
+      if (res.success) {
+        await loadDashboard();
+      } else {
+        alert(res.message || "Could not sync stats.");
+      }
+    } catch {
+      alert("Network error while syncing stats.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (authLoading || (loading && !dashboard)) {
     return (
       <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center font-mono text-[#E8C97A]">
@@ -456,14 +473,24 @@ export default function StudentProfileDashboard() {
               <p className="text-xs text-[var(--ink-dim)] font-mono">
                 Real-time external competitive profiles synced into your Cryptic-to-Clear score.
               </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRefreshLiveStats}
+                disabled={actionLoading}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-white text-xs font-mono transition-all cursor-pointer shadow-sm disabled:opacity-50"
+                title="Fetch latest solved problems and ratings from LeetCode and CodeChef"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${actionLoading ? "animate-spin text-amber-400" : ""}`} />
+                <span>Sync Live Stats</span>
+              </button>
+              <button
+                onClick={() => openPlatformModal("leetcode")}
+                className="text-xs font-mono text-[#E8C97A] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>Manage Handles</span>
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <button
-              onClick={() => openPlatformModal("leetcode")}
-              className="text-xs font-mono text-[#E8C97A] hover:underline flex items-center gap-1 cursor-pointer"
-            >
-              <span>Manage Handles</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
