@@ -473,6 +473,7 @@ export default function StudentProfileDashboard() {
               <p className="text-xs text-[var(--ink-dim)] font-mono">
                 Real-time external competitive profiles synced into your Cryptic-to-Clear score.
               </p>
+            </div>
             <div className="flex items-center gap-3">
               <button
                 onClick={handleRefreshLiveStats}
