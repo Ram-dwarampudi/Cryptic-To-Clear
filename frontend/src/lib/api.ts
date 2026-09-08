@@ -755,7 +755,7 @@ export async function logoutUser(): Promise<{ success: boolean; message?: string
   }
 }
 
-export async function fetchMe(token?: string): Promise<AuthResponse> {
+export async function fetchMe(token?: string): Promise<AuthResponse & { isNetworkError?: boolean }> {
   try {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (token) {
@@ -772,7 +772,7 @@ export async function fetchMe(token?: string): Promise<AuthResponse> {
     }
     return data as AuthResponse;
   } catch {
-    return { success: false, message: "Could not fetch user session." };
+    return { success: false, message: "Could not fetch user session.", isNetworkError: true };
   }
 }
 

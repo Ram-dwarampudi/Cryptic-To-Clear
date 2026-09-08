@@ -48,9 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (res.success && res.user) {
           setUser(res.user);
           setIsGuest(false);
+        } else if (res.isNetworkError) {
+          // Backend may be sleeping or temporarily connecting; keep session intact
+          console.warn("Session check delayed due to network; keeping token for next retry.");
         } else {
           setUser(null);
-          // If token failed validation, clean up
+          // Only if token explicitly failed validation (e.g. 401 Unauthorized), clean up
           if (savedToken) {
             localStorage.removeItem("c2c_token");
             setToken(null);
