@@ -36,6 +36,7 @@ import {
   Flame,
   Target,
   BarChart3,
+  PieChart,
   TrendingUp,
   Cpu,
   Layers,
@@ -58,6 +59,7 @@ export default function StudentProfileDashboard() {
   // Modals
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [codingChartType, setCodingChartType] = useState<"pie" | "bar">("pie");
   const [selectedPlatform, setSelectedPlatform] = useState<"leetcode" | "codeforces" | "codechef" | "hackerrank" | "github">("codechef");
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -253,6 +255,38 @@ export default function StudentProfileDashboard() {
   const submissions = dashboard?.submissions;
   const ratingGraph = dashboard?.ratingGraph || [];
 
+  // Coding Performance Stats & Chart Calculations
+  const lcEasy = platforms.leetcode?.easy || 0;
+  const lcMed = platforms.leetcode?.medium || 0;
+  const lcHard = platforms.leetcode?.hard || 0;
+  const lcTotal = platforms.leetcode?.totalSolved || (lcEasy + lcMed + lcHard);
+  const ccTotal = platforms.codechef?.totalSolved || 0;
+  const totalProblemsSolved = s?.problemsSolved || (lcTotal + ccTotal);
+  const totalAttempted = s?.problemsAttempted || totalProblemsSolved;
+  const accuracyRate = s?.accuracy ?? 100;
+
+  const diffEasy = lcEasy;
+  const diffMed = lcMed;
+  const diffHard = lcHard;
+  const diffSum = diffEasy + diffMed + diffHard;
+
+  const easyPct = diffSum > 0 ? Math.round((diffEasy / diffSum) * 100) : 0;
+  const medPct = diffSum > 0 ? Math.round((diffMed / diffSum) * 100) : 0;
+  const hardPct = diffSum > 0 ? Math.max(0, 100 - easyPct - medPct) : 0;
+
+  const circleCircumference = 251.327; // 2 * PI * 40
+  const dashEasy = diffSum > 0 ? (diffEasy / diffSum) * circleCircumference : 0;
+  const dashMed = diffSum > 0 ? (diffMed / diffSum) * circleCircumference : 0;
+  const dashHard = diffSum > 0 ? (diffHard / diffSum) * circleCircumference : 0;
+
+  const connectedPlatformCount = [
+    platforms.leetcode?.connected,
+    platforms.codechef?.connected,
+    platforms.codeforces?.connected,
+    platforms.hackerrank?.connected,
+    platforms.github?.connected,
+  ].filter(Boolean).length;
+
   // Filtered problems
   const filteredProblems = problemsList.filter((item) => {
     const matchesSearch =
@@ -269,7 +303,7 @@ export default function StudentProfileDashboard() {
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 pb-20 space-y-10">
         {/* =========================================================================
-            SECTION 1: HERO COMMAND DECK (Identity + Unified Developer Score)
+            SECTION 1: HERO COMMAND DECK (Identity + Coding Performance Stats)
            ========================================================================= */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Left: Student Identity & Academic Profile Card */}
@@ -367,95 +401,370 @@ export default function StudentProfileDashboard() {
             </div>
           </div>
 
-          {/* Right: Unified Developer Score (DevScore / UDR) Hero */}
-          <div className="lg:col-span-5 glass-strong rounded-3xl border border-[rgba(212,175,55,0.3)] p-6 sm:p-8 flex flex-col justify-between relative overflow-hidden shadow-2xl bg-gradient-to-b from-[#0d1527] to-[#070b14]">
-            {/* Top Rating Tier Badge */}
-            <div className="flex items-center justify-between mb-4">
+          {/* Right: Coding Performance & Problem Distribution Hero */}
+          <div className="lg:col-span-5 glass-strong rounded-3xl border border-[rgba(212,175,55,0.3)] p-6 sm:p-7 flex flex-col justify-between relative overflow-hidden shadow-2xl bg-gradient-to-b from-[#0d1527] to-[#070b14]">
+            {/* Ambient Background Glow */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none" />
+
+            {/* Top Header: Title & View Mode Switcher */}
+            <div className="flex items-center justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
+                {codingChartType === "pie" ? (
+                  <PieChart className="w-4 h-4 text-[#D4AF37]" />
+                ) : (
+                  <BarChart3 className="w-4 h-4 text-[#D4AF37]" />
+                )}
                 <span className="text-xs font-mono uppercase tracking-wider text-[#E8C97A] font-bold">
-                  Unified Developer Score (UDS)
+                  Coding Performance Stats
                 </span>
               </div>
-              <span
-                className="px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider border shadow-sm"
-                style={{
-                  backgroundColor: `${breakdown?.tierColor || "#94a3b8"}15`,
-                  borderColor: `${breakdown?.tierColor || "#94a3b8"}40`,
-                  color: breakdown?.tierColor || "#94a3b8",
-                }}
-              >
-                {breakdown?.tier || "Novice"} Tier
-              </span>
+
+              {/* Chart Toggle: Pie Chart vs Bar Graph */}
+              <div className="inline-flex items-center p-0.5 rounded-xl bg-white/5 border border-white/10 font-mono text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setCodingChartType("pie")}
+                  className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    codingChartType === "pie"
+                      ? "bg-[rgba(212,175,55,0.2)] text-[#E8C97A] border border-[rgba(212,175,55,0.4)] font-bold shadow-sm"
+                      : "text-[var(--ink-dim)] hover:text-white border border-transparent"
+                  }`}
+                  title="View Problem Difficulty Pie Chart"
+                >
+                  <PieChart className="w-3 h-3" />
+                  <span>Pie Chart</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCodingChartType("bar")}
+                  className={`px-2.5 py-1 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    codingChartType === "bar"
+                      ? "bg-[rgba(212,175,55,0.2)] text-[#E8C97A] border border-[rgba(212,175,55,0.4)] font-bold shadow-sm"
+                      : "text-[var(--ink-dim)] hover:text-white border border-transparent"
+                  }`}
+                  title="View Platform Breakdown Bar Graph"
+                >
+                  <BarChart3 className="w-3 h-3" />
+                  <span>Bar Graph</span>
+                </button>
+              </div>
             </div>
 
-            {/* Score Ring & Value */}
-            <div className="my-auto py-3 flex items-center justify-between gap-6">
+            {/* Core Stats KPI Header */}
+            <div className="flex items-center justify-between gap-4 pb-3 border-b border-white/10">
               <div>
-                <div className="text-5xl sm:text-6xl font-black font-mono tracking-tight text-white flex items-baseline gap-2">
+                <div className="text-4xl sm:text-5xl font-black font-mono tracking-tight text-white flex items-baseline gap-2">
                   <span className="bg-gradient-to-r from-white via-[#E8C97A] to-[#D4AF37] bg-clip-text text-transparent">
-                    {breakdown?.overallScore ?? s?.overallScore ?? 0}
+                    {totalProblemsSolved}
                   </span>
-                  <span className="text-xs font-mono text-[var(--ink-faint)] font-normal">/ 2500 pts</span>
+                  <span className="text-xs font-mono text-[var(--ink-faint)] font-normal">solved</span>
                 </div>
-                <p className="text-xs font-mono text-[var(--ink-dim)] mt-1 flex items-center gap-1.5">
-                  <TrendingUp className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>Next Rank: <strong className="text-white">{breakdown?.nextTier || "Apprentice"}</strong> at {breakdown?.nextTierTarget || 500} pts</span>
+                <p className="text-[11px] font-mono text-[var(--ink-dim)] mt-0.5">
+                  Across {connectedPlatformCount || 1} Connected Platform{connectedPlatformCount !== 1 ? "s" : ""}
                 </p>
               </div>
 
-              {/* Circular Mini Visual */}
-              <div className="relative w-20 h-20 flex-shrink-0 flex items-center justify-center">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-                  <path
-                    className="text-white/10"
-                    strokeWidth="3.5"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className="text-[#D4AF37]"
-                    strokeDasharray={`${breakdown?.progressPercentage || 0}, 100`}
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    stroke="currentColor"
-                    fill="none"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                  <span className="text-xs font-mono font-bold text-white">{breakdown?.progressPercentage || 0}%</span>
-                  <span className="text-[8px] font-mono text-[var(--ink-faint)] uppercase">Tier</span>
-                </div>
+              <div className="text-right font-mono">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 border border-emerald-500/25 text-emerald-400">
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>{accuracyRate}% Accuracy</span>
+                </span>
+                <p className="text-[10px] text-[var(--ink-faint)] mt-1">
+                  {totalAttempted} Attempts Tracked
+                </p>
               </div>
             </div>
 
-            {/* Score Composition Transparency Breakdown */}
-            <div className="space-y-2.5 pt-4 border-t border-white/10 font-mono text-xs">
-              <span className="text-[10px] uppercase text-[var(--ink-faint)] tracking-wider block font-semibold">
-                Score Synthesis Breakdown
-              </span>
-
-              <div className="space-y-2">
-                {breakdown?.components?.map((c) => (
-                  <div key={c.id} className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span className="text-[var(--ink-dim)] truncate max-w-[220px]">{c.label}</span>
-                      <span className="font-bold text-white">+{c.points} <span className="text-[var(--ink-faint)] font-normal text-[10px]">pts</span></span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                          width: `${Math.min((c.points / c.max) * 100, 100)}%`,
-                          backgroundColor: c.color,
-                        }}
+            {/* Dynamic View: Pie Chart vs Bar Graph */}
+            {codingChartType === "pie" ? (
+              /* ==================== PIE / DONUT CHART VIEW ==================== */
+              <div className="my-auto py-3">
+                <div className="flex items-center justify-between gap-4">
+                  {/* SVG Donut Chart */}
+                  <div className="relative w-28 h-28 sm:w-32 sm:h-32 flex-shrink-0 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                      {/* Background track circle */}
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke="rgba(255, 255, 255, 0.07)"
+                        strokeWidth="11"
+                        fill="none"
                       />
+                      {/* Easy segment */}
+                      {diffSum > 0 && dashEasy > 0 && (
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="40"
+                          stroke="#10b981"
+                          strokeWidth="11"
+                          strokeDasharray={`${dashEasy} ${circleCircumference}`}
+                          strokeDashoffset={0}
+                          strokeLinecap="round"
+                          fill="none"
+                          className="transition-all duration-700"
+                        />
+                      )}
+                      {/* Medium segment */}
+                      {diffSum > 0 && dashMed > 0 && (
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="40"
+                          stroke="#f59e0b"
+                          strokeWidth="11"
+                          strokeDasharray={`${dashMed} ${circleCircumference}`}
+                          strokeDashoffset={-dashEasy}
+                          strokeLinecap="round"
+                          fill="none"
+                          className="transition-all duration-700"
+                        />
+                      )}
+                      {/* Hard segment */}
+                      {diffSum > 0 && dashHard > 0 && (
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="40"
+                          stroke="#ef4444"
+                          strokeWidth="11"
+                          strokeDasharray={`${dashHard} ${circleCircumference}`}
+                          strokeDashoffset={-(dashEasy + dashMed)}
+                          strokeLinecap="round"
+                          fill="none"
+                          className="transition-all duration-700"
+                        />
+                      )}
+                    </svg>
+
+                    {/* Donut Center Content */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                      <span className="text-base sm:text-lg font-black font-mono text-white leading-none">
+                        {diffSum > 0 ? diffSum : totalProblemsSolved}
+                      </span>
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-[var(--ink-faint)] mt-0.5">
+                        {diffSum > 0 ? "Categorized" : "Total"}
+                      </span>
                     </div>
                   </div>
-                ))}
+
+                  {/* Difficulty Breakdown Metrics */}
+                  <div className="flex-1 space-y-2 font-mono">
+                    {/* Easy */}
+                    <div className="bg-white/5 border border-emerald-500/20 rounded-xl p-2 sm:p-2.5">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
+                          Easy
+                        </span>
+                        <span className="text-white font-bold">
+                          {diffEasy} <span className="text-[var(--ink-faint)] font-normal text-[10px]">({easyPct}%)</span>
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
+                          style={{ width: `${easyPct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Medium */}
+                    <div className="bg-white/5 border border-amber-500/20 rounded-xl p-2 sm:p-2.5">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="flex items-center gap-1.5 text-amber-400 font-semibold">
+                          <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)]" />
+                          Medium
+                        </span>
+                        <span className="text-white font-bold">
+                          {diffMed} <span className="text-[var(--ink-faint)] font-normal text-[10px]">({medPct}%)</span>
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all duration-500"
+                          style={{ width: `${medPct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Hard */}
+                    <div className="bg-white/5 border border-rose-500/20 rounded-xl p-2 sm:p-2.5">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="flex items-center gap-1.5 text-rose-400 font-semibold">
+                          <span className="w-2 h-2 rounded-full bg-rose-400 shadow-[0_0_6px_rgba(244,63,94,0.8)]" />
+                          Hard
+                        </span>
+                        <span className="text-white font-bold">
+                          {diffHard} <span className="text-[var(--ink-faint)] font-normal text-[10px]">({hardPct}%)</span>
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-rose-500 to-rose-400 rounded-full transition-all duration-500"
+                          style={{ width: `${hardPct}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sub-note */}
+                <p className="text-[10px] font-mono text-[var(--ink-faint)] mt-2.5 text-center">
+                  Difficulty breakdown reflects verified solves across linked accounts.
+                </p>
               </div>
+            ) : (
+              /* ==================== BAR GRAPH VIEW ==================== */
+              <div className="my-auto py-2.5 space-y-3 font-mono">
+                {/* LeetCode Bar */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[var(--ink)] font-semibold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-amber-400" />
+                      LeetCode
+                      {platforms.leetcode?.handle && (
+                        <span className="text-[var(--ink-faint)] font-normal text-[10px]">
+                          (@{platforms.leetcode.handle})
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-bold text-white">
+                      {lcTotal} <span className="text-[var(--ink-faint)] font-normal text-[10px]">solved</span>
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-500 via-amber-400 to-[#E8C97A] rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(
+                          (lcTotal / Math.max(totalProblemsSolved, 1)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--ink-dim)]">
+                    <span>Breakdown: {lcEasy} Easy • {lcMed} Medium • {lcHard} Hard</span>
+                    <span>{Math.round((lcTotal / Math.max(totalProblemsSolved, 1)) * 100)}% share</span>
+                  </div>
+                </div>
+
+                {/* CodeChef Bar */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[var(--ink)] font-semibold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#d97706]" />
+                      CodeChef
+                      {platforms.codechef?.handle && (
+                        <span className="text-[var(--ink-faint)] font-normal text-[10px]">
+                          (@{platforms.codechef.handle})
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-bold text-white">
+                      {ccTotal} <span className="text-[var(--ink-faint)] font-normal text-[10px]">solved</span>
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#b45309] via-[#d97706] to-[#f59e0b] rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(
+                          (ccTotal / Math.max(totalProblemsSolved, 1)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--ink-dim)]">
+                    <span>
+                      Rating: {platforms.codechef?.rating || "N/A"} ({platforms.codechef?.stars || "Unrated"})
+                    </span>
+                    <span>{Math.round((ccTotal / Math.max(totalProblemsSolved, 1)) * 100)}% share</span>
+                  </div>
+                </div>
+
+                {/* Codeforces / Other Platforms Status Bar */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[var(--ink)] font-semibold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                      Codeforces
+                      {platforms.codeforces?.handle && (
+                        <span className="text-[var(--ink-faint)] font-normal text-[10px]">
+                          (@{platforms.codeforces.handle})
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-bold text-cyan-300">
+                      {platforms.codeforces?.connected
+                        ? `Rating: ${platforms.codeforces.rating || "Unrated"}`
+                        : "Not Linked"}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 rounded-full transition-all duration-500"
+                      style={{
+                        width: platforms.codeforces?.connected ? "60%" : "0%",
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-[var(--ink-dim)]">
+                    <span>Rank: {platforms.codeforces?.rank || (platforms.codeforces?.connected ? "Participant" : "Link in accounts")}</span>
+                    <span>{platforms.codeforces?.connected ? "Active" : "Inactive"}</span>
+                  </div>
+                </div>
+
+                {/* Segmented Cumulative Difficulty Bar */}
+                <div className="pt-2 border-t border-white/5 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] text-[var(--ink-faint)]">
+                    <span>Difficulty Split</span>
+                    <span>{easyPct}% Easy • {medPct}% Medium • {hardPct}% Hard</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden flex">
+                    <div className="h-full bg-emerald-500 transition-all duration-500" style={{ width: `${easyPct}%` }} title={`Easy: ${diffEasy}`} />
+                    <div className="h-full bg-amber-500 transition-all duration-500" style={{ width: `${medPct}%` }} title={`Medium: ${diffMed}`} />
+                    <div className="h-full bg-rose-500 transition-all duration-500" style={{ width: `${hardPct}%` }} title={`Hard: ${diffHard}`} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bottom Footer: Platform Quick Status & Manage Platforms CTA */}
+            <div className="pt-3 border-t border-white/10 flex items-center justify-between flex-wrap gap-2 text-xs font-mono">
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] uppercase text-[var(--ink-faint)] tracking-wider">
+                  Sync:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      platforms.leetcode?.connected ? "bg-emerald-400" : "bg-white/20"
+                    }`}
+                  />
+                  <span className="text-[11px] text-[var(--ink-dim)]">LeetCode</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      platforms.codechef?.connected ? "bg-emerald-400" : "bg-white/20"
+                    }`}
+                  />
+                  <span className="text-[11px] text-[var(--ink-dim)]">CodeChef</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsSyncModalOpen(true)}
+                className="inline-flex items-center gap-1 text-[11px] text-[#E8C97A] hover:text-white transition-colors cursor-pointer"
+              >
+                <span>Manage Accounts</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </button>
             </div>
           </div>
         </section>
