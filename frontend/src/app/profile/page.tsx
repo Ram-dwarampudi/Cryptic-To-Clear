@@ -43,11 +43,13 @@ import {
   ArrowUpRight,
   ShieldCheck,
   Compass,
+  Camera,
 } from "lucide-react";
+import AvatarPicker from "@/components/auth/AvatarPicker";
 
 export default function StudentProfileDashboard() {
   const router = useRouter();
-  const { user, token, loading: authLoading } = useAuth();
+  const { user, token, loading: authLoading, updateUser } = useAuth();
 
   const [dashboard, setDashboard] = useState<StudentDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,6 +60,7 @@ export default function StudentProfileDashboard() {
 
   // Modals
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [codingChartType, setCodingChartType] = useState<"pie" | "bar">("pie");
   const [selectedPlatform, setSelectedPlatform] = useState<"leetcode" | "codeforces" | "codechef" | "hackerrank" | "github">("codechef");
@@ -72,6 +75,7 @@ export default function StudentProfileDashboard() {
   // Edit Profile Form State
   const [editForm, setEditForm] = useState<{
     name: string;
+    avatar: string;
     bio: string;
     rollNo: string;
     collegeName: string;
@@ -80,6 +84,7 @@ export default function StudentProfileDashboard() {
     graduationYear: number | string;
   }>({
     name: "",
+    avatar: "",
     bio: "",
     rollNo: "",
     collegeName: "",
@@ -113,6 +118,7 @@ export default function StudentProfileDashboard() {
         const p = res.data.profile;
         setEditForm({
           name: p.name || "",
+          avatar: p.avatar || "",
           bio: p.bio || "",
           rollNo: p.rollNo || "",
           collegeName: p.collegeName || "",
@@ -166,6 +172,9 @@ export default function StudentProfileDashboard() {
         token
       );
       if (res.success) {
+        if (editForm.avatar) {
+          updateUser({ avatar: editForm.avatar, name: editForm.name });
+        }
         setActionSuccess("Profile updated successfully!");
         setTimeout(() => {
           setIsEditModalOpen(false);
@@ -177,6 +186,26 @@ export default function StudentProfileDashboard() {
       }
     } catch {
       alert("Error updating profile.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Quick Save Avatar
+  const handleSaveAvatarOnly = async (avatarUrl: string) => {
+    setActionLoading(true);
+    try {
+      const res = await updateStudentProfile({ avatar: avatarUrl }, token);
+      if (res.success) {
+        setEditForm((prev) => ({ ...prev, avatar: avatarUrl }));
+        updateUser({ avatar: avatarUrl });
+        setIsAvatarModalOpen(false);
+        loadDashboard();
+      } else {
+        alert(res.message || "Failed to update avatar.");
+      }
+    } catch {
+      alert("Error saving avatar.");
     } finally {
       setActionLoading(false);
     }
@@ -318,25 +347,46 @@ export default function StudentProfileDashboard() {
                   <span className="w-2 h-2 rounded-full bg-emerald-400" />
                   <span>Student Profile</span>
                 </div>
-                <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-[var(--ink-dim)] hover:text-white transition-all cursor-pointer"
-                >
-                  <Edit3 className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>Edit Profile</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setIsAvatarModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[rgba(212,175,55,0.12)] hover:bg-[rgba(212,175,55,0.22)] border border-[rgba(212,175,55,0.35)] text-xs font-mono text-[#E8C97A] transition-all cursor-pointer"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Change Avatar</span>
+                  </button>
+                  <button
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-[var(--ink-dim)] hover:text-white transition-all cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <span>Edit Profile</span>
+                  </button>
+                </div>
               </div>
 
               {/* Profile Avatar & Names */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 mb-6">
-                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-[#D4AF37] via-[#9c784f] to-[#16213b] p-0.5 shadow-xl flex-shrink-0">
-                  <div className="h-full w-full rounded-[14px] bg-[#070b14] flex items-center justify-center text-3xl font-bold font-serif text-[#E8C97A] overflow-hidden">
+                <div
+                  onClick={() => setIsAvatarModalOpen(true)}
+                  className="relative group h-20 w-20 rounded-2xl bg-gradient-to-br from-[#D4AF37] via-[#9c784f] to-[#16213b] p-0.5 shadow-xl flex-shrink-0 cursor-pointer"
+                  title="Click to change your avatar"
+                >
+                  <div className="h-full w-full rounded-[14px] bg-[#070b14] flex items-center justify-center text-3xl font-bold font-serif text-[#E8C97A] overflow-hidden relative">
                     {p?.avatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.avatar} alt={p.name} className="h-full w-full object-cover" />
+                      <img src={p.avatar} alt={p.name} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                     ) : (
                       p?.name?.charAt(0).toUpperCase() || "S"
                     )}
+                    {/* Hover Camera Overlay */}
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity text-white text-[10px] font-mono gap-0.5">
+                      <Camera className="w-4 h-4 text-[#D4AF37]" />
+                      <span>Change</span>
+                    </div>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 bg-[#D4AF37] p-1 rounded-full text-black shadow-md">
+                    <Camera className="w-3 h-3" />
                   </div>
                 </div>
 
@@ -1649,6 +1699,15 @@ export default function StudentProfileDashboard() {
               </div>
 
               <form onSubmit={handleSaveProfile} className="space-y-4 font-mono text-xs">
+                {/* Avatar Picker */}
+                <AvatarPicker
+                  selectedAvatar={editForm.avatar}
+                  onSelectAvatar={(url) => setEditForm({ ...editForm, avatar: url })}
+                  label="Profile Avatar"
+                  title="Choose your developer persona"
+                  compact={true}
+                />
+
                 <div>
                   <label className="block text-[var(--ink-dim)] mb-1">Full Name</label>
                   <input
@@ -1985,6 +2044,65 @@ export default function StudentProfileDashboard() {
                   </>
                 );
               })()}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          MODAL 3: CHOOSE AVATAR MODAL
+         ========================================================================= */}
+      <AnimatePresence>
+        {isAvatarModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0b1120] border border-white/10 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl relative space-y-5"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-white font-display">Select Your Avatar</h3>
+                  <p className="text-xs text-[var(--ink-dim)] font-mono mt-0.5">
+                    Pick from developer personas, bots, adventurers, or use a custom URL
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsAvatarModalOpen(false)}
+                  className="p-1 rounded-lg text-[var(--ink-dim)] hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <AvatarPicker
+                  selectedAvatar={editForm.avatar || p?.avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=CyberSpark"}
+                  onSelectAvatar={(url) => setEditForm((prev) => ({ ...prev, avatar: url }))}
+                  label="Selected Persona"
+                  title="Click any avatar or shuffle a new one"
+                  compact={false}
+                />
+
+                <div className="pt-3 flex justify-end gap-2 border-t border-white/5">
+                  <button
+                    type="button"
+                    onClick={() => setIsAvatarModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white font-mono text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={actionLoading}
+                    onClick={() => handleSaveAvatarOnly(editForm.avatar || p?.avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=CyberSpark")}
+                    className="btn-gold px-5 py-2 rounded-xl text-black font-bold font-mono text-xs shadow-lg hover:shadow-[#D4AF37]/20"
+                  >
+                    {actionLoading ? "Saving..." : "Save Avatar"}
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}

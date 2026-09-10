@@ -22,6 +22,7 @@ import {
   Briefcase,
   ShieldCheck,
 } from "lucide-react";
+import AvatarPicker from "./AvatarPicker";
 
 interface RegisterFormProps {
   onSwitchTab: (tab: "login") => void;
@@ -55,6 +56,9 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
   const [facultyId, setFacultyId] = useState("");
   const [department, setDepartment] = useState("Computer Science & Engineering");
   const [collegeName, setCollegeName] = useState("Apex University of Technology");
+
+  // Avatar selection
+  const [avatar, setAvatar] = useState<string>("https://api.dicebear.com/7.x/bottts/svg?seed=CyberSpark");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,10 +115,12 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
               rollNo: facultyId.trim().toUpperCase() || "FAC-" + Math.floor(1000 + Math.random() * 9000),
               collegeName: collegeName.trim(),
               stream: department.trim(),
+              avatar,
             }
           : {
               role: "student" as const,
               rollNo: rollNo.trim().toUpperCase(),
+              avatar,
             };
 
       const res = await register(name.trim(), email.trim(), password, options);
@@ -405,6 +411,15 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
           </div>
         )}
       </div>
+
+      {/* Avatar Picker Section */}
+      <AvatarPicker
+        selectedAvatar={avatar}
+        onSelectAvatar={setAvatar}
+        compact={true}
+        label="Choose Your Avatar"
+        title="Click any avatar or shuffle"
+      />
 
       <button
         type="submit"

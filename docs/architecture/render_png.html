@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      background-color: #ffffff;
+      width: 1100px;
+      height: 1120px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1120" width="1100" height="1120" style="background-color: #ffffff; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;">
+    <defs>
+      <!-- Arrow Marker -->
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 1 L 10 5 L 0 9 z" fill="#000000" />
+      </marker>
+      <!-- Subtle drop shadow -->
+      <filter id="box-shadow" x="-5%" y="-5%" width="115%" height="115%">
+        <feDropShadow dx="1" dy="2" stdDeviation="1.5" flood-opacity="0.15" />
+      </filter>
+    </defs>
+
+    <!-- Top-Left Box: User Code & Inputs (Coral / Light Red) -->
+    <g id="box-code-inputs">
+      <rect x="145" y="105" width="210" height="125" rx="3" ry="3" 
+            fill="#fceeed" stroke="#a94442" stroke-width="1.8" filter="url(#box-shadow)" />
+      <text x="250" y="135" text-anchor="middle" fill="#000000" font-size="15" font-weight="700">User Code &amp; Inputs</text>
+      <text x="250" y="160" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">(Source Code in C, C++,</text>
+      <text x="250" y="178" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">Java &amp; Python,</text>
+      <text x="250" y="196" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">Custom STDIN Input Tab,</text>
+      <text x="250" y="214" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">Interactive User Prompts)</text>
+    </g>
+
+    <!-- Top-Middle Box: Compiler Output & Errors (Light Green) -->
+    <g id="box-compiler-telemetry">
+      <rect x="440" y="112" width="210" height="112" rx="3" ry="3" 
+            fill="#eaf5ea" stroke="#3c763d" stroke-width="1.8" filter="url(#box-shadow)" />
+      <text x="545" y="142" text-anchor="middle" fill="#000000" font-size="15" font-weight="700">Compiler Output &amp; Errors</text>
+      <text x="545" y="168" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">(Program STDOUT Output,</text>
+      <text x="545" y="186" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">Compiler STDERR Logs,</text>
+      <text x="545" y="204" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">Syntax &amp; Runtime Errors)</text>
+    </g>
+
+    <!-- Top-Right Box: Faculty & Learning Tasks (Soft Purple) -->
+    <g id="box-faculty-data">
+      <rect x="740" y="105" width="210" height="125" rx="3" ry="3" 
+            fill="#f3e8f8" stroke="#79429e" stroke-width="1.8" filter="url(#box-shadow)" />
+      <text x="845" y="135" text-anchor="middle" fill="#000000" font-size="15" font-weight="700">Faculty &amp; Learning Tasks</text>
+      <text x="845" y="160" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">(Faculty Assignments,</text>
+      <text x="845" y="178" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">Automated Test Cases,</text>
+      <text x="845" y="196" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">Concept Walkthroughs,</text>
+      <text x="845" y="214" text-anchor="middle" fill="#222222" font-size="12.5" font-weight="400">Practice Questions &amp; Hints)</text>
+    </g>
+
+    <!-- Connections to 3D Module -->
+    <path d="M 250 230 L 250 320 L 290 320" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)" />
+    <path d="M 545 224 L 545 275" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)" />
+    <path d="M 845 230 L 845 320 L 795 320" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)" />
+
+    <!-- 3D Aggregation Module (Soft Sky Blue) -->
+    <g id="box-data-acquisition">
+      <polygon points="290,285 265,265 770,265 795,285" fill="#e3f0fc" stroke="#3172b7" stroke-width="1.8" stroke-linejoin="round" />
+      <polygon points="265,265 290,285 290,355 265,335" fill="#b5d7f8" stroke="#3172b7" stroke-width="1.8" stroke-linejoin="round" />
+      <rect x="290" y="285" width="505" height="70" fill="#cce4f9" stroke="#3172b7" stroke-width="1.8" />
+      <text x="542" y="318" text-anchor="middle" fill="#000000" font-size="16.5" font-weight="700">Website Backend &amp; Error Processor</text>
+      <text x="542" y="340" text-anchor="middle" fill="#2b4c6f" font-size="12.5" font-weight="500">(Express API Server, Path Sanitizer, Language Router, Prompt Builder)</text>
+    </g>
+
+    <!-- From 3D Module to AI Engine -->
+    <path d="M 542 355 L 542 425" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)" />
+
+    <!-- AI Intelligence Engine (Yellow / Gold) -->
+    <g id="box-ml-engine">
+      <rect x="440" y="425" width="205" height="76" rx="3" ry="3" fill="#f6c324" stroke="#a07800" stroke-width="1.8" filter="url(#box-shadow)" />
+      <text x="542" y="454" text-anchor="middle" fill="#000000" font-size="15" font-weight="700">AI Intelligence Engine</text>
+      <text x="542" y="474" text-anchor="middle" fill="#000000" font-size="12.5" font-weight="600">(Groq LLaMA 3.3 70B,</text>
+      <text x="542" y="492" text-anchor="middle" fill="#111111" font-size="12" font-weight="500">NVIDIA NIM &amp; Gemini Fallback)</text>
+    </g>
+
+    <!-- Arrow from AI to Core Engine -->
+    <path d="M 542 501 L 542 542 L 460 542 L 460 585" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)" />
+    <text x="550" y="534" fill="#000000" font-size="12.5" font-weight="600">AI Explanations &amp; Suggested Fixes</text>
+
+    <!-- Analysis & Solution Engine (Slate Blue) -->
+    <g id="box-control-decision">
+      <rect x="340" y="585" width="240" height="120" rx="3" ry="3" fill="#8caec6" stroke="#25465e" stroke-width="1.8" filter="url(#box-shadow)" />
+      <text x="460" y="615" text-anchor="middle" fill="#000000" font-size="15" font-weight="700">Analysis &amp; Solution Engine</text>
+      <text x="460" y="638" text-anchor="middle" fill="#0c2333" font-size="12.5" font-weight="500">(Plain-English Error Explainer,</text>
+      <text x="460" y="656" text-anchor="middle" fill="#0c2333" font-size="12.5" font-weight="500">Line-by-Line Code Fix Generator,</text>
+      <text x="460" y="674" text-anchor="middle" fill="#0c2333" font-size="12.5" font-weight="500">Time &amp; Space Complexity Analyzer,</text>
+      <text x="460" y="692" text-anchor="middle" fill="#0c2333" font-size="12.5" font-weight="500">Logic Flowchart Visualizer)</text>
+    </g>
+
+    <!-- Code Execution Sandboxes (Light Red, Left) -->
+    <g id="box-sandbox-network">
+      <rect x="95" y="415" width="225" height="115" rx="3" ry="3" fill="#fceeed" stroke="#a94442" stroke-width="1.8" filter="url(#box-shadow)" />
+      <text x="207" y="444" text-anchor="middle" fill="#000000" font-size="15" font-weight="700">Code Execution Sandboxes</text>
+      <text x="207" y="470" text-anchor="middle" fill="#222222" font-size="12" font-weight="400">(Local Compilers: GCC, G++,</text>
+      <text x="207" y="488" text-anchor="middle" fill="#222222" font-size="12" font-weight="400">Javac, Python3 &amp;</text>
+      <text x="207" y="506" text-anchor="middle" fill="#222222" font-size="12" font-weight="400">Remote Piston / Judge0 APIs)</text>
+    </g>
+
+    <!-- Arrow from Execution Sandbox to Core Analysis Engine -->
+    <path d="M 207 530 L 207 644 L 340 644" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)" />
+
+    <!-- Arrow from Core Engine to Website UI -->
+    <path d="M 460 705 L 460 735 L 350 735 L 350 765" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)" />
+
+    <!-- Interactive Website Features (Soft Cyan / Teal) -->
+    <g id="box-drainage-infrastructure">
+      <rect x="135" y="765" width="230" height="96" rx="3" ry="3" fill="#94d0e4" stroke="#1d6682" stroke-width="1.8" filter="url(#box-shadow)" />
+      <text x="250" y="795" text-anchor="middle" fill="#000000" font-size="15" font-weight="700">Website Interactive Features</text>
+      <text x="250" y="820" text-anchor="middle" fill="#082e3d" font-size="12.5" font-weight="500">(Monaco Editor, Side-by-Side Diff,</text>
+      <text x="250" y="838" text-anchor="middle" fill="#082e3d" font-size="12.5" font-weight="500">Visual Step Debugger, Language</text>
+      <text x="250" y="854" text-anchor="middle" fill="#082e3d" font-size="12.5" font-weight="500">Converter, AI Chat Assistant)</text>
+    </g>
+
+    <!-- Feedback loop Arrow (Upward) -->
+    <path d="M 80 765 L 80 538" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)" />
+    <path d="M 135 812 L 80 812" fill="none" stroke="#000000" stroke-width="1.8" />
+    <path d="M 80 472 L 95 472" fill="none" stroke="#000000" stroke-width="1.8" />
+    <text x="-665" y="60" transform="rotate(-90)" fill="#000000" font-size="12" font-weight="600" letter-spacing="0.2">
+      Run / Compile Execution Loop
+    </text>
+
+    <!-- Arrow from Website Features to Final Results -->
+    <path d="M 250 861 L 250 920 L 450 920" fill="none" stroke="#000000" stroke-width="1.8" marker-end="url(#arrow)" />
+    <text x="348" y="910" text-anchor="middle" fill="#000000" font-size="12.5" font-weight="600">
+      One-Click Fixes &amp; Reports
+    </text>
+
+    <!-- Final Deliverables & Exports (Light Peach / Orange) -->
+    <g id="box-agriculture-fields">
+      <rect x="450" y="875" width="230" height="85" rx="3" ry="3" fill="#fdd49e" stroke="#bd5d00" stroke-width="1.8" filter="url(#box-shadow)" />
+      <text x="565" y="904" text-anchor="middle" fill="#000000" font-size="15" font-weight="700">Final Deliverables &amp; Exports</text>
+      <text x="565" y="927" text-anchor="middle" fill="#4d2600" font-size="12" font-weight="500">(1-Click Apply Code Fix,</text>
+      <text x="565" y="944" text-anchor="middle" fill="#4d2600" font-size="12" font-weight="500">Download PDF &amp; Markdown Reports,</text>
+      <text x="565" y="960" text-anchor="middle" fill="#4d2600" font-size="12" font-weight="500">Faculty Assignment Submissions)</text>
+    </g>
+
+    <!-- Caption -->
+    <text x="550" y="1045" text-anchor="middle" fill="#666666" font-size="13" font-style="italic">
+      Figure: End-to-End Architecture &amp; Feature Workflow of Cryptic to Clear (CodeMentor AI)
+    </text>
+  </svg>
+</body>
+</html>

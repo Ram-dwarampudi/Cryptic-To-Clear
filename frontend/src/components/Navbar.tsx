@@ -2,22 +2,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, BookOpen } from "lucide-react";
+import { Menu, X, BookOpen, ArrowRight, Sparkles, Terminal, LogIn } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
 import UserMenu from "./auth/UserMenu";
-import { LogIn } from "lucide-react";
 import { AssignmentItem } from "@/lib/api";
 
 const NAV_LINKS = [
-  { label: "Home", href: "/" },
   { label: "Compiler", href: "/compiler" },
-  { label: "Interviews", href: "/interviews" },
-  { label: "Doubt Forum", href: "/doubts" },
-  { label: "Features", href: "/features" },
-  { label: "About", href: "/about" },
+  { label: "AI Debugger", href: "/features" },
+  { label: "Learn", href: "/doubts" },
+  { label: "Docs", href: "/about" },
 ];
 
 interface NavbarProps {
@@ -27,7 +24,8 @@ interface NavbarProps {
 
 export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: NavbarProps = {}) {
   const router = useRouter();
-  const { user, openAuthModal } = useAuth();
+  const pathname = usePathname();
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -43,146 +41,154 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
 
   return (
     <header
-      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-200 ${
         scrolled
-          ? "glass-strong shadow-[0_4px_28px_rgba(0,0,0,0.45)] border-b border-[rgba(212,175,55,0.22)]"
+          ? "bg-[#070b14]/90 backdrop-blur-md shadow-lg border-b border-white/10"
           : "bg-transparent border-b border-transparent"
       }`}
     >
       <nav className="mx-auto max-w-7xl px-5 sm:px-8 h-16 flex items-center justify-between">
-        {/* Logo */}
+        {/* Brand Identity */}
         <Link href="/" className="flex items-center gap-3 group py-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-icon.png"
             alt="Cryptic to Clear Logo"
-            className="h-10 sm:h-11 w-auto object-contain filter drop-shadow-[0_0_14px_rgba(255,255,255,0.25)] group-hover:scale-105 transition-transform"
+            className="h-9 sm:h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(212,175,55,0.3)] group-hover:scale-105 transition-transform"
           />
           <div className="flex flex-col justify-center leading-none">
-            <span className="font-logo-title font-bold text-[17px] sm:text-[19px] tracking-[0.06em] text-[var(--ink)] group-hover:text-[#E8C97A] transition-colors">
-              CRYPTIC
+            <span className="font-extrabold text-[16px] sm:text-[18px] tracking-[0.05em] text-white group-hover:text-[#E8C97A] transition-colors font-mono">
+              CRYPTIC <span className="text-[#D4AF37]">→</span> CLEAR
             </span>
-            <span className="font-sans font-semibold text-[9px] sm:text-[10px] tracking-[0.3em] text-[#E8C97A] mt-0.5">
-              TO CLEAR
+            <span className="font-mono text-[9px] tracking-[0.25em] text-slate-400 mt-0.5 uppercase">
+              AI Debugger & Compiler
             </span>
           </div>
         </Link>
 
-        {/* Desktop nav */}
-        <ul className="hidden md:flex items-center gap-2 font-sans text-[14px]">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className="relative px-4 py-2 rounded-md font-medium text-[var(--ink-dim)] hover:text-[#f7f3eb] transition-colors group"
-              >
-                {link.label}
-                <span className="absolute left-3 right-3 -bottom-0.5 h-[2px] bg-gradient-to-r from-[#B8860B] via-[#D4AF37] to-[#E8C97A] scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-center rounded-full" />
-              </Link>
-            </li>
-          ))}
+        {/* Desktop Navigation Links */}
+        <ul className="hidden md:flex items-center gap-1 font-mono text-[13px]">
+          {NAV_LINKS.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className={`px-3.5 py-1.5 rounded-lg transition-colors ${
+                    isActive
+                      ? "text-white font-bold bg-white/10"
+                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
-        {/* CTA & User Menu */}
+        {/* Right CTA Actions */}
         <div className="hidden md:flex items-center gap-3">
-          {/* Assignments button — only shown on compiler page for non-faculty users */}
+          {/* Assignment Selector (if on compiler) */}
           {!isFaculty && onOpenAssignmentSelector && (
             <button
+              type="button"
               onClick={onOpenAssignmentSelector}
               title="Open Course Assignments"
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-mono border transition-all cursor-pointer shrink-0 ${
                 activeAssignment
-                  ? "bg-[rgba(212,175,55,0.15)] border-[rgba(212,175,55,0.5)] text-[#E8C97A] font-semibold shadow-[0_0_12px_rgba(212,175,55,0.2)]"
-                  : "glass text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[rgba(212,175,55,0.35)]"
+                  ? "bg-[rgba(212,175,55,0.15)] border-[#D4AF37]/50 text-[#E8C97A] font-semibold"
+                  : "bg-white/5 border-white/10 text-slate-300 hover:text-white hover:bg-white/10"
               }`}
             >
               <BookOpen className="h-3.5 w-3.5 text-[#E8C97A]" />
-              <span>{activeAssignment ? `Assignment: ${activeAssignment.title.slice(0, 18)}...` : "Assignments"}</span>
+              <span>{activeAssignment ? `Assignment: ${activeAssignment.title.slice(0, 16)}...` : "Assignments"}</span>
             </button>
           )}
+
           <ThemeToggle />
+
           {user ? (
             <UserMenu />
           ) : (
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg font-mono text-xs font-medium text-[var(--ink)] glass hover:bg-white/[0.1] hover:border-[rgba(212,175,55,0.4)] border border-[rgba(212,175,55,0.2)] transition-all hover:shadow-[0_0_14px_rgba(212,175,55,0.2)] transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              className="text-xs font-mono text-slate-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
             >
-              <LogIn className="w-3.5 h-3.5 text-[#E8C97A]" />
-              <span>Sign In</span>
+              Sign In
             </Link>
           )}
+
+          {/* Primary CTA - Start Coding */}
+          <Link
+            href="/compiler"
+            prefetch={true}
+            className="btn-gold px-4 py-2 text-xs font-mono font-bold text-black rounded-xl shadow-[0_0_18px_rgba(212,175,55,0.35)] hover:shadow-[0_0_26px_rgba(232,201,122,0.6)] flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <span>Start Coding</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
 
-        {/* Mobile toggle */}
-        <div className="flex items-center gap-1 md:hidden">
+        {/* Mobile menu toggle button */}
+        <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
           <button
-            className="text-[var(--ink)] p-2"
+            type="button"
+            className="text-slate-200 p-2 hover:text-[#E8C97A] transition-colors"
             onClick={() => setOpen((v) => !v)}
             aria-label="Toggle navigation menu"
             aria-expanded={open}
           >
-            {open ? <X className="h-5 w-5 text-[#E8C97A]" /> : <Menu className="h-5 w-5 text-[#E8C97A]" />}
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile menu */}
+      {/* Mobile Menu Drawer */}
       <AnimatePresence>
         {open && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeInOut" }}
-            className="md:hidden overflow-hidden glass-strong border-t border-[rgba(212,175,55,0.2)]"
+            transition={{ duration: 0.2 }}
+            className="md:hidden overflow-hidden bg-[#070b14] border-t border-white/10 px-5 py-4 space-y-3 font-mono text-sm shadow-2xl"
           >
-            <ul className="flex flex-col px-5 py-4 gap-1 font-sans text-sm">
+            <ul className="flex flex-col gap-1">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className="block px-3 py-2.5 rounded-md font-medium text-[var(--ink-dim)] hover:text-[#f7f3eb] hover:bg-[rgba(212,175,55,0.08)] transition-colors"
+                    className="block px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5"
                   >
                     {link.label}
                   </Link>
                 </li>
               ))}
+            </ul>
 
-              {/* Assignments button — mobile, only on compiler page for non-faculty users */}
-              {!isFaculty && onOpenAssignmentSelector && (
-                <li>
-                  <button
-                    onClick={() => {
-                      setOpen(false);
-                      onOpenAssignmentSelector();
-                    }}
-                    className={`w-full flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-mono transition-colors ${
-                      activeAssignment
-                        ? "bg-[rgba(212,175,55,0.15)] text-[#E8C97A] font-semibold"
-                        : "text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5"
-                    }`}
-                  >
-                    <BookOpen className="w-4 h-4 text-[#E8C97A]" />
-                    <span>{activeAssignment ? `Assignment: ${activeAssignment.title.slice(0, 18)}...` : "Assignments"}</span>
-                  </button>
-                </li>
-              )}
+            <div className="pt-2 border-t border-white/10 space-y-2">
+              <Link
+                href="/compiler"
+                onClick={() => setOpen(false)}
+                className="w-full btn-gold py-2.5 rounded-xl font-bold text-black flex items-center justify-center gap-2 text-xs shadow-md"
+              >
+                <span>Start Coding Now</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
 
               {!user && (
-                <li className="pt-1">
-                  <Link
-                    href="/login"
-                    onClick={() => setOpen(false)}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-mono text-[var(--ink)] glass border border-[rgba(212,175,55,0.25)] hover:border-[rgba(212,175,55,0.5)]"
-                  >
-                    <LogIn className="w-4 h-4 text-[#E8C97A]" />
-                    <span>Sign In / Create Account</span>
-                  </Link>
-                </li>
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="w-full py-2 rounded-xl text-slate-300 hover:text-white text-xs text-center block bg-white/5 border border-white/10"
+                >
+                  Sign In / Create Account
+                </Link>
               )}
-            </ul>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
