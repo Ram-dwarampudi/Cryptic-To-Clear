@@ -4,6 +4,9 @@ const { requireAuth } = require("../auth/middleware/auth.middleware");
 
 const router = express.Router();
 
+// Public / student accessible leaderboard
+router.get("/leaderboard", usersController.getLeaderboard);
+
 router.use(requireAuth);
 router.get("/profile", usersController.getProfile);
 router.put("/profile", usersController.updateProfile);

@@ -402,6 +402,49 @@ class UserModel {
     if (!password || !passwordHash) return false;
     return bcrypt.compare(password, passwordHash);
   }
+
+  async getLeaderboard() {
+    if (prisma) {
+      try {
+        const dbUsers = await prisma.user.findMany({
+          where: {
+            OR: [
+              { role: "STUDENT" },
+              { role: "student" },
+            ],
+          },
+          include: { university: true, department: true },
+          orderBy: [
+            { overallScore: "desc" },
+            { karmaPoints: "desc" },
+            { createdAt: "asc" },
+          ],
+        });
+
+        if (dbUsers && dbUsers.length > 0) {
+          return dbUsers.map((u, idx) => {
+            const formatted = this._formatUser(u);
+            return {
+              rank: idx + 1,
+              ...this.sanitizeUser(formatted),
+            };
+          });
+        }
+      } catch (err) {
+        console.warn("Prisma getLeaderboard error, using in-memory fallback:", err.message);
+      }
+    }
+
+    const students = Array.from(this.users.values())
+      .filter((u) => (u.role || "").toLowerCase() === "student")
+      .sort((a, b) => (b.overallScore || 0) - (a.overallScore || 0) || (b.karmaPoints || 0) - (a.karmaPoints || 0))
+      .map((u, idx) => ({
+        rank: idx + 1,
+        ...this.sanitizeUser(u),
+      }));
+
+    return students;
+  }
 }
 
 module.exports = new UserModel();

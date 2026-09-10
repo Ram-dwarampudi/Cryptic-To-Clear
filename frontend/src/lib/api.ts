@@ -1456,3 +1456,40 @@ export async function syncExternalPlatforms(
   }
 }
 
+export interface LeaderboardStudent {
+  rank: number;
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  rollNo?: string;
+  collegeName?: string;
+  stream?: string;
+  overallScore?: number;
+  karmaPoints?: number;
+  leetcodeHandle?: string;
+  codechefHandle?: string;
+  codeforcesHandle?: string;
+  githubHandle?: string;
+  createdAt?: string;
+}
+
+export async function fetchStudentLeaderboard(
+  token?: string | null
+): Promise<{ success: boolean; data: LeaderboardStudent[]; count?: number; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/users/leaderboard`, {
+      method: "GET",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, data: [], message: json?.message || "Failed to fetch leaderboard." };
+    }
+    return { success: true, data: json.data || [], count: json.count || 0 };
+  } catch {
+    return { success: false, data: [], message: "Network error fetching student leaderboard." };
+  }
+}
+

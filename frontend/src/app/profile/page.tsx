@@ -11,8 +11,10 @@ import {
   fetchStudentDashboard,
   updateStudentProfile,
   syncExternalPlatforms,
+  fetchStudentLeaderboard,
   StudentDashboardData,
   ProblemItem,
+  LeaderboardStudent,
 } from "@/lib/api";
 import {
   Zap,
@@ -44,6 +46,10 @@ import {
   ShieldCheck,
   Compass,
   Camera,
+  Trophy,
+  Medal,
+  Crown,
+  UserCheck,
 } from "lucide-react";
 import AvatarPicker from "@/components/auth/AvatarPicker";
 
@@ -107,6 +113,25 @@ export default function StudentProfileDashboard() {
   const [difficultyFilter, setDifficultyFilter] = useState<string>("All");
   const [statusFilter, setStatusFilter] = useState<string>("All");
 
+  // Leaderboard State
+  const [leaderboard, setLeaderboard] = useState<LeaderboardStudent[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  const [leaderboardSearch, setLeaderboardSearch] = useState("");
+
+  const loadLeaderboard = async () => {
+    try {
+      setLeaderboardLoading(true);
+      const res = await fetchStudentLeaderboard(token);
+      if (res.success && res.data) {
+        setLeaderboard(res.data);
+      }
+    } catch {
+      // Fallback
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+
   // Load Dashboard
   const loadDashboard = async () => {
     try {
@@ -150,6 +175,7 @@ export default function StudentProfileDashboard() {
     }
     if (user) {
       loadDashboard();
+      loadLeaderboard();
     }
   }, [user, authLoading, token, router]);
 
@@ -324,6 +350,18 @@ export default function StudentProfileDashboard() {
     const matchesDiff = difficultyFilter === "All" || item.difficulty === difficultyFilter;
     const matchesStatus = statusFilter === "All" || item.status === statusFilter;
     return matchesSearch && matchesDiff && matchesStatus;
+  });
+
+  // Filtered leaderboard
+  const filteredLeaderboard = leaderboard.filter((item) => {
+    if (!leaderboardSearch) return true;
+    const q = leaderboardSearch.toLowerCase();
+    return (
+      (item.name && item.name.toLowerCase().includes(q)) ||
+      (item.email && item.email.toLowerCase().includes(q)) ||
+      (item.rollNo && item.rollNo.toLowerCase().includes(q)) ||
+      (item.collegeName && item.collegeName.toLowerCase().includes(q))
+    );
   });
 
   return (
@@ -1142,99 +1180,305 @@ export default function StudentProfileDashboard() {
         </section>
 
         {/* =========================================================================
-            SECTION 3: 4-PILLAR CORE METRICS DECK
+            SECTION 3: STUDENT LEADERBOARD FOR ALL STUDENTS
            ========================================================================= */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Metric 1: Total Problems Solved */}
-          <div className="glass-panel p-5 rounded-2xl border border-white/5 space-y-3 relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-[var(--ink-dim)] uppercase tracking-wider">Problems Solved</span>
-              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-                <Code2 className="w-4 h-4" />
+        <section className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/5 space-y-6 relative overflow-hidden bg-gradient-to-b from-[#161b22]/90 to-[#0d1117]/95 shadow-2xl">
+          {/* Ambient Gold Glow */}
+          <div className="absolute top-0 right-0 w-96 h-48 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none -z-10" />
+
+          {/* Leaderboard Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
+            <div className="flex items-center gap-3.5">
+              <div className="p-3 rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-lg shadow-amber-500/10 flex-shrink-0">
+                <Trophy className="w-6 h-6 text-[#D4AF37]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h2 className="text-xl font-bold text-white tracking-tight">Student Leaderboard</h2>
+                  <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 font-semibold flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>{leaderboard.length} Enrolled Student{leaderboard.length !== 1 ? "s" : ""}</span>
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--ink-dim)] mt-0.5 font-sans">
+                  Real-time campus standings ranked by overall DevScore, platform solves &amp; community karma
+                </p>
               </div>
             </div>
-            <div>
-              <div className="text-3xl font-bold font-mono text-white">
-                {s?.problemsSolved ?? 0}
+
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search student or roll no..."
+                  value={leaderboardSearch}
+                  onChange={(e) => setLeaderboardSearch(e.target.value)}
+                  className="bg-[#0d1117] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37] w-56 sm:w-64 font-mono transition"
+                />
+                {leaderboardSearch && (
+                  <button
+                    onClick={() => setLeaderboardSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white text-xs"
+                  >
+                    &times;
+                  </button>
+                )}
               </div>
-              <p className="text-xs font-mono text-[var(--ink-faint)] mt-1">
-                Out of <span className="text-white font-semibold">{s?.problemsAttempted ?? 0}</span> attempted
-              </p>
-            </div>
-            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-              <div
-                className="h-full bg-amber-400 rounded-full"
-                style={{
-                  width: s?.problemsAttempted ? `${Math.min(((s?.problemsSolved || 0) / s.problemsAttempted) * 100, 100)}%` : "0%",
-                }}
-              />
+
+              <button
+                onClick={loadLeaderboard}
+                disabled={leaderboardLoading}
+                title="Refresh Leaderboard"
+                className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 transition cursor-pointer disabled:opacity-50 flex items-center justify-center"
+              >
+                <RefreshCw className={`w-4 h-4 ${leaderboardLoading ? "animate-spin text-[#D4AF37]" : ""}`} />
+              </button>
             </div>
           </div>
 
-          {/* Metric 2: Evaluation Accuracy */}
-          <div className="glass-panel p-5 rounded-2xl border border-white/5 space-y-3 relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-[var(--ink-dim)] uppercase tracking-wider">Precision Ratio</span>
-              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
-                <Target className="w-4 h-4" />
-              </div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold font-mono text-white">
-                {s?.accuracy ?? 0}%
-              </div>
-              <p className="text-xs font-mono text-emerald-400 mt-1">
-                Optimal time & memory complexity
-              </p>
-            </div>
-            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-              <div className="h-full bg-emerald-400 rounded-full" style={{ width: `${s?.accuracy || 0}%` }} />
-            </div>
-          </div>
+          {/* Top 3 Podium Highlights Cards */}
+          {!leaderboardLoading && leaderboard.length >= 2 && !leaderboardSearch && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+              {leaderboard.slice(0, 3).map((st, i) => {
+                const isFirst = i === 0;
+                const isSecond = i === 1;
+                const isThird = i === 2;
+                const isUser =
+                  st.id === user?.id ||
+                  (st.email && user?.email && st.email.toLowerCase() === user.email.toLowerCase());
 
-          {/* Metric 3: Active Coding Streak */}
-          <div className="glass-panel p-5 rounded-2xl border border-white/5 space-y-3 relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-[var(--ink-dim)] uppercase tracking-wider">Coding Streak</span>
-              <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400">
-                <Flame className="w-4 h-4" />
-              </div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold font-mono text-white flex items-center gap-2">
-                <span>{s?.currentStreak ?? 0} Days</span>
-                <span className="text-xs font-normal text-rose-400 font-mono">🔥</span>
-              </div>
-              <p className="text-xs font-mono text-[var(--ink-faint)] mt-1">
-                Personal record: <span className="text-white font-semibold">{s?.longestStreak ?? 0} days</span>
-              </p>
-            </div>
-            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-              <div className="h-full bg-rose-500 rounded-full" style={{ width: s?.currentStreak ? "100%" : "0%" }} />
-            </div>
-          </div>
+                return (
+                  <div
+                    key={st.id || st.email}
+                    className={`relative p-4 rounded-2xl border transition-all overflow-hidden ${
+                      isFirst
+                        ? "bg-gradient-to-b from-[#D4AF37]/15 to-[#161b22] border-[#D4AF37]/40 shadow-lg shadow-[#D4AF37]/10"
+                        : isSecond
+                        ? "bg-gradient-to-b from-slate-400/10 to-[#161b22] border-slate-400/20"
+                        : "bg-gradient-to-b from-amber-700/10 to-[#161b22] border-amber-700/20"
+                    } ${isUser ? "ring-1 ring-[#D4AF37]" : ""}`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={
+                              st.avatar ||
+                              `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(st.email)}`
+                            }
+                            alt={st.name}
+                            className="w-11 h-11 rounded-xl border border-white/10 bg-black/40 object-cover"
+                          />
+                          <span className="absolute -bottom-1.5 -right-1.5 text-sm">
+                            {isFirst ? "🥇" : isSecond ? "🥈" : "🥉"}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-white text-sm tracking-tight truncate max-w-[130px]">
+                              {st.name}
+                            </span>
+                            {isUser && (
+                              <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-[#D4AF37] text-black font-extrabold uppercase">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-mono text-[var(--ink-dim)] block">
+                            {st.rollNo || st.email.split("@")[0]}
+                          </span>
+                        </div>
+                      </div>
 
-          {/* Metric 4: Community Karma & Doubts */}
-          <div className="glass-panel p-5 rounded-2xl border border-white/5 space-y-3 relative overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-[var(--ink-dim)] uppercase tracking-wider">Community Karma</span>
-              <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400">
-                <Award className="w-4 h-4" />
-              </div>
+                      <div className="text-right">
+                        <div className="text-lg font-black font-mono text-[#D4AF37] flex items-center justify-end gap-1">
+                          <Zap className="w-3.5 h-3.5 fill-[#D4AF37]" />
+                          <span>{st.overallScore ?? 0}</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-[var(--ink-faint)]">
+                          {st.karmaPoints ?? 0} karma
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div>
-              <div className="text-3xl font-bold font-mono text-white flex items-center gap-1.5">
-                <span className="text-purple-400 font-black">{doubts?.karma ?? p?.karmaPoints ?? 0}</span>
-                <span className="text-xs font-mono text-[var(--ink-faint)] font-normal">pts</span>
-              </div>
-              <p className="text-xs font-mono text-[var(--ink-faint)] mt-1">
-                <span className="text-white font-semibold">{doubts?.accepted ?? 0}</span> endorsed solutions provided
-              </p>
+          )}
+
+          {/* Main Roster Table */}
+          {leaderboardLoading ? (
+            <div className="py-16 flex flex-col items-center justify-center space-y-3">
+              <Loader2 className="w-8 h-8 text-[#D4AF37] animate-spin" />
+              <p className="text-xs font-mono text-[var(--ink-dim)]">Loading student rankings from database...</p>
             </div>
-            <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden">
-              <div className="h-full bg-purple-500 rounded-full" style={{ width: doubts?.karma ? "100%" : "0%" }} />
+          ) : filteredLeaderboard.length === 0 ? (
+            <div className="py-14 text-center text-gray-500 border border-dashed border-white/10 rounded-2xl bg-[#0d1117]/40">
+              <Trophy className="w-10 h-10 mx-auto text-gray-600 mb-2 opacity-50" />
+              <p className="text-sm font-medium text-gray-300">No students found matching &ldquo;{leaderboardSearch}&rdquo;</p>
+              <p className="text-xs text-gray-600 mt-1">Try searching by another name or roll number</p>
             </div>
-          </div>
+          ) : (
+            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#0d1117]/80 shadow-inner">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-white/10 bg-white/[0.03] text-[var(--ink-dim)] font-mono uppercase text-[11px] tracking-wider">
+                    <th className="py-3.5 px-4 text-center w-16">Rank</th>
+                    <th className="py-3.5 px-4">Student</th>
+                    <th className="py-3.5 px-4">Roll Number</th>
+                    <th className="py-3.5 px-4">Institution / Campus</th>
+                    <th className="py-3.5 px-4">Profiles</th>
+                    <th className="py-3.5 px-4 text-center">Karma</th>
+                    <th className="py-3.5 px-4 text-right">DevScore</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5 font-mono">
+                  {filteredLeaderboard.map((student) => {
+                    const isCurrentUser =
+                      student.id === user?.id ||
+                      (student.email && user?.email && student.email.toLowerCase() === user.email.toLowerCase());
+                    const isTop1 = student.rank === 1;
+                    const isTop2 = student.rank === 2;
+                    const isTop3 = student.rank === 3;
+
+                    return (
+                      <tr
+                        key={student.id || student.email}
+                        className={`transition-colors ${
+                          isCurrentUser
+                            ? "bg-[#D4AF37]/15 hover:bg-[#D4AF37]/20 border-l-4 border-l-[#D4AF37]"
+                            : "hover:bg-white/[0.02]"
+                        }`}
+                      >
+                        {/* Rank */}
+                        <td className="py-3.5 px-4 text-center font-bold">
+                          {isTop1 ? (
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs">
+                              🥇
+                            </span>
+                          ) : isTop2 ? (
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-300/20 text-slate-200 border border-slate-300/40 text-xs">
+                              🥈
+                            </span>
+                          ) : isTop3 ? (
+                            <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-700/20 text-amber-500 border border-amber-700/40 text-xs">
+                              🥉
+                            </span>
+                          ) : (
+                            <span className="text-[var(--ink-dim)]">#{student.rank}</span>
+                          )}
+                        </td>
+
+                        {/* Student Details */}
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-3">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={
+                                student.avatar ||
+                                `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(student.email)}`
+                              }
+                              alt={student.name}
+                              className="w-8 h-8 rounded-full border border-white/10 bg-black/40 flex-shrink-0 object-cover"
+                            />
+                            <div>
+                              <div className="flex items-center gap-2 font-sans font-semibold text-white">
+                                <span>{student.name}</span>
+                                {isCurrentUser && (
+                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-[#D4AF37] text-black font-extrabold uppercase tracking-wider">
+                                    You
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-[var(--ink-dim)] font-mono">{student.email}</div>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Roll Number */}
+                        <td className="py-3.5 px-4 text-[var(--ink-faint)]">
+                          {student.rollNo ? (
+                            <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-gray-200 font-mono text-[11px]">
+                              {student.rollNo}
+                            </span>
+                          ) : (
+                            <span className="text-gray-600 italic">—</span>
+                          )}
+                        </td>
+
+                        {/* Campus */}
+                        <td className="py-3.5 px-4 text-[var(--ink-dim)] font-sans text-xs">
+                          {student.collegeName || "Vishnu Educational Society"}
+                        </td>
+
+                        {/* Coding Profiles Links */}
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-1.5">
+                            {student.leetcodeHandle && (
+                              <a
+                                href={`https://leetcode.com/u/${student.leetcodeHandle}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                title={`LeetCode: @${student.leetcodeHandle}`}
+                                className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-[10px] font-mono border border-amber-500/20 transition flex items-center gap-1"
+                              >
+                                <span>LC</span>
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            )}
+                            {student.codechefHandle && (
+                              <a
+                                href={`https://www.codechef.com/users/${student.codechefHandle}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                title={`CodeChef: @${student.codechefHandle}`}
+                                className="px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 text-[10px] font-mono border border-orange-500/20 transition flex items-center gap-1"
+                              >
+                                <span>CC</span>
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            )}
+                            {student.githubHandle && (
+                              <a
+                                href={`https://github.com/${student.githubHandle}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                title={`GitHub: @${student.githubHandle}`}
+                                className="px-1.5 py-0.5 rounded bg-white/5 text-gray-300 hover:bg-white/10 text-[10px] font-mono border border-white/10 transition flex items-center gap-1"
+                              >
+                                <span>GH</span>
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            )}
+                            {!student.leetcodeHandle && !student.codechefHandle && !student.githubHandle && (
+                              <span className="text-gray-600 italic text-[11px]">—</span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Karma Points */}
+                        <td className="py-3.5 px-4 text-center">
+                          <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 font-bold text-xs">
+                            {student.karmaPoints ?? 0} pts
+                          </span>
+                        </td>
+
+                        {/* DevScore / Rating */}
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="inline-flex items-center gap-1.5 font-bold text-sm text-[#D4AF37]">
+                            <Zap className="w-3.5 h-3.5 fill-[#D4AF37]" />
+                            <span>{student.overallScore ?? 0}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         {/* =========================================================================

@@ -712,3 +712,20 @@ exports.getDashboard = async (req, res, next) => {
     next(err);
   }
 };
+
+/**
+ * @route GET /api/users/leaderboard
+ * @desc Get global and institutional student leaderboard
+ */
+exports.getLeaderboard = async (req, res, next) => {
+  try {
+    const students = await userModel.getLeaderboard();
+    return res.status(200).json({
+      success: true,
+      data: students,
+      count: students.length,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
