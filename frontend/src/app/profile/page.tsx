@@ -414,8 +414,23 @@ export default function StudentProfileDashboard() {
   const lcMed = platforms.leetcode?.medium || 0;
   const lcHard = platforms.leetcode?.hard || 0;
   const lcTotal = platforms.leetcode?.totalSolved || (lcEasy + lcMed + lcHard);
+  const lcRating = platforms.leetcode?.rating || null;
+
   const ccTotal = platforms.codechef?.totalSolved || 0;
-  const totalProblemsSolved = s?.problemsSolved || (lcTotal + ccTotal);
+  const ccRating = platforms.codechef?.rating || null;
+  const ccStars = platforms.codechef?.stars || null;
+
+  const cfTotal = platforms.codeforces?.totalSolved || 0;
+  const cfRating = platforms.codeforces?.rating || null;
+  const cfRank = platforms.codeforces?.rank || null;
+
+  const hrTotal = platforms.hackerrank?.totalSolved || 0;
+  const hrBadges = platforms.hackerrank?.badges?.length || 0;
+
+  const ghRepos = platforms.github?.repos || 0;
+  const ghFollowers = platforms.github?.followers || 0;
+
+  const totalProblemsSolved = s?.problemsSolved || (lcTotal + ccTotal + cfTotal + hrTotal);
   const totalAttempted = s?.problemsAttempted || totalProblemsSolved;
   const accuracyRate = s?.accuracy ?? 100;
 
@@ -801,7 +816,7 @@ export default function StudentProfileDashboard() {
               </div>
             ) : (
               /* ==================== BAR GRAPH VIEW ==================== */
-              <div className="my-auto py-2.5 space-y-3 font-mono">
+              <div className="my-auto py-2.5 space-y-2.5 font-mono">
                 {/* LeetCode Bar */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
@@ -814,9 +829,16 @@ export default function StudentProfileDashboard() {
                         </span>
                       )}
                     </span>
-                    <span className="font-bold text-white">
-                      {lcTotal} <span className="text-[var(--ink-faint)] font-normal text-[10px]">solved</span>
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {lcRating && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-bold">
+                          Rating: {lcRating}
+                        </span>
+                      )}
+                      <span className="font-bold text-white">
+                        {lcTotal} <span className="text-[var(--ink-faint)] font-normal text-[10px]">solved</span>
+                      </span>
+                    </div>
                   </div>
                   <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
                     <div
@@ -847,9 +869,16 @@ export default function StudentProfileDashboard() {
                         </span>
                       )}
                     </span>
-                    <span className="font-bold text-white">
-                      {ccTotal} <span className="text-[var(--ink-faint)] font-normal text-[10px]">solved</span>
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {ccRating && (
+                        <span className="px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400 border border-amber-600/20 text-[10px] font-bold">
+                          Rating: {ccRating} ({ccStars || "1★"})
+                        </span>
+                      )}
+                      <span className="font-bold text-white">
+                        {ccTotal} <span className="text-[var(--ink-faint)] font-normal text-[10px]">solved</span>
+                      </span>
+                    </div>
                   </div>
                   <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
                     <div
@@ -863,14 +892,12 @@ export default function StudentProfileDashboard() {
                     />
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-[var(--ink-dim)]">
-                    <span>
-                      Rating: {platforms.codechef?.rating || "N/A"} ({platforms.codechef?.stars || "Unrated"})
-                    </span>
+                    <span>Stars: {ccStars || "Unrated"} • Rating: {ccRating || "N/A"}</span>
                     <span>{Math.round((ccTotal / Math.max(totalProblemsSolved, 1)) * 100)}% share</span>
                   </div>
                 </div>
 
-                {/* Codeforces / Other Platforms Status Bar */}
+                {/* Codeforces Bar */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-[var(--ink)] font-semibold flex items-center gap-1.5">
@@ -882,23 +909,62 @@ export default function StudentProfileDashboard() {
                         </span>
                       )}
                     </span>
-                    <span className="font-bold text-cyan-300">
-                      {platforms.codeforces?.connected
-                        ? `Rating: ${platforms.codeforces.rating || "Unrated"}`
-                        : "Not Linked"}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {cfRating ? (
+                        <span className="px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-[10px] font-bold">
+                          Rating: {cfRating}
+                        </span>
+                      ) : null}
+                      <span className="font-bold text-white">
+                        {cfTotal} <span className="text-[var(--ink-faint)] font-normal text-[10px]">solved</span>
+                      </span>
+                    </div>
                   </div>
                   <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-cyan-600 to-cyan-400 rounded-full transition-all duration-500"
                       style={{
-                        width: platforms.codeforces?.connected ? "60%" : "0%",
+                        width: `${Math.min(
+                          (cfTotal / Math.max(totalProblemsSolved, 1)) * 100,
+                          100
+                        )}%`,
                       }}
                     />
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-[var(--ink-dim)]">
-                    <span>Rank: {platforms.codeforces?.rank || (platforms.codeforces?.connected ? "Participant" : "Link in accounts")}</span>
-                    <span>{platforms.codeforces?.connected ? "Active" : "Inactive"}</span>
+                    <span>Rank: {cfRank || (platforms.codeforces?.connected ? "Participant" : "Unranked")}</span>
+                    <span>{Math.round((cfTotal / Math.max(totalProblemsSolved, 1)) * 100)}% share</span>
+                  </div>
+                </div>
+
+                {/* HackerRank & GitHub Micro-Row */}
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <div className="bg-white/5 border border-emerald-500/20 rounded-xl p-2 text-xs">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-emerald-400 font-semibold flex items-center gap-1 text-[11px]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        HackerRank
+                      </span>
+                      <span className="text-white font-bold text-[11px]">{hrTotal} solved</span>
+                    </div>
+                    <div className="text-[10px] text-[var(--ink-dim)] flex justify-between">
+                      <span>{hrBadges} Badges Earned</span>
+                      <span>{Math.round((hrTotal / Math.max(totalProblemsSolved, 1)) * 100)}% share</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white/5 border border-purple-500/20 rounded-xl p-2 text-xs">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-purple-400 font-semibold flex items-center gap-1 text-[11px]">
+                        <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                        GitHub
+                      </span>
+                      <span className="text-white font-bold text-[11px]">{ghRepos} repos</span>
+                    </div>
+                    <div className="text-[10px] text-[var(--ink-dim)] flex justify-between">
+                      <span>{ghFollowers} Followers</span>
+                      <span className="text-emerald-400 font-semibold">Active</span>
+                    </div>
                   </div>
                 </div>
 
@@ -919,25 +985,49 @@ export default function StudentProfileDashboard() {
 
             {/* Bottom Footer: Platform Quick Status & Manage Platforms CTA */}
             <div className="pt-3 border-t border-white/10 flex items-center justify-between flex-wrap gap-2 text-xs font-mono">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="text-[10px] uppercase text-[var(--ink-faint)] tracking-wider">
                   Sync:
                 </span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
                       platforms.leetcode?.connected ? "bg-emerald-400" : "bg-white/20"
                     }`}
                   />
-                  <span className="text-[11px] text-[var(--ink-dim)]">LeetCode</span>
+                  <span className="text-[10px] text-[var(--ink-dim)]">LeetCode</span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${
                       platforms.codechef?.connected ? "bg-emerald-400" : "bg-white/20"
                     }`}
                   />
-                  <span className="text-[11px] text-[var(--ink-dim)]">CodeChef</span>
+                  <span className="text-[10px] text-[var(--ink-dim)]">CodeChef</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      platforms.codeforces?.connected ? "bg-emerald-400" : "bg-white/20"
+                    }`}
+                  />
+                  <span className="text-[10px] text-[var(--ink-dim)]">Codeforces</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      platforms.hackerrank?.connected ? "bg-emerald-400" : "bg-white/20"
+                    }`}
+                  />
+                  <span className="text-[10px] text-[var(--ink-dim)]">HackerRank</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      platforms.github?.connected ? "bg-emerald-400" : "bg-white/20"
+                    }`}
+                  />
+                  <span className="text-[10px] text-[var(--ink-dim)]">GitHub</span>
                 </div>
               </div>
 
@@ -1007,7 +1097,11 @@ export default function StudentProfileDashboard() {
                       <span className="text-[var(--ink-dim)]">Solved:</span>
                       <span className="text-white font-bold">{platforms.leetcode.totalSolved || 0}</span>
                     </div>
-                    <div className="grid grid-cols-3 gap-1 text-[10px] font-mono text-center pt-1">
+                    <div className="flex items-baseline justify-between text-xs font-mono">
+                      <span className="text-[var(--ink-dim)]">Rating:</span>
+                      <span className="text-amber-400 font-bold">{platforms.leetcode.rating || "Unrated"}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 text-[10px] font-mono text-center pt-0.5">
                       <div className="bg-emerald-500/10 text-emerald-400 py-0.5 rounded">E: {platforms.leetcode.easy || 0}</div>
                       <div className="bg-amber-500/10 text-amber-400 py-0.5 rounded">M: {platforms.leetcode.medium || 0}</div>
                       <div className="bg-rose-500/10 text-rose-400 py-0.5 rounded">H: {platforms.leetcode.hard || 0}</div>
@@ -1063,6 +1157,10 @@ export default function StudentProfileDashboard() {
                       @{platforms.codeforces.handle}
                     </p>
                     <div className="flex items-baseline justify-between text-xs font-mono pt-1">
+                      <span className="text-[var(--ink-dim)]">Solved:</span>
+                      <span className="text-white font-bold">{platforms.codeforces.totalSolved || 0}</span>
+                    </div>
+                    <div className="flex items-baseline justify-between text-xs font-mono">
                       <span className="text-[var(--ink-dim)]">Rating:</span>
                       <span className="text-cyan-400 font-bold">{platforms.codeforces.rating || "Unrated"}</span>
                     </div>
@@ -1121,12 +1219,16 @@ export default function StudentProfileDashboard() {
                       @{platforms.codechef.handle}
                     </p>
                     <div className="flex items-baseline justify-between text-xs font-mono pt-1">
-                      <span className="text-[var(--ink-dim)]">Stars:</span>
-                      <span className="text-amber-400 font-bold">{platforms.codechef.stars || "Unrated"}</span>
+                      <span className="text-[var(--ink-dim)]">Solved:</span>
+                      <span className="text-white font-bold">{platforms.codechef.totalSolved || 0}</span>
                     </div>
                     <div className="flex items-baseline justify-between text-xs font-mono">
                       <span className="text-[var(--ink-dim)]">Rating:</span>
-                      <span className="text-white font-semibold">{platforms.codechef.rating || "N/A"}</span>
+                      <span className="text-amber-400 font-bold">{platforms.codechef.rating || "N/A"}</span>
+                    </div>
+                    <div className="flex items-baseline justify-between text-xs font-mono">
+                      <span className="text-[var(--ink-dim)]">Stars:</span>
+                      <span className="text-white font-semibold">{platforms.codechef.stars || "Unrated"}</span>
                     </div>
                   </div>
                 ) : (
@@ -1179,11 +1281,17 @@ export default function StudentProfileDashboard() {
                       @{platforms.hackerrank.handle}
                     </p>
                     <div className="flex items-baseline justify-between text-xs font-mono pt-1">
-                      <span className="text-[var(--ink-dim)]">Status:</span>
-                      <span className="text-emerald-400 font-bold">Connected</span>
+                      <span className="text-[var(--ink-dim)]">Solved:</span>
+                      <span className="text-white font-bold">{platforms.hackerrank.totalSolved ?? 0}</span>
                     </div>
-                    <div className="text-[10px] font-mono text-[var(--ink-faint)] truncate">
-                      Profile Active
+                    <div className="flex items-baseline justify-between text-xs font-mono">
+                      <span className="text-[var(--ink-dim)]">Badges:</span>
+                      <span className="text-emerald-400 font-bold">{platforms.hackerrank.badges?.length || 0} earned</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-emerald-400/80 truncate pt-0.5">
+                      {platforms.hackerrank.badges && platforms.hackerrank.badges.length > 0
+                        ? platforms.hackerrank.badges.map((b: any) => b.name).slice(0, 2).join(", ")
+                        : "Profile Active"}
                     </div>
                   </div>
                 ) : (
@@ -1236,11 +1344,15 @@ export default function StudentProfileDashboard() {
                       @{platforms.github.handle}
                     </p>
                     <div className="flex items-baseline justify-between text-xs font-mono pt-1">
-                      <span className="text-[var(--ink-dim)]">Status:</span>
-                      <span className="text-purple-400 font-bold">Connected</span>
+                      <span className="text-[var(--ink-dim)]">Repositories:</span>
+                      <span className="text-white font-bold">{platforms.github.repos ?? 0}</span>
                     </div>
-                    <div className="text-[10px] font-mono text-emerald-400 truncate">
-                      Profile Active
+                    <div className="flex items-baseline justify-between text-xs font-mono">
+                      <span className="text-[var(--ink-dim)]">Followers:</span>
+                      <span className="text-purple-400 font-bold">{platforms.github.followers ?? 0}</span>
+                    </div>
+                    <div className="text-[10px] font-mono text-emerald-400 truncate pt-0.5">
+                      {platforms.github.repos ? `${platforms.github.repos} Public Repos` : "Profile Active"}
                     </div>
                   </div>
                 ) : (

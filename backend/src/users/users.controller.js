@@ -97,6 +97,31 @@ async function fetchCodeforcesStats(handle) {
     const data = await res.json();
     if (data.status === "OK" && data.result && data.result.length > 0) {
       const u = data.result[0];
+
+      // Fetch user's submissions to count unique problems solved
+      let totalSolved = 0;
+      try {
+        const subRes = await fetch(`https://codeforces.com/api/user.status?handle=${encodeURIComponent(username)}&from=1&count=2000`, {
+          headers: { "User-Agent": "Mozilla/5.0" },
+          signal: AbortSignal.timeout(6000),
+        });
+        if (subRes.ok) {
+          const subData = await subRes.json();
+          if (subData.status === "OK" && Array.isArray(subData.result)) {
+            const solvedSet = new Set();
+            for (const sub of subData.result) {
+              if (sub.verdict === "OK" && sub.problem) {
+                const pId = `${sub.problem.contestId || ""}${sub.problem.index || ""}`;
+                if (pId) solvedSet.add(pId);
+              }
+            }
+            totalSolved = solvedSet.size;
+          }
+        }
+      } catch (subErr) {
+        console.warn("Codeforces submissions fetch error:", subErr.message);
+      }
+
       return {
         handle: u.handle,
         rating: u.rating || 0,
@@ -104,6 +129,7 @@ async function fetchCodeforcesStats(handle) {
         rank: u.rank || "unranked",
         maxRank: u.maxRank || "unranked",
         contribution: u.contribution || 0,
+        totalSolved,
       };
     }
   } catch (err) {
@@ -122,10 +148,16 @@ async function fetchLeetCodeStats(handle) {
 
   // Strategy 1: Direct official LeetCode GraphQL (Official API, fastest, most accurate)
   try {
-    const query = `query userProblemsSolved($username: String!) {
+    const query = `query userCombined($username: String!) {
       matchedUser(username: $username) {
         profile { ranking }
         submitStatsGlobal { acSubmissionNum { difficulty count } }
+      }
+      userContestRanking(username: $username) {
+        rating
+        globalRanking
+        attendedContestsCount
+        topPercentage
       }
     }`;
 
@@ -143,9 +175,11 @@ async function fetchLeetCodeStats(handle) {
     if (res.ok) {
       const data = await res.json();
       const matched = data?.data?.matchedUser;
+      const contest = data?.data?.userContestRanking;
       if (matched) {
         const list = matched.submitStatsGlobal?.acSubmissionNum || [];
         const get = (d) => list.find((s) => s.difficulty.toLowerCase() === d.toLowerCase())?.count || 0;
+        const rating = contest?.rating ? Math.round(contest.rating) : null;
 
         return {
           handle: username,
@@ -154,6 +188,7 @@ async function fetchLeetCodeStats(handle) {
           mediumSolved: get("Medium"),
           hardSolved: get("Hard"),
           ranking: matched.profile?.ranking || null,
+          rating,
           acceptanceRate: 75,
         };
       }
@@ -177,6 +212,7 @@ async function fetchLeetCodeStats(handle) {
           mediumSolved: data.mediumSolved || 0,
           hardSolved: data.hardSolved || 0,
           ranking: data.ranking || null,
+          rating: data.contestRating ? Math.round(data.contestRating) : null,
           acceptanceRate: 75,
         };
       }
@@ -200,6 +236,7 @@ async function fetchLeetCodeStats(handle) {
           mediumSolved: data.mediumSolved || 0,
           hardSolved: data.hardSolved || 0,
           ranking: null,
+          rating: null,
           acceptanceRate: 75,
         };
       }
@@ -209,6 +246,53 @@ async function fetchLeetCodeStats(handle) {
   }
 
   return null;
+}
+
+/**
+ * Helper to fetch HackerRank stats (questions solved & badges)
+ */
+async function fetchHackerRankStats(handle) {
+  if (!handle) return null;
+  const username = handle.trim().replace(/^https?:\/\/(www\.)?hackerrank\.com\/profile\//i, "").replace(/^https?:\/\/(www\.)?hackerrank\.com\//i, "").replace(/\/$/, "");
+  if (!username) return null;
+
+  try {
+    const res = await fetch(`https://www.hackerrank.com/rest/hackers/${encodeURIComponent(username)}/badges`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/json",
+      },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const models = Array.isArray(data?.models) ? data.models : [];
+      let totalSolved = 0;
+      const badges = models.map((b) => {
+        const solved = typeof b.solved === "number" ? b.solved : 0;
+        totalSolved += solved;
+        return {
+          name: b.badge_name || b.badge_type || "Badge",
+          stars: b.stars || 0,
+          solved,
+        };
+      });
+
+      return {
+        handle: username,
+        totalSolved,
+        badges,
+      };
+    }
+  } catch (err) {
+    console.warn("HackerRank fetch error:", err.message);
+  }
+
+  return {
+    handle: username,
+    totalSolved: 0,
+    badges: [],
+  };
 }
 
 /**
@@ -347,24 +431,31 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
     // ignore
   }
 
-  const [cfStats, lcStats, ccStats, ghStats] = await Promise.all([
+  const [cfStats, lcStats, ccStats, ghStats, hrStats] = await Promise.all([
     fetchCodeforcesStats(cfHandle),
     fetchLeetCodeStats(lcHandle),
     fetchCodeChefStats(ccHandle),
     fetchGitHubStats(ghHandle),
+    fetchHackerRankStats(hrHandle),
   ]);
 
   const isMatch = (h1, h2) => Boolean(h1 && h2 && h1.toString().trim().toLowerCase() === h2.toString().trim().toLowerCase());
 
   const finalLc = (lcStats && lcStats.totalSolved > 0)
-    ? lcStats
+    ? {
+        ...lcStats,
+        rating: lcStats.rating ?? (isMatch(prevPlatforms.leetcode?.handle, lcHandle) ? prevPlatforms.leetcode?.rating : null),
+      }
     : (isMatch(prevPlatforms.leetcode?.handle, lcHandle) && prevPlatforms.leetcode?.totalSolved > 0
         ? prevPlatforms.leetcode
         : (lcStats || prevPlatforms.leetcode || null));
 
-  const finalCf = (cfStats && cfStats.rating)
-    ? cfStats
-    : (isMatch(prevPlatforms.codeforces?.handle, cfHandle) && prevPlatforms.codeforces?.rating
+  const finalCf = (cfStats && (cfStats.rating || cfStats.totalSolved > 0))
+    ? {
+        ...cfStats,
+        totalSolved: cfStats.totalSolved ?? (isMatch(prevPlatforms.codeforces?.handle, cfHandle) ? prevPlatforms.codeforces?.totalSolved : 0),
+      }
+    : (isMatch(prevPlatforms.codeforces?.handle, cfHandle) && (prevPlatforms.codeforces?.rating || prevPlatforms.codeforces?.totalSolved > 0)
         ? prevPlatforms.codeforces
         : (cfStats || prevPlatforms.codeforces || null));
 
@@ -380,21 +471,30 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
         ? prevPlatforms.github
         : (ghStats || prevPlatforms.github || null));
 
+  const finalHr = (hrStats && (hrStats.totalSolved > 0 || (hrStats.badges && hrStats.badges.length > 0)))
+    ? hrStats
+    : (isMatch(prevPlatforms.hackerrank?.handle, hrHandle) && (prevPlatforms.hackerrank?.totalSolved > 0 || prevPlatforms.hackerrank?.badges?.length > 0)
+        ? prevPlatforms.hackerrank
+        : (hrStats || prevPlatforms.hackerrank || null));
+
   const lcSolved = finalLc?.totalSolved || 0;
   const ccSolved = finalCc?.totalSolved || 0;
+  const cfSolved = finalCf?.totalSolved || 0;
+  const hrSolved = finalHr?.totalSolved || 0;
   const cfRating = finalCf?.rating || 0;
   const internalSolved = 0;
 
-  const totalSolved = lcSolved + ccSolved + internalSolved;
+  const totalSolved = lcSolved + ccSolved + cfSolved + hrSolved + internalSolved;
   const totalAttempted = totalSolved;
   const accuracy = totalSolved > 0 ? 88.5 : 0;
 
   const lcScore = finalLc ? ((finalLc.easy || finalLc.easySolved || 0) * 2 + (finalLc.medium || finalLc.mediumSolved || 0) * 4 + (finalLc.hard || finalLc.hardSolved || 0) * 8) : 0;
   const ccScore = finalCc ? (ccSolved * 2 + (finalCc.rating ? Math.round(finalCc.rating * 0.05) : 0)) : 0;
-  const cfScore = cfRating ? Math.round(cfRating * 0.2) : 0;
+  const cfScore = cfRating ? Math.round(cfRating * 0.2) + (cfSolved * 2) : (cfSolved * 2);
+  const hrScore = hrSolved ? Math.min(hrSolved * 2, 100) : 0;
   const ghScore = finalGh ? Math.min(((finalGh.repos || 0) * 5), 50) : 0;
 
-  const externalScore = Math.min(lcScore + ccScore + cfScore + ghScore, 1000);
+  const externalScore = Math.min(lcScore + ccScore + cfScore + hrScore + ghScore, 1000);
   const internalScore = internalSolved * 5;
   const courseworkScore = 0;
   const karmaScore = Math.min((user.karmaPoints || 0) * 2, 150);
@@ -412,13 +512,15 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
         medium: finalLc?.medium || finalLc?.mediumSolved || 0,
         hard: finalLc?.hard || finalLc?.hardSolved || 0,
         ranking: finalLc?.ranking || null,
+        rating: finalLc?.rating || null,
       },
       codeforces: {
         handle: finalCf?.handle || cfHandle,
-        connected: Boolean(finalCf?.rating || cfStats || (finalCf && finalCf.connected)),
+        connected: Boolean(finalCf?.rating || finalCf?.totalSolved > 0 || cfStats || (finalCf && finalCf.connected)),
         rating: finalCf?.rating || null,
         rank: finalCf?.rank || null,
         maxRating: finalCf?.maxRating || null,
+        totalSolved: cfSolved,
       },
       codechef: {
         handle: finalCc?.handle || ccHandle,
@@ -428,13 +530,14 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
         totalSolved: ccSolved,
       },
       hackerrank: {
-        handle: hrHandle,
-        connected: Boolean(hrHandle),
-        badges: [],
+        handle: finalHr?.handle || hrHandle,
+        connected: Boolean((finalHr && (finalHr.totalSolved > 0 || finalHr.badges?.length > 0)) || hrHandle),
+        totalSolved: hrSolved,
+        badges: finalHr?.badges || [],
       },
       github: {
         handle: finalGh?.handle || ghHandle,
-        connected: Boolean((finalGh && finalGh.repos > 0) || ghStats || (finalGh && finalGh.connected)),
+        connected: Boolean((finalGh && finalGh.repos > 0) || ghStats || (finalGh && finalGh.connected) || ghHandle),
         repos: finalGh?.repos || 0,
         followers: finalGh?.followers || 0,
       },
@@ -642,6 +745,7 @@ exports.getDashboard = async (req, res, next) => {
         medium: 0,
         hard: 0,
         ranking: null,
+        rating: null,
       },
       codeforces: {
         handle: user.codeforcesHandle || "",
@@ -649,22 +753,26 @@ exports.getDashboard = async (req, res, next) => {
         rating: null,
         rank: null,
         maxRating: null,
+        totalSolved: 0,
       },
       codechef: {
         handle: user.codechefHandle || "",
         connected: Boolean(user.codechefHandle),
         rating: null,
         stars: null,
+        totalSolved: 0,
       },
       hackerrank: {
         handle: user.hackerrankHandle || "",
         connected: Boolean(user.hackerrankHandle),
+        totalSolved: 0,
         badges: [],
       },
       github: {
         handle: user.githubHandle || "",
         connected: Boolean(user.githubHandle),
         repos: 0,
+        followers: 0,
       },
     };
 
