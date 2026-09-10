@@ -68,6 +68,7 @@ export default function StudentProfileDashboard() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [isScoringModalOpen, setIsScoringModalOpen] = useState(false);
   const [codingChartType, setCodingChartType] = useState<"pie" | "bar">("pie");
   const [selectedPlatform, setSelectedPlatform] = useState<"leetcode" | "codeforces" | "codechef" | "hackerrank" | "github">("codechef");
   const [actionLoading, setActionLoading] = useState(false);
@@ -349,6 +350,7 @@ export default function StudentProfileDashboard() {
           setIsSyncModalOpen(false);
           setActionSuccess(null);
           loadDashboard();
+          loadLeaderboard();
         }, 900);
       } else {
         alert(res.message || "Failed to sync platforms.");
@@ -366,7 +368,7 @@ export default function StudentProfileDashboard() {
     try {
       const res = await syncExternalPlatforms(handlesForm, token);
       if (res.success) {
-        await loadDashboard();
+        await Promise.allSettled([loadDashboard(), loadLeaderboard()]);
       } else {
         alert(res.message || "Could not sync stats.");
       }
@@ -1417,7 +1419,16 @@ export default function StudentProfileDashboard() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <button
+                onClick={() => setIsScoringModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-[#E8C97A] hover:text-white text-xs font-mono font-semibold transition cursor-pointer shadow-sm"
+                title="View how points are calculated according to the different coding platforms"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>How Points are Calculated</span>
+              </button>
+
               <div className="relative">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 <input
@@ -1425,7 +1436,7 @@ export default function StudentProfileDashboard() {
                   placeholder="Search student or roll no..."
                   value={leaderboardSearch}
                   onChange={(e) => setLeaderboardSearch(e.target.value)}
-                  className="bg-[#0d1117] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37] w-56 sm:w-64 font-mono transition"
+                  className="bg-[#0d1117] border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#D4AF37] w-48 sm:w-56 font-mono transition"
                 />
                 {leaderboardSearch && (
                   <button
@@ -1628,7 +1639,7 @@ export default function StudentProfileDashboard() {
 
                         {/* Coding Profiles Links */}
                         <td className="py-3.5 px-4">
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             {student.leetcodeHandle && (
                               <a
                                 href={`https://leetcode.com/u/${student.leetcodeHandle}`}
@@ -1653,6 +1664,30 @@ export default function StudentProfileDashboard() {
                                 <ExternalLink className="w-2.5 h-2.5" />
                               </a>
                             )}
+                            {student.codeforcesHandle && (
+                              <a
+                                href={`https://codeforces.com/profile/${student.codeforcesHandle}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                title={`Codeforces: @${student.codeforcesHandle}`}
+                                className="px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 text-[10px] font-mono border border-cyan-500/20 transition flex items-center gap-1"
+                              >
+                                <span>CF</span>
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            )}
+                            {student.hackerrankHandle && (
+                              <a
+                                href={`https://www.hackerrank.com/${student.hackerrankHandle}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                title={`HackerRank: @${student.hackerrankHandle}`}
+                                className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-[10px] font-mono border border-emerald-500/20 transition flex items-center gap-1"
+                              >
+                                <span>HR</span>
+                                <ExternalLink className="w-2.5 h-2.5" />
+                              </a>
+                            )}
                             {student.githubHandle && (
                               <a
                                 href={`https://github.com/${student.githubHandle}`}
@@ -1665,7 +1700,7 @@ export default function StudentProfileDashboard() {
                                 <ExternalLink className="w-2.5 h-2.5" />
                               </a>
                             )}
-                            {!student.leetcodeHandle && !student.codechefHandle && !student.githubHandle && (
+                            {!student.leetcodeHandle && !student.codechefHandle && !student.codeforcesHandle && !student.hackerrankHandle && !student.githubHandle && (
                               <span className="text-gray-600 italic text-[11px]">—</span>
                             )}
                           </div>
@@ -2550,6 +2585,233 @@ export default function StudentProfileDashboard() {
                 onClose={() => setIsAvatarModalOpen(false)}
                 isSubmitting={actionLoading}
               />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          MODAL 4: POINTS CALCULATION BREAKDOWN MODAL
+         ========================================================================= */}
+      <AnimatePresence>
+        {isScoringModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="bg-[#0b1120] border border-[rgba(212,175,55,0.35)] rounded-3xl p-6 sm:p-7 max-w-2xl w-full shadow-2xl relative my-8 max-h-[90vh] overflow-y-auto space-y-6 text-white"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-2xl bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30">
+                    <Trophy className="w-6 h-6 text-[#D4AF37]" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-white font-display">
+                      How Points (DevScore) are Calculated
+                    </h3>
+                    <p className="text-xs text-[var(--ink-dim)] font-mono mt-0.5">
+                      Transparent evaluation of your coding activity across competitive platforms &amp; campus coursework.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsScoringModalOpen(false)}
+                  className="p-1.5 rounded-xl text-[var(--ink-dim)] hover:text-white hover:bg-white/5 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* SECTION 1: EXTERNAL CODING PLATFORMS */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#E8C97A] flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <span>External Coding Platforms (Max 1,000 pts)</span>
+                  </span>
+                  <span className="text-[11px] font-mono text-[var(--ink-faint)]">Weighted Scoring</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+                  {/* LeetCode Card */}
+                  <div className="p-3.5 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-2">
+                    <div className="flex items-center justify-between text-amber-400 font-bold">
+                      <span>LeetCode</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20">
+                        Difficulty Weighted
+                      </span>
+                    </div>
+                    <ul className="text-[11px] text-[var(--ink-dim)] space-y-1">
+                      <li className="flex justify-between">
+                        <span>• Easy Problem:</span>
+                        <span className="text-emerald-400 font-bold">+2 pts</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>• Medium Problem:</span>
+                        <span className="text-amber-400 font-bold">+4 pts</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>• Hard Problem:</span>
+                        <span className="text-rose-400 font-bold">+8 pts</span>
+                      </li>
+                    </ul>
+                    <div className="pt-1.5 border-t border-white/5 text-[10px] text-[var(--ink-faint)]">
+                      Formula: <span className="text-amber-300 font-semibold">(E × 2) + (M × 4) + (H × 8)</span>
+                    </div>
+                  </div>
+
+                  {/* CodeChef Card */}
+                  <div className="p-3.5 rounded-2xl bg-orange-500/5 border border-orange-500/20 space-y-2">
+                    <div className="flex items-center justify-between text-orange-400 font-bold">
+                      <span>CodeChef</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/10 border border-orange-500/20">
+                        Solves + Rating Bonus
+                      </span>
+                    </div>
+                    <ul className="text-[11px] text-[var(--ink-dim)] space-y-1">
+                      <li className="flex justify-between">
+                        <span>• Problem Solved:</span>
+                        <span className="text-white font-bold">+2 pts each</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>• Contest Rating:</span>
+                        <span className="text-orange-400 font-bold">+5% of rating</span>
+                      </li>
+                    </ul>
+                    <div className="pt-1.5 border-t border-white/5 text-[10px] text-[var(--ink-faint)]">
+                      Formula: <span className="text-orange-300 font-semibold">(Solved × 2) + (Rating × 0.05)</span>
+                    </div>
+                  </div>
+
+                  {/* Codeforces Card */}
+                  <div className="p-3.5 rounded-2xl bg-cyan-500/5 border border-cyan-500/20 space-y-2">
+                    <div className="flex items-center justify-between text-cyan-400 font-bold">
+                      <span>Codeforces</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 border border-cyan-500/20">
+                        Competitive Solves
+                      </span>
+                    </div>
+                    <ul className="text-[11px] text-[var(--ink-dim)] space-y-1">
+                      <li className="flex justify-between">
+                        <span>• Accepted Problem:</span>
+                        <span className="text-white font-bold">+2 pts each</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>• Contest Rating:</span>
+                        <span className="text-cyan-400 font-bold">+20% of rating</span>
+                      </li>
+                    </ul>
+                    <div className="pt-1.5 border-t border-white/5 text-[10px] text-[var(--ink-faint)]">
+                      Formula: <span className="text-cyan-300 font-semibold">(Solved × 2) + (Rating × 0.20)</span>
+                    </div>
+                  </div>
+
+                  {/* HackerRank & GitHub Card */}
+                  <div className="p-3.5 rounded-2xl bg-purple-500/5 border border-purple-500/20 space-y-2">
+                    <div className="flex items-center justify-between text-purple-400 font-bold">
+                      <span>HackerRank &amp; GitHub</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/10 border border-purple-500/20">
+                        Tracks &amp; Repos
+                      </span>
+                    </div>
+                    <ul className="text-[11px] text-[var(--ink-dim)] space-y-1">
+                      <li className="flex justify-between">
+                        <span>• HR Questions Solved:</span>
+                        <span className="text-emerald-400 font-bold">+2 pts (max 100)</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>• GitHub Public Repos:</span>
+                        <span className="text-purple-300 font-bold">+5 pts (max 50)</span>
+                      </li>
+                    </ul>
+                    <div className="pt-1.5 border-t border-white/5 text-[10px] text-[var(--ink-faint)]">
+                      Formula: <span className="text-purple-300 font-semibold">(HR × 2) + (Repos × 5)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: IN-PLATFORM & CAMPUS PERFORMANCE */}
+              <div className="space-y-3 pt-2 border-t border-white/10">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#E8C97A] flex items-center gap-1.5">
+                  <Award className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>Campus Labs, Code Execution &amp; Karma</span>
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10 space-y-1">
+                    <span className="font-bold text-[#D4AF37] block">In-Platform Solves</span>
+                    <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed">
+                      <span className="text-white font-bold">+5 pts</span> per compiler run &amp; solution verified on Cryptic-to-Clear (up to 500 pts).
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10 space-y-1">
+                    <span className="font-bold text-sky-400 block">Academic Labs</span>
+                    <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed">
+                      Faculty-assigned lab problem submissions graded on syllabus criteria (up to 200 pts).
+                    </p>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-white/5 border border-white/10 space-y-1">
+                    <span className="font-bold text-purple-400 block">Community Karma</span>
+                    <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed">
+                      <span className="text-white font-bold">+2 pts</span> per peer upvote &amp; answer accepted by professors (up to 150 pts).
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: RATING TIERS */}
+              <div className="space-y-2 pt-2 border-t border-white/10">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#E8C97A]">
+                  DevScore Rating Tiers
+                </span>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center font-mono text-[10px]">
+                  <div className="p-2 rounded-xl bg-white/5 border border-slate-500/20">
+                    <span className="text-slate-400 font-bold block">Novice</span>
+                    <span className="text-[var(--ink-dim)]">0–499</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/5 border border-yellow-500/20">
+                    <span className="text-yellow-400 font-bold block">Apprentice</span>
+                    <span className="text-[var(--ink-dim)]">500–649</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/5 border border-emerald-500/20">
+                    <span className="text-emerald-400 font-bold block">Specialist</span>
+                    <span className="text-[var(--ink-dim)]">650–799</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/5 border border-sky-500/20">
+                    <span className="text-sky-400 font-bold block">Expert</span>
+                    <span className="text-[var(--ink-dim)]">800–949</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/5 border border-purple-500/20">
+                    <span className="text-purple-400 font-bold block">Master</span>
+                    <span className="text-[var(--ink-dim)]">950–1199</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-white/5 border border-red-500/20">
+                    <span className="text-red-400 font-bold block">Grandmaster</span>
+                    <span className="text-[var(--ink-dim)]">1200+</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="pt-3 border-t border-white/10 flex items-center justify-between flex-wrap gap-3 font-mono text-xs">
+                <p className="text-[11px] text-[var(--ink-faint)]">
+                  💡 Tip: Click <span className="text-[#E8C97A]">Sync Live Stats</span> anytime to update your platform solved counts.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsScoringModalOpen(false)}
+                  className="btn-gold px-5 py-2 rounded-xl text-black font-bold font-mono shadow-md hover:shadow-[#D4AF37]/20 cursor-pointer"
+                >
+                  Got It!
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
