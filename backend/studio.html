@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Studio — Cryptic to Clear</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Horizontal & Vertical Scrollbars */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 12px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #161b22;
+      border-radius: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3b4252;
+      border-radius: 6px;
+      border: 2px solid #161b22;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #f59e0b;
+    }
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden text-sm">
+  <!-- Sidebar -->
+  <aside class="w-64 border-r border-[#30363d] bg-[#161b22] flex flex-col flex-shrink-0">
+    <div class="p-4 border-b border-[#30363d] flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center text-black font-bold text-base shadow-sm">
+          ⚡
+        </div>
+        <div>
+          <div class="font-bold text-white text-sm leading-tight">Database Studio</div>
+          <div class="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Render Postgres
+          </div>
+        </div>
+      </div>
+      <button onclick="loadModels()" title="Refresh Models" class="text-xs text-gray-400 hover:text-white p-1 rounded hover:bg-[#21262d] transition">
+        ↻
+      </button>
+    </div>
+
+    <div class="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+      All Models
+    </div>
+
+    <nav id="modelsList" class="flex-1 overflow-y-auto px-2 space-y-1">
+      <div class="text-xs text-gray-500 p-2">Loading models...</div>
+    </nav>
+
+    <div class="p-3 border-t border-[#30363d] text-[11px] text-gray-500">
+      Connected via Prisma ORM (Binary Engine)
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 flex flex-col overflow-hidden bg-[#0d1117]">
+    <!-- Top Bar -->
+    <header class="h-14 border-b border-[#30363d] bg-[#161b22] px-6 flex items-center justify-between flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <h1 id="currentModelTitle" class="text-lg font-bold text-white tracking-wide">User</h1>
+        <span id="recordCountBadge" class="bg-[#21262d] text-amber-300 text-xs px-2.5 py-0.5 rounded-full font-mono border border-amber-500/20">
+          0 rows
+        </span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Search in table..."
+            oninput="handleSearch(this.value)"
+            class="bg-[#0d1117] border border-[#30363d] rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-amber-400 w-64"
+          />
+        </div>
+        <button
+          onclick="fetchData(currentModel)"
+          class="bg-[#21262d] hover:bg-[#30363d] text-white text-xs px-3 py-1.5 rounded-lg border border-[#30363d] flex items-center gap-1.5 transition"
+        >
+          <span>Refresh</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Table Container -->
+    <div class="flex-1 overflow-hidden flex flex-col p-4" id="tableOuterContainer">
+      <div id="tableScrollHelper" class="mb-2 flex items-center justify-between text-[11px] text-gray-400 px-1 hidden">
+        <div class="flex items-center gap-1.5 text-gray-400">
+          <span class="text-amber-400 font-bold">↔</span> 
+          <span>Horizontal Scroll: Use <kbd class="bg-[#21262d] px-1.5 py-0.5 rounded text-amber-300 border border-[#30363d] font-mono text-[10px]">Shift + Mouse Wheel</kbd> or drag the scrollbar below to view all columns</span>
+        </div>
+        <div id="columnsMetaBadge" class="font-mono text-amber-300 bg-[#21262d] px-2.5 py-0.5 rounded-full border border-[#30363d]">
+          0 columns
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-x-auto overflow-y-auto border border-[#30363d] rounded-xl shadow-2xl bg-[#161b22]" id="tableContainer">
+        <div class="flex items-center justify-center h-64 text-gray-500">
+          Loading records...
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal for Raw Record View -->
+  <div id="detailModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div class="bg-[#161b22] border border-[#30363d] rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl">
+      <div class="p-4 border-b border-[#30363d] flex items-center justify-between">
+        <h3 class="font-bold text-white text-sm" id="modalTitle">Record Details</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white text-lg">&times;</button>
+      </div>
+      <div class="p-4 flex-1 overflow-auto">
+        <pre id="modalContent" class="text-xs font-mono bg-[#0d1117] p-3 rounded-lg border border-[#30363d] text-emerald-300 overflow-x-auto"></pre>
+      </div>
+      <div class="p-3 border-t border-[#30363d] flex justify-end">
+        <button onclick="closeModal()" class="bg-[#21262d] hover:bg-[#30363d] text-white text-xs px-4 py-1.5 rounded-lg">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentModel = 'User';
+    let modelsData = {};
+    let allRecords = [];
+
+    async function loadModels() {
+      try {
+        const res = await fetch('/api/models');
+        const data = await res.json();
+        if (data.success) {
+          modelsData = data.models;
+          renderModelsList();
+          fetchData(currentModel);
+        }
+      } catch (err) {
+        console.error("Failed to load models", err);
+      }
+    }
+
+    function renderModelsList() {
+      const container = document.getElementById('modelsList');
+      container.innerHTML = Object.entries(modelsData).map(([name, count]) => {
+        const isActive = name === currentModel;
+        return `
+          <button
+            onclick="switchModel('${name}')"
+            class="w-full text-left px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-between transition ${
+              isActive 
+                ? 'bg-amber-400/10 text-amber-300 border border-amber-400/20' 
+                : 'text-gray-300 hover:bg-[#21262d] hover:text-white'
+            }"
+          >
+            <span class="flex items-center gap-2">
+              <span class="opacity-60 text-xs">◈</span>
+              ${name}
+            </span>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full ${
+              isActive ? 'bg-amber-400/20 text-amber-300' : 'bg-[#21262d] text-gray-400'
+            }">
+              ${count}
+            </span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function switchModel(model) {
+      currentModel = model;
+      document.getElementById('currentModelTitle').innerText = model;
+      document.getElementById('searchInput').value = '';
+      renderModelsList();
+      fetchData(model);
+    }
+
+    async function fetchData(model) {
+      const container = document.getElementById('tableContainer');
+      const helper = document.getElementById('tableScrollHelper');
+      helper.classList.add('hidden');
+      container.innerHTML = `<div class="flex items-center justify-center h-64 text-gray-400 animate-pulse">Fetching ${model} records from Render database...</div>`;
+
+      try {
+        const res = await fetch(`/api/data/${model}`);
+        const data = await res.json();
+        if (data.success) {
+          allRecords = data.records;
+          document.getElementById('recordCountBadge').innerText = `${data.count} rows`;
+          renderTable(data.records);
+        } else {
+          container.innerHTML = `<div class="p-6 text-red-400 bg-red-950/20 border border-red-800/40 rounded-xl">Error: ${data.error}</div>`;
+        }
+      } catch (err) {
+        container.innerHTML = `<div class="p-6 text-red-400 bg-red-950/20 border border-red-800/40 rounded-xl">Fetch error: ${err.message}</div>`;
+      }
+    }
+
+    function handleSearch(val) {
+      if (!val) {
+        renderTable(allRecords);
+        return;
+      }
+      const s = val.toLowerCase();
+      const filtered = allRecords.filter(r => {
+        return JSON.stringify(r).toLowerCase().includes(s);
+      });
+      renderTable(filtered);
+    }
+
+    function renderTable(records) {
+      const container = document.getElementById('tableContainer');
+      const helper = document.getElementById('tableScrollHelper');
+      const metaBadge = document.getElementById('columnsMetaBadge');
+
+      if (!records || records.length === 0) {
+        helper.classList.add('hidden');
+        container.innerHTML = `
+          <div class="flex flex-col items-center justify-center h-64 text-gray-500">
+            <div class="text-3xl mb-2">📭</div>
+            <div class="font-medium text-gray-400">No records found</div>
+            <div class="text-xs text-gray-600 mt-1">There are no rows in the ${currentModel} table</div>
+          </div>
+        `;
+        return;
+      }
+
+      // Extract keys
+      const sample = records[0];
+      const keys = Object.keys(sample).filter(k => typeof sample[k] !== 'object' || sample[k] === null);
+
+      helper.classList.remove('hidden');
+      metaBadge.innerText = `${keys.length} columns • ${records.length} rows`;
+
+      let html = `
+        <table class="w-max min-w-full text-left border-collapse whitespace-nowrap text-xs">
+          <thead class="sticky top-0 z-30">
+            <tr class="bg-[#21262d] border-b border-[#30363d] text-gray-400 text-xs font-semibold uppercase tracking-wider">
+              <th class="p-3 w-12 text-center sticky left-0 bg-[#21262d] z-40 border-r border-[#30363d]">#</th>
+              ${keys.map(k => `
+                <th class="p-3.5 border-r border-[#30363d]/60 font-mono tracking-wider ${
+                  k === 'email' || k === 'name' ? 'text-amber-300' : 'text-gray-300'
+                }">
+                  ${k}
+                </th>
+              `).join('')}
+              <th class="p-3.5 text-center sticky right-0 bg-[#21262d] z-40 border-l border-[#30363d]">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#30363d]/40 text-xs font-mono">
+      `;
+
+      records.forEach((row, idx) => {
+        const isEven = idx % 2 === 0;
+        const rowBg = isEven ? 'bg-[#161b22]' : 'bg-[#13171f]';
+
+        html += `
+          <tr class="hover:bg-amber-400/5 transition cursor-pointer group ${rowBg}" onclick="viewRow(${idx})">
+            <td class="p-3 text-center text-gray-500 select-none sticky left-0 ${rowBg} group-hover:bg-[#1f242c] z-20 border-r border-[#30363d]">
+              ${idx + 1}
+            </td>
+        `;
+
+        keys.forEach(k => {
+          let val = row[k];
+          let display = val === null || val === undefined ? '<span class="text-gray-600 italic">null</span>' : String(val);
+
+          // Custom renderers
+          if (k === 'avatar' && val) {
+            display = `<div class="flex items-center gap-2"><img src="${val}" class="w-6 h-6 rounded-full border border-amber-400/40 bg-black/40 flex-shrink-0"><span class="truncate max-w-[140px] text-gray-400">${val}</span></div>`;
+          } else if (k === 'role') {
+            display = `<span class="px-2 py-0.5 rounded text-[10px] font-semibold font-sans uppercase ${
+              val === 'FACULTY' ? 'bg-indigo-900/60 text-indigo-300 border border-indigo-500/30' :
+              val === 'ADMIN' ? 'bg-rose-900/60 text-rose-300 border border-rose-500/30' :
+              'bg-emerald-900/60 text-emerald-300 border border-emerald-500/30'
+            }">${val}</span>`;
+          } else if (k === 'email') {
+            display = `<span class="text-amber-300 font-medium font-sans">${val}</span>`;
+          } else if (k === 'name') {
+            display = `<span class="text-white font-semibold font-sans">${val}</span>`;
+          } else if (k === 'passwordHash') {
+            display = `<span class="text-gray-500 font-mono text-[10px] truncate max-w-[120px] inline-block">${val.slice(0, 16)}...</span>`;
+          } else if (k === 'createdAt' || k === 'updatedAt') {
+            try {
+              display = `<span class="text-gray-400 text-[11px] font-sans">${new Date(val).toLocaleString()}</span>`;
+            } catch {}
+          } else if (typeof val === 'string' && val.length > 50) {
+            display = `<span class="truncate max-w-[240px] inline-block text-gray-300" title="${val}">${val}</span>`;
+          }
+
+          html += `<td class="p-3.5 border-r border-[#30363d]/30 text-gray-300 align-middle whitespace-nowrap">${display}</td>`;
+        });
+
+        html += `
+            <td class="p-3 text-center sticky right-0 ${rowBg} group-hover:bg-[#1f242c] z-20 border-l border-[#30363d]" onclick="event.stopPropagation()">
+              <button onclick="viewRow(${idx})" class="text-amber-400 hover:text-amber-300 text-xs px-2.5 py-1 bg-[#21262d] rounded-md border border-[#30363d] hover:bg-[#30363d] transition">
+                View JSON
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `
+          </tbody>
+        </table>
+      `;
+
+      container.innerHTML = html;
+    }
+
+    function viewRow(idx) {
+      const row = allRecords[idx];
+      if (!row) return;
+      document.getElementById('modalTitle').innerText = `${currentModel} Record #${idx + 1}`;
+      document.getElementById('modalContent').innerText = JSON.stringify(row, null, 2);
+      document.getElementById('detailModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('detailModal').classList.add('hidden');
+    }
+
+    window.addEventListener('DOMContentLoaded', loadModels);
+  </script>
+</body>
+</html>
