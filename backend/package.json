@@ -4,7 +4,8 @@
   "description": "Express API that connects Cryptic to Clear to the Groq AI execution engine",
   "main": "src/server.js",
   "scripts": {
-    "start": "npx prisma db push --accept-data-loss && node src/server.js",
+    "start": "node src/server.js",
+    "db:push": "npx prisma db push --accept-data-loss",
     "dev": "nodemon src/server.js",
     "build": "npx prisma generate"
   },
