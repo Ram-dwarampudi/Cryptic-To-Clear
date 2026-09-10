@@ -701,7 +701,6 @@ export interface RegisterOptions {
   collegeName?: string;
   stream?: string;
   title?: string;
-  avatar?: string;
 }
 
 export async function registerUser(

@@ -62,7 +62,7 @@ exports.lookupStudent = (req, res) => {
  */
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, role = "student", rollNo, avatar } = req.body;
+    const { name, email, password, role = "student", rollNo } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -106,7 +106,6 @@ exports.register = async (req, res, next) => {
       stream: academicDetails.stream,
       batchYear: academicDetails.batchYear,
       graduationYear: academicDetails.graduationYear,
-      avatar: avatar ? String(avatar).trim() : null,
       provider: "local",
     });
 

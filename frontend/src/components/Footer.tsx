@@ -1,148 +1,139 @@
 "use client";
 
 import Link from "next/link";
-import { Code2, MessageSquare, Terminal, Sparkles, BookOpen } from "lucide-react";
+import { Code2, Globe, Mail, ArrowUpRight, MessageSquare, BookOpen, ShieldCheck } from "lucide-react";
+
+const FOOTER_COLUMNS = [
+  {
+    title: "Quick Links",
+    links: [
+      { label: "Compiler", href: "/compiler" },
+      { label: "Features", href: "/features" },
+      { label: "Interactive Debugger", href: "/compiler#debugger" },
+      { label: "Start Coding", href: "/compiler" },
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      { label: "Error Glossary", href: "/#docs" },
+      { label: "Language Specs", href: "/features#languages" },
+      { label: "AI Diagnostic Engine", href: "/about" },
+      { label: "Architecture Overview", href: "/about#architecture" },
+    ],
+  },
+  {
+    title: "Contact",
+    links: [
+      { label: "Contact Engineering", href: "/contact" },
+      { label: "Community Forum", href: "/contact#forum" },
+      { label: "Bug Bounty", href: "/contact#security" },
+      { label: "Feedback & Suggestions", href: "/contact" },
+    ],
+  },
+];
 
 export default function Footer() {
   return (
-    <footer className="relative border-t border-white/10 bg-[#050811] text-slate-400 font-mono text-xs">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 py-14">
-        <div className="grid grid-cols-2 md:grid-cols-12 gap-8 lg:gap-12">
+    <footer className="relative border-t border-[rgba(212,175,55,0.25)] bg-[rgba(7,11,20,0.85)]">
+      {/* Top subtle golden shimmer line */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37]/50 to-transparent" />
+
+      <div className="mx-auto max-w-7xl px-5 sm:px-8 py-16">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-12 gap-10">
           {/* Brand Column */}
-          <div className="col-span-2 md:col-span-5 space-y-3">
-            <Link href="/" className="flex items-center gap-2.5 text-white font-extrabold text-base tracking-wider">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+          <div className="lg:col-span-4 pr-0 lg:pr-6">
+            <Link href="/" className="flex items-center gap-3 group">
               <img
                 src="/logo-icon.png"
-                alt="Logo"
-                className="h-7 w-auto object-contain"
+                alt="Cryptic to Clear Logo"
+                className="h-10 sm:h-11 w-auto object-contain filter drop-shadow-[0_0_14px_rgba(255,255,255,0.25)]"
               />
-              <span>CRYPTIC <span className="text-[#D4AF37]">→</span> CLEAR</span>
+              <div className="flex flex-col justify-center leading-none">
+                <span className="font-logo-title font-bold text-[18px] tracking-[0.06em] text-[var(--ink)]">
+                  CRYPTIC
+                </span>
+                <span className="font-sans font-semibold text-[10px] tracking-[0.3em] text-[#E8C97A] mt-0.5">
+                  TO CLEAR
+                </span>
+              </div>
             </Link>
 
-            <p className="text-slate-400 text-sm max-w-sm leading-relaxed font-sans">
-              Understand errors. Fix code faster. An AI-powered compiler environment turning cryptic errors into plain-English clarity.
+            <p className="mt-4 text-sm text-[var(--ink-dim)] max-w-sm leading-relaxed font-normal">
+              A modern coding environment built with timeless aesthetics. Combining instant multi-language compilation with plain-English AI error clarity.
             </p>
 
-            <div className="pt-2 flex items-center gap-3 text-slate-400">
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noreferrer"
-                aria-label="GitHub Repository"
-                className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center hover:text-white transition-colors"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
-                </svg>
-              </a>
-              <Link
-                href="/doubts"
-                aria-label="Community Doubts Forum"
-                className="h-8 w-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center hover:text-white transition-colors"
-              >
-                <MessageSquare className="w-4 h-4" />
-              </Link>
+            <div className="mt-6 flex items-center gap-3">
+              {[
+                { icon: Code2, label: "Code Repository", href: "https://github.com" },
+                { icon: Globe, label: "Network Status", href: "#" },
+                { icon: Mail, label: "Direct Support", href: "/contact" },
+              ].map((item, i) => (
+                <a
+                  key={i}
+                  href={item.href}
+                  aria-label={item.label}
+                  className="h-9 w-9 flex items-center justify-center rounded-lg glass border border-[rgba(212,175,55,0.2)] text-[var(--ink-dim)] hover:text-[#E8C97A] hover:border-[rgba(212,175,55,0.5)] hover:shadow-[0_0_15px_rgba(212,175,55,0.25)] transition-all"
+                >
+                  <item.icon className="h-4 w-4" />
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Column: PRODUCT */}
-          <div className="col-span-1 md:col-span-2 space-y-3">
-            <h4 className="text-white font-bold uppercase tracking-wider text-[11px]">
-              Product
-            </h4>
-            <ul className="space-y-2 text-[12px]">
-              <li>
-                <Link href="/compiler" className="hover:text-[#E8C97A] transition-colors">
-                  Compiler
-                </Link>
-              </li>
-              <li>
-                <Link href="/features" className="hover:text-[#E8C97A] transition-colors">
-                  AI Debugger
-                </Link>
-              </li>
-              <li>
-                <Link href="/compiler?mode=learn" className="hover:text-[#E8C97A] transition-colors">
-                  Learning Mode
-                </Link>
-              </li>
-              <li>
-                <Link href="/interviews" className="hover:text-[#E8C97A] transition-colors">
-                  Interview Archive
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {/* Structured Columns separated by thin gold lines */}
+          <div className="lg:col-span-8 grid sm:grid-cols-3 gap-8">
+            {FOOTER_COLUMNS.map((col, idx) => (
+              <div
+                key={col.title}
+                className={`relative ${
+                  idx > 0 ? "lg:border-l lg:border-[rgba(212,175,55,0.15)] lg:pl-8" : ""
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <h4 className="font-serif font-bold text-[14px] tracking-wide text-[#E8C97A]">
+                    {col.title}
+                  </h4>
+                  <div className="h-px flex-1 bg-gradient-to-r from-[rgba(212,175,55,0.3)] to-transparent" />
+                </div>
 
-          {/* Column: RESOURCES */}
-          <div className="col-span-1 md:col-span-2 space-y-3">
-            <h4 className="text-white font-bold uppercase tracking-wider text-[11px]">
-              Resources
-            </h4>
-            <ul className="space-y-2 text-[12px]">
-              <li>
-                <Link href="/about" className="hover:text-[#E8C97A] transition-colors">
-                  Documentation
-                </Link>
-              </li>
-              <li>
-                <Link href="/features#languages" className="hover:text-[#E8C97A] transition-colors">
-                  Languages
-                </Link>
-              </li>
-              <li>
-                <Link href="/about#faq" className="hover:text-[#E8C97A] transition-colors">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link href="/about#architecture" className="hover:text-[#E8C97A] transition-colors">
-                  Architecture
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Column: COMMUNITY & LEGAL */}
-          <div className="col-span-2 md:col-span-3 space-y-3">
-            <h4 className="text-white font-bold uppercase tracking-wider text-[11px]">
-              Community
-            </h4>
-            <ul className="space-y-2 text-[12px]">
-              <li>
-                <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-[#E8C97A] transition-colors">
-                  GitHub
-                </a>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-[#E8C97A] transition-colors">
-                  Feedback &amp; Bug Reports
-                </Link>
-              </li>
-              <li>
-                <Link href="/doubts" className="hover:text-[#E8C97A] transition-colors">
-                  Doubt Community
-                </Link>
-              </li>
-              <li>
-                <Link href="/login" className="hover:text-[#E8C97A] transition-colors">
-                  Educator Portal
-                </Link>
-              </li>
-            </ul>
+                <ul className="space-y-2.5">
+                  {col.links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        className="group inline-flex items-center gap-1.5 text-sm text-[var(--ink-dim)] hover:text-[#f7f3eb] transition-all duration-200 transform hover:translate-x-1"
+                      >
+                        <span className="h-1 w-1 rounded-full bg-[rgba(212,175,55,0.4)] group-hover:bg-[#E8C97A] transition-colors" />
+                        <span className="group-hover:text-[#E8C97A] group-hover:drop-shadow-[0_0_8px_rgba(212,175,55,0.35)] transition-colors">
+                          {link.label}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Bottom copyright line */}
-        <div className="mt-12 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-500">
-          <p>&copy; {new Date().getFullYear()} Cryptic to Clear. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <Link href="/about" className="hover:text-slate-300">Privacy Notice</Link>
-            <span>•</span>
-            <Link href="/about" className="hover:text-slate-300">Terms of Use</Link>
-            <span>•</span>
-            <Link href="/contact" className="hover:text-slate-300">Security</Link>
+        {/* Bottom bar with thin gold line */}
+        <div className="mt-14 pt-6 border-t border-[rgba(212,175,55,0.18)] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-xs text-[var(--ink-faint)] font-mono">
+            &copy; {new Date().getFullYear()} Cryptic to Clear. Timeless craftsmanship.
+          </p>
+          <div className="flex items-center gap-6 text-xs text-[var(--ink-faint)] font-mono">
+            <Link href="/#privacy" className="hover:text-[#E8C97A] transition-colors">
+              Privacy Notice
+            </Link>
+            <span className="h-1 w-1 rounded-full bg-[rgba(212,175,55,0.4)]" />
+            <Link href="/#terms" className="hover:text-[#E8C97A] transition-colors">
+              Terms of Service
+            </Link>
+            <span className="h-1 w-1 rounded-full bg-[rgba(212,175,55,0.4)]" />
+            <Link href="/contact" className="hover:text-[#E8C97A] transition-colors">
+              Security
+            </Link>
           </div>
         </div>
       </div>

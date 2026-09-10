@@ -50,9 +50,9 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Cryptic to Clear — AI-Powered Compiler & Intelligent Debugger",
+  title: "Cryptic to Clear — Modern Coding Environment with Timeless Aesthetics",
   description:
-    "Turn cryptic compiler errors into explanations you can actually understand. AI-powered multi-language coding and instant error diagnostics.",
+    "Cryptic to Clear: A modern coding environment with timeless aesthetics that explains its own errors with clarity and elegance.",
   icons: {
     icon: "/logo-icon.png",
     shortcut: "/logo-icon.png",
