@@ -1472,6 +1472,7 @@ export interface LeaderboardStudent {
   leetcodeHandle?: string;
   codechefHandle?: string;
   codeforcesHandle?: string;
+  hackerrankHandle?: string;
   githubHandle?: string;
   createdAt?: string;
 }

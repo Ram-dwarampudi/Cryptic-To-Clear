@@ -120,7 +120,7 @@ export default function StudentProfileDashboard() {
       id: "77127a83-4add-435a-90f7-bf73471c23d2",
       name: "Ram Dwarampudi",
       email: "24pa1a5720@vishnu.edu.in",
-      avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=BitPulse",
+      avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=RoboForge",
       rollNo: "24PA1A5720",
       collegeName: "Vishnu Educational Society",
       stream: "Computer Science & Engineering",
@@ -131,30 +131,47 @@ export default function StudentProfileDashboard() {
     },
     {
       rank: 2,
-      id: "30743284-a08d-4236-b592-6d36213fadf5",
-      name: "Sai Katreddy",
-      email: "24pa1a5730@vishnu.edu.in",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=24pa1a5730%40vishnu.edu.in",
-      rollNo: "24PA1A5730",
+      id: "99a7bcf2-7c11-4924-b9e3-5e959ffa5ce3",
+      name: "Samrudh",
+      email: "24pa1a5713@vishnu.edu.in",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=24pa1a5713%40vishnu.edu.in",
+      rollNo: "24PA1A5713",
       collegeName: "Vishnu Educational Society",
-      stream: "Computer Science & Engineering",
-      overallScore: 68,
-      karmaPoints: 10,
-      leetcodeHandle: "saikatreddy",
-      createdAt: "2026-09-08T04:02:27.475Z",
+      stream: "Computer Science & Business Systems",
+      overallScore: 162,
+      karmaPoints: 0,
+      leetcodeHandle: "rupasamrudh",
+      createdAt: "2026-09-10T10:47:58.481Z",
     },
     {
       rank: 3,
-      id: "usr_praneetha",
+      id: "30743284-a08d-4236-b592-6d36213fadf5",
+      name: "Sai Katreddy",
+      email: "24pa1a5730@vishnu.edu.in",
+      avatar: "https://media.licdn.com/dms/image/v2/D5603AQE2SqPqvBSR-Q/profile-displayphoto-scale_200_200/B56ZwDPTSXK0AY-/0/1769580885033?e=2147483647&v=beta&t=49xdigAB6zIKnmrmLs3Mhze0n0hy39taFjPj_rACgCU",
+      rollNo: "24PA1A5730",
+      collegeName: "Vishnu Educational Society",
+      stream: "Computer Science & Business Systems",
+      overallScore: 68,
+      karmaPoints: 10,
+      leetcodeHandle: "vYeuVxyec7",
+      codechefHandle: "svkatreddy",
+      hackerrankHandle: "24pa1a5730",
+      githubHandle: "svkatreddy",
+      createdAt: "2026-09-08T04:02:27.475Z",
+    },
+    {
+      rank: 4,
+      id: "b8fc6314-a8a3-4544-b73e-811c3e90f289",
       name: "Praneetha",
       email: "24pa1a5757@vishnu.edu.in",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=24pa1a5757%40vishnu.edu.in",
+      avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=LinusDev-8",
       rollNo: "24PA1A5757",
       collegeName: "Vishnu Educational Society",
-      stream: "Computer Science & Engineering",
+      stream: "Computer Science & Business Systems",
       overallScore: 0,
       karmaPoints: 0,
-      createdAt: "2026-09-09T10:00:00.000Z",
+      createdAt: "2026-09-10T10:04:47.497Z",
     },
   ];
 
@@ -230,11 +247,24 @@ export default function StudentProfileDashboard() {
   const handleSaveAvatarOnly = async (avatarUrl: string) => {
     setActionLoading(true);
     try {
+      // Optimistically update AuthContext user, edit form, and leaderboard immediately
+      updateUser({ avatar: avatarUrl });
+      setEditForm((prev) => ({ ...prev, avatar: avatarUrl }));
+      setLeaderboard((prev) =>
+        prev.map((s) => {
+          const isThisUser =
+            s.id === user?.id ||
+            (s.email && user?.email && s.email.toLowerCase() === user.email.toLowerCase());
+          return isThisUser ? { ...s, avatar: avatarUrl } : s;
+        })
+      );
+
       const res = await updateStudentProfile({ avatar: avatarUrl }, token);
       if (res.success) {
-        updateUser({ avatar: avatarUrl });
-        setEditForm((prev) => ({ ...prev, avatar: avatarUrl }));
-        await loadDashboard();
+        if (res.user?.avatar) {
+          updateUser({ avatar: res.user.avatar });
+        }
+        await Promise.allSettled([loadDashboard(), loadLeaderboard()]);
         setIsAvatarModalOpen(false);
       } else {
         alert(res.message || "Failed to update avatar.");
@@ -252,6 +282,27 @@ export default function StudentProfileDashboard() {
     setActionLoading(true);
     setActionSuccess(null);
     try {
+      // Optimistically update leaderboard if avatar or name changed
+      if (editForm.avatar || editForm.name) {
+        setLeaderboard((prev) =>
+          prev.map((s) => {
+            const isThisUser =
+              s.id === user?.id ||
+              (s.email && user?.email && s.email.toLowerCase() === user.email.toLowerCase());
+            return isThisUser
+              ? {
+                  ...s,
+                  avatar: editForm.avatar || s.avatar,
+                  name: editForm.name || s.name,
+                  rollNo: editForm.rollNo || s.rollNo,
+                  collegeName: editForm.collegeName || s.collegeName,
+                  stream: editForm.stream || s.stream,
+                }
+              : s;
+          })
+        );
+      }
+
       const res = await updateStudentProfile(
         {
           ...editForm,
@@ -273,6 +324,7 @@ export default function StudentProfileDashboard() {
           setIsEditModalOpen(false);
           setActionSuccess(null);
           loadDashboard();
+          loadLeaderboard();
         }, 700);
       } else {
         alert(res.message || "Failed to update profile.");
@@ -1312,6 +1364,7 @@ export default function StudentProfileDashboard() {
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={
+                              (isUser && (editForm.avatar || user?.avatar)) ||
                               st.avatar ||
                               `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(st.email)}`
                             }
@@ -1424,6 +1477,7 @@ export default function StudentProfileDashboard() {
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={
+                                (isCurrentUser && (editForm.avatar || user?.avatar)) ||
                                 student.avatar ||
                                 `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(student.email)}`
                               }
