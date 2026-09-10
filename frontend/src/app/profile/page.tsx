@@ -235,6 +235,7 @@ export default function StudentProfileDashboard() {
 
   useEffect(() => {
     if (!authLoading && !user && !token) {
+      setDashboard(null);
       router.push("/login");
       return;
     }

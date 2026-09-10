@@ -18,7 +18,7 @@ interface AuthContextType {
   loginAsFacultyDemo: () => Promise<{ success: boolean; message?: string }>;
   loginWithGoogleAccount: (data: GoogleAuthPayload) => Promise<{ success: boolean; message?: string }>;
   register: (name: string, email: string, pass: string, options?: "student" | "faculty" | RegisterOptions) => Promise<{ success: boolean; message?: string }>;
-  logout: () => Promise<void>;
+  logout: (redirectTo?: string) => Promise<void>;
   continueAsGuest: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; message: string; demoNote?: string }>;
   updateUser: (updatedData: Partial<User>) => void;
@@ -142,14 +142,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { success: false, message: res.message || "Registration failed." };
   };
 
-  const logout = async () => {
-    await logoutUser();
+  const logout = async (redirectTo: string = "/login") => {
+    try {
+      await logoutUser();
+    } catch {
+      // ignore network errors
+    }
     setUser(null);
     setToken(null);
     setIsGuest(true);
     if (typeof window !== "undefined") {
       localStorage.removeItem("c2c_token");
       localStorage.setItem("c2c_guest", "true");
+      if (redirectTo) {
+        window.location.href = redirectTo;
+      }
     }
   };
 

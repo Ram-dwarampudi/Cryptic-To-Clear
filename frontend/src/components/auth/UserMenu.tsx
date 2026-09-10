@@ -101,9 +101,9 @@ export default function UserMenu() {
 
           <div className="pt-1 border-t border-[var(--border)]">
             <button
-              onClick={() => {
+              onClick={async () => {
                 setOpen(false);
-                logout();
+                await logout("/login");
               }}
               className="w-full flex items-center gap-2 px-3 py-2 text-xs font-mono text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
             >
