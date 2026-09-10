@@ -707,6 +707,7 @@ exports.getDashboard = async (req, res, next) => {
       },
       submissions,
       platforms,
+      leaderboard: await userModel.getLeaderboard(),
     });
   } catch (err) {
     next(err);

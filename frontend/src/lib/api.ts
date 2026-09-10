@@ -5,6 +5,16 @@ const DEFAULT_API_BASE_URL =
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
 
+export function getAuthHeaders(token?: string | null): Record<string, string> {
+  const headers: Record<string, string> = {};
+  const authToken =
+    token || (typeof window !== "undefined" ? localStorage.getItem("c2c_token") : null);
+  if (authToken) {
+    headers["Authorization"] = `Bearer ${authToken}`;
+  }
+  return headers;
+}
+
 export interface ExecuteRequest {
   language: string;
   sourceCode: string;
@@ -994,15 +1004,6 @@ export interface FacultySubscriptionData {
   features: string[];
 }
 
-const getAuthHeaders = (token?: string | null) => {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const savedToken = token || (typeof window !== "undefined" ? localStorage.getItem("c2c_token") : null);
-  if (savedToken) {
-    headers["Authorization"] = `Bearer ${savedToken}`;
-  }
-  return headers;
-};
-
 export async function fetchFacultyOverview(token?: string | null): Promise<{ success: boolean; data?: FacultyOverviewData; message?: string }> {
   try {
     const res = await fetch(`${API_BASE_URL}/api/faculty/overview`, {
@@ -1374,6 +1375,7 @@ export interface StudentDashboardData {
     tags?: Array<{ tag: string; count: number; color: string }>;
   };
   platforms: Record<string, { handle: string; connected: boolean; [key: string]: any }>;
+  leaderboard?: LeaderboardStudent[];
 }
 
 export async function fetchStudentDashboard(

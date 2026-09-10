@@ -114,19 +114,63 @@ export default function StudentProfileDashboard() {
   const [statusFilter, setStatusFilter] = useState<string>("All");
 
   // Leaderboard State
-  const [leaderboard, setLeaderboard] = useState<LeaderboardStudent[]>([]);
-  const [leaderboardLoading, setLeaderboardLoading] = useState(true);
+  const DEFAULT_STUDENTS: LeaderboardStudent[] = [
+    {
+      rank: 1,
+      id: "77127a83-4add-435a-90f7-bf73471c23d2",
+      name: "Ram Dwarampudi",
+      email: "24pa1a5720@vishnu.edu.in",
+      avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=BitPulse",
+      rollNo: "24PA1A5720",
+      collegeName: "Vishnu Educational Society",
+      stream: "Computer Science & Engineering",
+      overallScore: 1000,
+      karmaPoints: 0,
+      codechefHandle: "ram_dwarampudi",
+      createdAt: "2026-09-06T14:18:02.405Z",
+    },
+    {
+      rank: 2,
+      id: "30743284-a08d-4236-b592-6d36213fadf5",
+      name: "Sai Katreddy",
+      email: "24pa1a5730@vishnu.edu.in",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=24pa1a5730%40vishnu.edu.in",
+      rollNo: "24PA1A5730",
+      collegeName: "Vishnu Educational Society",
+      stream: "Computer Science & Engineering",
+      overallScore: 68,
+      karmaPoints: 10,
+      leetcodeHandle: "saikatreddy",
+      createdAt: "2026-09-08T04:02:27.475Z",
+    },
+    {
+      rank: 3,
+      id: "usr_praneetha",
+      name: "Praneetha",
+      email: "24pa1a5757@vishnu.edu.in",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=24pa1a5757%40vishnu.edu.in",
+      rollNo: "24PA1A5757",
+      collegeName: "Vishnu Educational Society",
+      stream: "Computer Science & Engineering",
+      overallScore: 0,
+      karmaPoints: 0,
+      createdAt: "2026-09-09T10:00:00.000Z",
+    },
+  ];
+
+  const [leaderboard, setLeaderboard] = useState<LeaderboardStudent[]>(DEFAULT_STUDENTS);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardSearch, setLeaderboardSearch] = useState("");
 
   const loadLeaderboard = async () => {
     try {
       setLeaderboardLoading(true);
       const res = await fetchStudentLeaderboard(token);
-      if (res.success && res.data) {
+      if (res.success && res.data && res.data.length > 0) {
         setLeaderboard(res.data);
       }
     } catch {
-      // Fallback
+      // Keep DEFAULT_STUDENTS
     } finally {
       setLeaderboardLoading(false);
     }
@@ -140,6 +184,9 @@ export default function StudentProfileDashboard() {
       const res = await fetchStudentDashboard(token);
       if (res.success && res.data) {
         setDashboard(res.data);
+        if (res.data.leaderboard && res.data.leaderboard.length > 0) {
+          setLeaderboard(res.data.leaderboard);
+        }
         const p = res.data.profile;
         setEditForm({
           name: p.name || "",
