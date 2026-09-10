@@ -21,6 +21,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   continueAsGuest: () => void;
   forgotPassword: (email: string) => Promise<{ success: boolean; message: string; demoNote?: string }>;
+  updateUser: (updatedData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -164,6 +165,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return requestForgotPassword(email);
   };
 
+  const updateUser = (updatedData: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...updatedData } : null));
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -182,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         continueAsGuest,
         forgotPassword,
+        updateUser,
       }}
     >
       {children}

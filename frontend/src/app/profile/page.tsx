@@ -43,11 +43,13 @@ import {
   ArrowUpRight,
   ShieldCheck,
   Compass,
+  Camera,
 } from "lucide-react";
+import AvatarPicker from "@/components/auth/AvatarPicker";
 
 export default function StudentProfileDashboard() {
   const router = useRouter();
-  const { user, token, loading: authLoading } = useAuth();
+  const { user, token, loading: authLoading, updateUser } = useAuth();
 
   const [dashboard, setDashboard] = useState<StudentDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -59,6 +61,7 @@ export default function StudentProfileDashboard() {
   // Modals
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
   const [codingChartType, setCodingChartType] = useState<"pie" | "bar">("pie");
   const [selectedPlatform, setSelectedPlatform] = useState<"leetcode" | "codeforces" | "codechef" | "hackerrank" | "github">("codechef");
   const [actionLoading, setActionLoading] = useState(false);
@@ -72,6 +75,7 @@ export default function StudentProfileDashboard() {
   // Edit Profile Form State
   const [editForm, setEditForm] = useState<{
     name: string;
+    avatar: string;
     bio: string;
     rollNo: string;
     collegeName: string;
@@ -80,6 +84,7 @@ export default function StudentProfileDashboard() {
     graduationYear: number | string;
   }>({
     name: "",
+    avatar: "",
     bio: "",
     rollNo: "",
     collegeName: "",
@@ -113,6 +118,7 @@ export default function StudentProfileDashboard() {
         const p = res.data.profile;
         setEditForm({
           name: p.name || "",
+          avatar: p.avatar || "",
           bio: p.bio || "",
           rollNo: p.rollNo || "",
           collegeName: p.collegeName || "",
@@ -128,7 +134,7 @@ export default function StudentProfileDashboard() {
           githubHandle: p.handles?.github || "",
         });
       } else {
-        setError(res.message || "Failed to load developer dashboard.");
+        setError(res.message || "Failed to load profile data.");
       }
     } catch {
       setError("Network error loading dashboard.");
@@ -138,14 +144,34 @@ export default function StudentProfileDashboard() {
   };
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push("/login?redirect=/profile");
+    if (!authLoading && !user && !token) {
+      router.push("/login");
       return;
     }
     if (user) {
       loadDashboard();
     }
   }, [user, authLoading, token, router]);
+
+  // Save Avatar Only
+  const handleSaveAvatarOnly = async (avatarUrl: string) => {
+    setActionLoading(true);
+    try {
+      const res = await updateStudentProfile({ avatar: avatarUrl }, token);
+      if (res.success) {
+        updateUser({ avatar: avatarUrl });
+        setEditForm((prev) => ({ ...prev, avatar: avatarUrl }));
+        await loadDashboard();
+        setIsAvatarModalOpen(false);
+      } else {
+        alert(res.message || "Failed to update avatar.");
+      }
+    } catch {
+      alert("Error updating avatar.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   // Save Profile
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -166,6 +192,9 @@ export default function StudentProfileDashboard() {
         token
       );
       if (res.success) {
+        if (editForm.avatar) {
+          updateUser({ avatar: editForm.avatar });
+        }
         setActionSuccess("Profile updated successfully!");
         setTimeout(() => {
           setIsEditModalOpen(false);
@@ -329,15 +358,32 @@ export default function StudentProfileDashboard() {
 
               {/* Profile Avatar & Names */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 mb-6">
-                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-[#D4AF37] via-[#9c784f] to-[#16213b] p-0.5 shadow-xl flex-shrink-0">
-                  <div className="h-full w-full rounded-[14px] bg-[#070b14] flex items-center justify-center text-3xl font-bold font-serif text-[#E8C97A] overflow-hidden">
-                    {p?.avatar ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.avatar} alt={p.name} className="h-full w-full object-cover" />
-                    ) : (
-                      p?.name?.charAt(0).toUpperCase() || "S"
-                    )}
+                <div
+                  className="relative group cursor-pointer"
+                  onClick={() => setIsAvatarModalOpen(true)}
+                  title="Click to change your avatar"
+                >
+                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-[#D4AF37] via-[#9c784f] to-[#16213b] p-0.5 shadow-xl flex-shrink-0">
+                    <div className="h-full w-full rounded-[14px] bg-[#070b14] flex items-center justify-center text-3xl font-bold font-serif text-[#E8C97A] overflow-hidden relative">
+                      {p?.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={p.avatar} alt={p.name} className="h-full w-full object-cover" />
+                      ) : (
+                        p?.name?.charAt(0).toUpperCase() || "S"
+                      )}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
+                        <Camera className="w-5 h-5 text-[#E8C97A]" />
+                        <span className="text-[9px] font-mono text-white mt-0.5 font-bold">Edit</span>
+                      </div>
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    className="absolute -bottom-1 -right-1 p-1.5 rounded-lg bg-[#D4AF37] text-black shadow-md hover:scale-110 transition-transform cursor-pointer"
+                    title="Change Avatar"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                  </button>
                 </div>
 
                 <div className="space-y-1">
@@ -1649,6 +1695,31 @@ export default function StudentProfileDashboard() {
               </div>
 
               <form onSubmit={handleSaveProfile} className="space-y-4 font-mono text-xs">
+                {/* Avatar Preview & Quick Change */}
+                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-black/40 border border-white/10">
+                  <div className="h-12 w-12 rounded-xl bg-[#070b14] border border-[#D4AF37]/30 flex items-center justify-center overflow-hidden shrink-0">
+                    {editForm.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={editForm.avatar} alt="Avatar Preview" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-xl font-bold font-serif text-[#E8C97A]">
+                        {editForm.name?.charAt(0).toUpperCase() || "S"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <span className="text-xs font-bold text-white block">Profile Avatar</span>
+                    <span className="text-[11px] text-[var(--ink-dim)] block mt-0.5">Customize your character or icon</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsAvatarModalOpen(true)}
+                    className="px-3 py-1.5 rounded-xl bg-[rgba(212,175,55,0.15)] hover:bg-[rgba(212,175,55,0.25)] border border-[rgba(212,175,55,0.35)] text-[#E8C97A] text-xs font-bold transition-all cursor-pointer shrink-0"
+                  >
+                    Change Avatar
+                  </button>
+                </div>
+
                 <div>
                   <label className="block text-[var(--ink-dim)] mb-1">Full Name</label>
                   <input
@@ -1985,6 +2056,43 @@ export default function StudentProfileDashboard() {
                   </>
                 );
               })()}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* =========================================================================
+          MODAL 3: AVATAR CUSTOMIZER MODAL
+         ========================================================================= */}
+      <AnimatePresence>
+        {isAvatarModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0b1120] border border-[rgba(212,175,55,0.35)] rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl relative space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <h3 className="text-base font-bold text-white font-display flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                  <span>Customize Avatar</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsAvatarModalOpen(false)}
+                  className="p-1 rounded-lg text-[var(--ink-dim)] hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <AvatarPicker
+                currentAvatar={editForm.avatar || p?.avatar || ""}
+                onSelect={handleSaveAvatarOnly}
+                onClose={() => setIsAvatarModalOpen(false)}
+                isSubmitting={actionLoading}
+              />
             </motion.div>
           </div>
         )}

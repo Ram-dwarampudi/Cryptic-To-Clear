@@ -21,7 +21,10 @@ import {
   Calendar,
   Briefcase,
   ShieldCheck,
+  Camera,
+  X,
 } from "lucide-react";
+import AvatarPicker from "./AvatarPicker";
 
 interface RegisterFormProps {
   onSwitchTab: (tab: "login") => void;
@@ -47,6 +50,8 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [avatar, setAvatar] = useState("");
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
 
   // Student specific
   const [rollNo, setRollNo] = useState("");
@@ -111,10 +116,12 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
               rollNo: facultyId.trim().toUpperCase() || "FAC-" + Math.floor(1000 + Math.random() * 9000),
               collegeName: collegeName.trim(),
               stream: department.trim(),
+              avatar: avatar || undefined,
             }
           : {
               role: "student" as const,
               rollNo: rollNo.trim().toUpperCase(),
+              avatar: avatar || undefined,
             };
 
       const res = await register(name.trim(), email.trim(), password, options);
@@ -324,6 +331,32 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
         </>
       )}
 
+      {/* Avatar Selection (Optional) */}
+      <div className="flex items-center justify-between p-2.5 rounded-xl bg-black/40 border border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-[#070b14] border border-[#D4AF37]/30 flex items-center justify-center overflow-hidden shrink-0">
+            {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatar} alt="Avatar" className="h-full w-full object-cover" />
+            ) : (
+              <UserIcon className="w-5 h-5 text-[#E8C97A]" />
+            )}
+          </div>
+          <div>
+            <span className="text-xs font-bold text-white block">Profile Avatar</span>
+            <span className="text-[10px] text-[var(--ink-faint)] block">Default or choose your character</span>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAvatarModal(true)}
+          className="px-2.5 py-1.5 rounded-lg bg-[rgba(212,175,55,0.15)] hover:bg-[rgba(212,175,55,0.25)] border border-[rgba(212,175,55,0.35)] text-[#E8C97A] text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1"
+        >
+          <Camera className="w-3 h-3" />
+          <span>{avatar ? "Change" : "Choose"}</span>
+        </button>
+      </div>
+
       {/* Name Input */}
       <div>
         <label htmlFor="register-name" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
@@ -456,6 +489,43 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
           Sign In
         </button>
       </p>
+
+      {/* Avatar Selection Dialog */}
+      <AnimatePresence>
+        {showAvatarModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#0b1120] border border-[rgba(212,175,55,0.35)] rounded-3xl p-6 max-w-lg w-full shadow-2xl relative space-y-4 text-left"
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <h3 className="text-base font-bold text-white font-display flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                  <span>Choose Your Avatar</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowAvatarModal(false)}
+                  className="p-1 rounded-lg text-[var(--ink-dim)] hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <AvatarPicker
+                currentAvatar={avatar}
+                onSelect={(selectedUrl) => {
+                  setAvatar(selectedUrl);
+                  setShowAvatarModal(false);
+                }}
+                onClose={() => setShowAvatarModal(false)}
+              />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </form>
   );
 }
