@@ -66,53 +66,57 @@ export default function StudentPublicProfileModal({
     }
 
     let isMounted = true;
+
+    // Immediately show baseline profile if initial student data is provided
+    if (initialStudent) {
+      setProfile({
+        id: initialStudent.id || studentId,
+        name: initialStudent.name || "Student",
+        email: initialStudent.email || "",
+        avatar: initialStudent.avatar,
+        rollNo: initialStudent.rollNo || "",
+        collegeName: initialStudent.collegeName || "Vishnu Educational Society",
+        stream: initialStudent.stream || "Computer Science",
+        karmaPoints: initialStudent.karmaPoints || 0,
+        overallScore: initialStudent.overallScore || 0,
+        rank: initialStudent.rank,
+        tier: (initialStudent.overallScore || 0) >= 1000 ? "Master" : (initialStudent.overallScore || 0) >= 800 ? "Expert" : "Novice",
+        tierColor: (initialStudent.overallScore || 0) >= 1000 ? "#f59e0b" : "#38bdf8",
+        handles: {
+          leetcode: initialStudent.leetcodeHandle || "",
+          codeforces: initialStudent.codeforcesHandle || "",
+          codechef: initialStudent.codechefHandle || "",
+          hackerrank: initialStudent.hackerrankHandle || "",
+          github: initialStudent.githubHandle || "",
+        },
+        platforms: {
+          leetcode: { connected: Boolean(initialStudent.leetcodeHandle), handle: initialStudent.leetcodeHandle },
+          codeforces: { connected: Boolean(initialStudent.codeforcesHandle), handle: initialStudent.codeforcesHandle },
+          codechef: { connected: Boolean(initialStudent.codechefHandle), handle: initialStudent.codechefHandle },
+          hackerrank: { connected: Boolean(initialStudent.hackerrankHandle), handle: initialStudent.hackerrankHandle },
+          github: { connected: Boolean(initialStudent.githubHandle), handle: initialStudent.githubHandle },
+        },
+        summary: {
+          problemsSolved: 0,
+          overallScore: initialStudent.overallScore || 0,
+        },
+      });
+    }
+
     const loadProfile = async () => {
-      setLoading(true);
+      setLoading(!initialStudent);
       try {
         const res = await fetchPublicStudentProfile(studentId, token);
         if (isMounted && res.success && res.profile) {
           setProfile(res.profile);
           setConnectionStatus(res.profile.connectionStatus || "NONE");
-        } else if (isMounted && initialStudent) {
-          // Fallback to initial student data
-          setProfile({
-            id: initialStudent.id,
-            name: initialStudent.name,
-            email: initialStudent.email,
-            avatar: initialStudent.avatar,
-            rollNo: initialStudent.rollNo,
-            collegeName: initialStudent.collegeName || "Vishnu Educational Society",
-            stream: initialStudent.stream,
-            karmaPoints: initialStudent.karmaPoints || 0,
-            overallScore: initialStudent.overallScore || 0,
-            rank: initialStudent.rank,
-            tier: (initialStudent.overallScore || 0) >= 1000 ? "Master" : (initialStudent.overallScore || 0) >= 800 ? "Expert" : "Novice",
-            tierColor: (initialStudent.overallScore || 0) >= 1000 ? "#f59e0b" : "#38bdf8",
-            handles: {
-              leetcode: initialStudent.leetcodeHandle,
-              codeforces: initialStudent.codeforcesHandle,
-              codechef: initialStudent.codechefHandle,
-              hackerrank: initialStudent.hackerrankHandle,
-              github: initialStudent.githubHandle,
-            },
-            platforms: {
-              leetcode: { connected: Boolean(initialStudent.leetcodeHandle), handle: initialStudent.leetcodeHandle },
-              codeforces: { connected: Boolean(initialStudent.codeforcesHandle), handle: initialStudent.codeforcesHandle },
-              codechef: { connected: Boolean(initialStudent.codechefHandle), handle: initialStudent.codechefHandle },
-              hackerrank: { connected: Boolean(initialStudent.hackerrankHandle), handle: initialStudent.hackerrankHandle },
-              github: { connected: Boolean(initialStudent.githubHandle), handle: initialStudent.githubHandle },
-            },
-            summary: {
-              problemsSolved: 0,
-              overallScore: initialStudent.overallScore || 0,
-            },
-          });
-          // Check connection status
+        } else if (isMounted && studentId) {
+          // Check connection status even on initialStudent fallback
           const statusRes = await getConnectionStatus(studentId, token);
-          if (isMounted) setConnectionStatus(statusRes.status);
+          if (isMounted && statusRes.status) setConnectionStatus(statusRes.status);
         }
       } catch {
-        // Ignore
+        // Fallback already rendered if initialStudent exists
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -340,66 +344,66 @@ export default function StudentPublicProfileModal({
             {/* Platform Badges Link Row */}
             <div className="mt-4 pt-3 border-t border-white/10 flex items-center gap-2 flex-wrap">
               <span className="text-[11px] font-mono text-gray-400 mr-1">Profiles:</span>
-              {profile?.handles.leetcode && (
+              {profile?.handles?.leetcode && (
                 <a
-                  href={`https://leetcode.com/u/${profile.handles.leetcode}`}
+                  href={`https://leetcode.com/u/${profile.handles?.leetcode}`}
                   target="_blank"
                   rel="noreferrer"
                   className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 text-xs font-mono border border-amber-500/20 transition flex items-center gap-1"
                 >
-                  <span>LC @{profile.handles.leetcode}</span>
+                  <span>LC @{profile.handles?.leetcode}</span>
                   <ExternalLink className="w-3 h-3 opacity-70" />
                 </a>
               )}
-              {profile?.handles.codechef && (
+              {profile?.handles?.codechef && (
                 <a
-                  href={`https://www.codechef.com/users/${profile.handles.codechef}`}
+                  href={`https://www.codechef.com/users/${profile.handles?.codechef}`}
                   target="_blank"
                   rel="noreferrer"
                   className="px-2.5 py-1 rounded-lg bg-amber-700/15 hover:bg-amber-700/25 text-amber-200 text-xs font-mono border border-amber-700/30 transition flex items-center gap-1"
                 >
-                  <span>CC @{profile.handles.codechef}</span>
+                  <span>CC @{profile.handles?.codechef}</span>
                   <ExternalLink className="w-3 h-3 opacity-70" />
                 </a>
               )}
-              {profile?.handles.codeforces && (
+              {profile?.handles?.codeforces && (
                 <a
-                  href={`https://codeforces.com/profile/${profile.handles.codeforces}`}
+                  href={`https://codeforces.com/profile/${profile.handles?.codeforces}`}
                   target="_blank"
                   rel="noreferrer"
                   className="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-300 text-xs font-mono border border-red-500/20 transition flex items-center gap-1"
                 >
-                  <span>CF @{profile.handles.codeforces}</span>
+                  <span>CF @{profile.handles?.codeforces}</span>
                   <ExternalLink className="w-3 h-3 opacity-70" />
                 </a>
               )}
-              {profile?.handles.hackerrank && (
+              {profile?.handles?.hackerrank && (
                 <a
-                  href={`https://www.hackerrank.com/profile/${profile.handles.hackerrank}`}
+                  href={`https://www.hackerrank.com/profile/${profile.handles?.hackerrank}`}
                   target="_blank"
                   rel="noreferrer"
                   className="px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs font-mono border border-emerald-500/20 transition flex items-center gap-1"
                 >
-                  <span>HR @{profile.handles.hackerrank}</span>
+                  <span>HR @{profile.handles?.hackerrank}</span>
                   <ExternalLink className="w-3 h-3 opacity-70" />
                 </a>
               )}
-              {profile?.handles.github && (
+              {profile?.handles?.github && (
                 <a
-                  href={`https://github.com/${profile.handles.github}`}
+                  href={`https://github.com/${profile.handles?.github}`}
                   target="_blank"
                   rel="noreferrer"
                   className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-gray-200 text-xs font-mono border border-white/15 transition flex items-center gap-1"
                 >
                   <Github className="w-3 h-3" />
-                  <span>@{profile.handles.github}</span>
+                  <span>@{profile.handles?.github}</span>
                   <ExternalLink className="w-3 h-3 opacity-70" />
                 </a>
               )}
-              {!profile?.handles.leetcode &&
-                !profile?.handles.codechef &&
-                !profile?.handles.codeforces &&
-                !profile?.handles.github && (
+              {!profile?.handles?.leetcode &&
+                !profile?.handles?.codechef &&
+                !profile?.handles?.codeforces &&
+                !profile?.handles?.github && (
                   <span className="text-xs text-gray-500 italic">No external platforms linked yet.</span>
                 )}
             </div>
@@ -473,7 +477,7 @@ export default function StudentPublicProfileModal({
                         <span>LeetCode</span>
                       </div>
                       <div className="text-lg font-bold text-white font-mono mt-1">
-                        {profile?.platforms?.leetcode?.totalSolved ?? (profile?.handles.leetcode ? "Synced" : "—")}
+                        {profile?.platforms?.leetcode?.totalSolved ?? (profile?.handles?.leetcode ? "Synced" : "—")}
                       </div>
                       <div className="text-[10px] text-gray-400 font-mono mt-0.5">
                         {profile?.platforms?.leetcode?.ranking ? `#${profile.platforms.leetcode.ranking}` : "Problems Solved"}
@@ -486,7 +490,7 @@ export default function StudentPublicProfileModal({
                         <span>CodeChef</span>
                       </div>
                       <div className="text-lg font-bold text-white font-mono mt-1">
-                        {profile?.platforms?.codechef?.rating ?? (profile?.handles.codechef ? "Active" : "—")}
+                        {profile?.platforms?.codechef?.rating ?? (profile?.handles?.codechef ? "Active" : "—")}
                       </div>
                       <div className="text-[10px] text-gray-400 font-mono mt-0.5">
                         {profile?.platforms?.codechef?.stars ? `${profile.platforms.codechef.stars} Stars` : "Rating"}
@@ -499,7 +503,7 @@ export default function StudentPublicProfileModal({
                         <span>GitHub</span>
                       </div>
                       <div className="text-lg font-bold text-white font-mono mt-1">
-                        {profile?.platforms?.github?.repos ?? (profile?.handles.github ? "Active" : "—")}
+                        {profile?.platforms?.github?.repos ?? (profile?.handles?.github ? "Active" : "—")}
                       </div>
                       <div className="text-[10px] text-gray-400 font-mono mt-0.5">Public Repositories</div>
                     </div>
