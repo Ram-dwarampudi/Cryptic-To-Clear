@@ -76,6 +76,10 @@ async function requestWithFallback({ model, messages, temperature, responseForma
           payload.max_tokens = maxTokens;
         }
 
+        if (provider.name.startsWith("groq")) {
+          payload.reasoning_format = "hidden";
+        }
+
         if (responseFormat) {
           if (
             provider.name.startsWith("groq") ||
@@ -962,162 +966,28 @@ function validateJavaCode(sourceCode) {
 }
 
 const EXECUTION_SYSTEM_PROMPT =
-  "You are a production-grade interactive compiler, interpreter, and execution engine that accurately simulates a real local terminal.\n\n" +
-
-  "Your responsibility is to compile (when applicable), execute, and return the exact execution result of the submitted program using the supplied stdin.\n" +
-  "Never repair, rewrite, optimize, or modify the user's source code.\n" +
-  "Behave exactly like a real compiler and runtime.\n\n" +
-
-  "==============================\n" +
-  "RESPONSE FORMAT\n" +
-  "==============================\n" +
-  "Return ONLY valid JSON.\n" +
-  "Do NOT return markdown.\n" +
-  "Do NOT explain anything.\n" +
-  "Do NOT wrap JSON inside code fences.\n\n" +
-
+  "You are a silent terminal execution simulator.\n" +
+  "Your job is to execute the submitted code using the supplied standard input (stdin) and return ONLY the raw console stdout in JSON format.\n\n" +
+  "CRITICAL RULES:\n" +
+  "1. Return ONLY valid JSON with keys: statusId, statusDescription, output, compileError, runtimeError, time, memory, isAccepted.\n" +
+  "2. NEVER explain anything. NEVER provide any commentary, tracing, reasoning, analysis, or step-by-step walkthrough.\n" +
+  "3. The 'output' field must contain ONLY what the code itself prints to the console stdout (prompt text, println/printf output, and user inputs on prompt lines).\n" +
+  "4. Under NO circumstances should 'output' contain phrases like 'Let\\'s trace', 'Scanner input', 'The provided stdin', 'According to the rules', or any source code lines.\n" +
+  "5. If the program asks for input via Scanner/input/cin/scanf and no more stdin values are available, terminate immediately with statusId=3 and leave 'output' containing only the prompt printed up to that point.\n" +
+  "6. If there is a compilation error, set statusId=6, statusDescription='Compilation Error', output='', and compileError='<realistic error>'.\n" +
+  "7. If there is a runtime error, set statusId=13, statusDescription='Runtime Error', output='<output before error>', and runtimeError='<realistic error>'.\n\n" +
+  "RESPONSE FORMAT (JSON ONLY):\n" +
   "{\n" +
   '  "statusId": 3,\n' +
   '  "statusDescription": "Success",\n' +
-  '  "output": "",\n' +
+  '  "output": "Exact raw stdout text here",\n' +
   '  "compileError": "",\n' +
   '  "runtimeError": "",\n' +
   '  "time": "0.05s",\n' +
   '  "memory": 8,\n' +
   '  "isAccepted": true\n' +
-  "}\n\n" +
+  "}";
 
-  "==============================\n" +
-  "COMPILATION RULES\n" +
-  "==============================\n" +
-
-  "Before execution, perform a strict compilation or syntax validation exactly as the corresponding language compiler/interpreter would.\n\n" +
-
-  "Detect, but do NOT repair:\n" +
-  "- Syntax errors\n" +
-  "- Missing semicolons\n" +
-  "- Missing brackets\n" +
-  "- Missing braces\n" +
-  "- Missing quotes\n" +
-  "- Invalid operators\n" +
-  "- Invalid declarations\n" +
-  "- Undefined variables (compile-time languages)\n" +
-  "- Type mismatch errors\n" +
-  "- Duplicate definitions\n" +
-  "- Missing imports/packages when required\n" +
-  "- Invalid language constructs\n\n" +
-
-  "If ANY compilation or syntax error exists:\n" +
-  "- DO NOT execute any code.\n" +
-  "- DO NOT attempt auto-correction.\n" +
-  "- Return:\n" +
-  'statusId = 6\n' +
-  'statusDescription = "Compilation Error"\n' +
-  'output = ""\n' +
-  'compileError = "<realistic compiler error with line number, column, and reason>"\n' +
-  'runtimeError = ""\n' +
-  'isAccepted = false\n\n' +
-
-  "==============================\n" +
-  "EXECUTION RULES\n" +
-  "==============================\n" +
-
-  "If compilation succeeds:\n" +
-  "- Execute exactly from the language entry point.\n" +
-  "- Preserve execution order.\n" +
-  "- Simulate a real runtime.\n" +
-  "- Respect variable mutations.\n" +
-  "- Respect loops.\n" +
-  "- Respect recursion.\n" +
-  "- Respect function calls.\n" +
-  "- Respect object state.\n" +
-  "- Respect exceptions.\n" +
-  "- Respect program termination.\n" +
-  "- Never invent output.\n\n" +
-
-  "Produce the exact stdout stream exactly as a terminal would display it.\n\n" +
-
-  "==============================\n" +
-  "STDIN & INPUT PROMPT RULES\n" +
-  "==============================\n" +
-
-  "CRITICAL REQUIREMENT:\n" +
-  "Any output statement or prompt string that occurs BEFORE an input statement (e.g., printf(\"Enter your name: \"), std::cout << \"Enter age: \", System.out.print(\"Enter city: \"), input(\"Enter username: \")) MUST BE INCLUDED IN THE 'output' FIELD IMMEDIATELY.\n\n" +
-
-  "When an input statement is encountered (including but not limited to scanf, getchar, fgets, cin, getline, Scanner, BufferedReader, input(), fmt.Scan, Console.ReadLine, readLine, stdin readers, etc.):\n\n" +
-
-  "1. If another stdin value exists:\n" +
-  "- Consume ONLY the next unused value.\n" +
-  "- Echo it in the terminal stream side-by-side directly after the prompt line (e.g., \"Enter your name: Alice\\n\" or \"Enter age: 25\\n\"). If no prompt text exists, output \"> value\".\n" +
-  "- Continue execution.\n\n" +
-
-  "2. If no stdin values remain:\n" +
-  "- Stop execution immediately at that input prompt.\n" +
-  "- Do NOT raise EOF.\n" +
-  "- Do NOT generate Runtime Error.\n" +
-  "- Do NOT invent input.\n" +
-  "- Include ALL preceding output and prompt text in the 'output' field.\n" +
-  "- Return:\n" +
-  'statusId = 3\n' +
-  'statusDescription = "Success"\n' +
-  'compileError = ""\n' +
-  'runtimeError = ""\n\n' +
-
-  "==============================\n" +
-  "RUNTIME ERRORS\n" +
-  "==============================\n" +
-
-  "If execution encounters a runtime error, stop immediately and return:\n\n" +
-  'statusId = 13\n' +
-  'statusDescription = "Runtime Error"\n' +
-  'output = "<stdout produced before failure>"\n' +
-  'compileError = ""\n' +
-  'runtimeError = "<realistic runtime error including language-specific message and line number when possible>"\n' +
-  'isAccepted = false\n\n' +
-
-  "Runtime errors include but are not limited to:\n" +
-  "- Division by zero\n" +
-  "- Null reference\n" +
-  "- Segmentation fault\n" +
-  "- Stack overflow\n" +
-  "- Array index out of bounds\n" +
-  "- Invalid pointer dereference\n" +
-  "- Arithmetic overflow when applicable\n" +
-  "- File access failures\n" +
-  "- Unhandled exceptions\n" +
-  "- Infinite recursion\n\n" +
-
-  "==============================\n" +
-  "OUTPUT RULES\n" +
-  "==============================\n" +
-
-  "Simulate stdout exactly.\n" +
-  "Preserve:\n" +
-  "- Spaces\n" +
-  "- Tabs\n" +
-  "- Blank lines\n" +
-  "- Newlines\n" +
-  "- Prompt text\n" +
-  "- Output ordering\n\n" +
-
-  "Do NOT:\n" +
-  "- Add explanations.\n" +
-  "- Add commentary.\n" +
-  "- Add debugging text.\n" +
-  "- Add markdown.\n" +
-  "- Summarize execution.\n\n" +
-
-  "==============================\n" +
-  "TIMING & MEMORY\n" +
-  "==============================\n" +
-
-  "Estimate realistic execution time and memory usage based on the program size, language, and execution path.\n\n" +
-
-  "==============================\n" +
-  "FINAL REQUIREMENT\n" +
-  "==============================\n" +
-
-  "Your entire response MUST be a single valid JSON object beginning with '{' and ending with '}'. No additional text is allowed.";
 function buildExecutionPrompt({ language, sourceCode, stdin }) {
   const hasStdin = typeof stdin === "string" && stdin.trim().length > 0;
   return `Target Language: ${language}
@@ -1127,45 +997,63 @@ ${sourceCode}
 Standard Input (stdin):
 ${hasStdin ? stdin : "[NO STDIN VALUES PROVIDED]"}
 
-CRITICAL OUTPUT INSTRUCTION FOR INPUT PROMPTS:
-If the source code calls an input function with a prompt string (such as input("Enter your username: "), printf("Enter name: "), cout << "Enter age: ", System.out.print("Enter city: ")), and no stdin is provided, you MUST include that prompt string in the "output" field!`;
+CRITICAL REQUIREMENT:
+Return ONLY the JSON object. The "output" property MUST contain ONLY the exact raw terminal stdout produced by this program. Do NOT include any explanations, tracing, or commentary.`;
 }
 
 function cleanTerminalOutput(raw) {
   if (!raw || typeof raw !== "string") return "";
-  const lines = raw.split("\n");
+  let text = raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+  // If text contains tracing '-> prints "..."' or prints with println, extract printed strings
+  if (/->\s*prints/i.test(text)) {
+    const prints = [];
+    const lines = text.split("\n");
+    for (const line of lines) {
+      const quoted = line.match(/->\s*prints\s*"([^"]+)"/i);
+      if (quoted) {
+        prints.push(quoted[1]);
+        continue;
+      }
+      const codePrint = line.match(/(?:System\.out\.print(?:ln)?|printf|cout\s*<<)\s*\(\s*"([^"]+)"\s*\)/i);
+      if (codePrint) {
+        prints.push(codePrint[1]);
+      }
+    }
+    if (prints.length > 0) {
+      return prints.join("\n");
+    }
+  }
+
+  const lines = text.split("\n");
   const cleaned = lines.filter((line) => {
     const t = line.trim();
-    if (!t) return true;
-    if (
-      t.startsWith("We ") ||
-      t.startsWith("Let's ") ||
-      t.startsWith("Given ") ||
-      t.startsWith("Process:") ||
-      t.startsWith("In this ") ||
-      t.startsWith("Note:") ||
-      t.startsWith("Since ") ||
-      t.startsWith("However,") ||
-      t.startsWith("First,")
-    ) {
-      if (
-        !t.includes("Enter ") &&
-        !t.includes("After ") &&
-        !t.includes("Output") &&
-        !t.includes(":") &&
-        !t.includes("=")
-      ) {
-        return false;
-      }
+    if (!t) return false;
+    // Strip conversational / chain-of-thought phrases
+    if (/^(the provided stdin|that's only|that is only|according to the rules|let's trace|let's see|we need to|note:|process:|explanation:|tracing|here is the output|output:)/i.test(t)) {
+      return false;
+    }
+    // Strip trace step numbers like "1. Scanner input = ...", "2. System.out.println..."
+    if (/^\d+\.\s*(scanner|system|int|float|double|char|boolean|string|let|var|const|def|public|private|#include|cin|cout|printf)/i.test(t)) {
+      return false;
+    }
+    // Strip source code statements leaked into terminal
+    if (/^(scanner\s+|system\.out|public\s+class|int\s+\w+\s*=|#include\s*<)/i.test(t)) {
+      return false;
+    }
+    // Strip rule repetition
+    if (/(stop execution immediately|return statusId|include all preceding output|with no runtime error)/i.test(t)) {
+      return false;
     }
     return true;
   });
+
   return cleaned.join("\n").trim();
 }
 
 function extractAndParseJSON(text) {
   if (!text || typeof text !== "string") return null;
-  let cleaned = text.trim();
+  let cleaned = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
   cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
   try {
     return JSON.parse(cleaned);
@@ -1420,7 +1308,7 @@ async function runCode({ language, sourceCode, stdin }) {
 
     const { content } = await requestWithFallback({
       temperature: 0.0,
-      maxTokens: 300,
+      maxTokens: 1500,
       messages: [
         { role: "system", content: EXECUTION_SYSTEM_PROMPT },
         { role: "user", content: userPrompt },
@@ -1431,10 +1319,21 @@ async function runCode({ language, sourceCode, stdin }) {
 
     let parsed = extractAndParseJSON(content);
     if (!parsed) {
-      parsed = {
-        output: (content || "").replace(/```json|```|\{|\}/g, "").trim(),
-        statusId: 3,
-      };
+      // If full JSON parsing failed, try to safely extract "output": "..." via regex
+      const outputMatch = (content || "").match(/"output"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+      if (outputMatch) {
+        try {
+          const extracted = JSON.parse(`"${outputMatch[1]}"`);
+          parsed = { output: extracted, statusId: 3 };
+        } catch {
+          parsed = { output: outputMatch[1], statusId: 3 };
+        }
+      } else {
+        parsed = {
+          output: "",
+          statusId: 3,
+        };
+      }
     }
 
     let rawOutput = parsed.output;
