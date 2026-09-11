@@ -15,6 +15,7 @@ import {
   ArrowLeftRight,
   Keyboard,
   Send,
+  BookOpen,
 } from "lucide-react";
 import LanguageDropdown from "./LanguageDropdown";
 import SettingsPanel from "./SettingsPanel";
@@ -26,9 +27,11 @@ interface ToolbarProps {
   language: string;
   onLanguageChange: (id: LanguageConfig["id"]) => void;
   allowedLanguages?: string[];
-  activeAssignment?: { id: string } | null;
+  activeAssignment?: any | null;
   onSubmitAssignment?: () => void;
   isSubmittingAssignment?: boolean;
+  onToggleProblemSpecs?: () => void;
+  isProblemSpecsOpen?: boolean;
   onRun: () => void;
   onCompile: () => void;
   onClear: () => void;
@@ -71,6 +74,8 @@ export default function Toolbar({
   activeAssignment,
   onSubmitAssignment,
   isSubmittingAssignment,
+  onToggleProblemSpecs,
+  isProblemSpecsOpen,
   onRun,
   onCompile,
   onClear,
@@ -209,69 +214,96 @@ export default function Toolbar({
 
       <div className="flex-1 min-w-2" />
 
-      <button
-        onClick={onAnalyze}
-        disabled={isAnalyzing}
-        title="Analyze code quality"
-        className="flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/20 hover:border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.12)] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 shrink-0 cursor-pointer"
-      >
-        {isAnalyzing ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-300" />
-        ) : (
-          <Gauge className="h-3.5 w-3.5 text-emerald-300" />
-        )}
-        Analyze
-      </button>
+      {/* Assignment Mode: Show Problem Specs Toggle & Hide All AI Tools */}
+      {activeAssignment ? (
+        <div className="flex items-center gap-2">
+          {onToggleProblemSpecs && (
+            <button
+              onClick={onToggleProblemSpecs}
+              title="Toggle Problem Statement & Instructions"
+              className={`flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-semibold transition-all shrink-0 cursor-pointer ${
+                isProblemSpecsOpen
+                  ? "bg-purple-500/20 text-purple-200 border border-purple-400/50 shadow-sm"
+                  : "bg-white/5 text-zinc-300 border border-zinc-700 hover:bg-white/10"
+              }`}
+            >
+              <BookOpen className="h-3.5 w-3.5 text-purple-400" />
+              <span>Problem Specs</span>
+            </button>
+          )}
 
-      <button
-        onClick={onDebug}
-        disabled={isDebugging}
-        title="Open Visual Debugger"
-        className="flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium text-amber-300 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 hover:border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.12)] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 shrink-0 cursor-pointer"
-      >
-        {isDebugging ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-300" />
-        ) : (
-          <Bug className="h-3.5 w-3.5 text-amber-300" />
-        )}
-        Debug
-      </button>
+          <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-[11px] font-mono font-semibold">
+            <span>Points: {activeAssignment.points || 100}</span>
+          </div>
+        </div>
+      ) : (
+        /* Regular Compiler Mode: Full Suite of AI Developer Tools */
+        <>
+          <button
+            onClick={onAnalyze}
+            disabled={isAnalyzing}
+            title="Analyze code quality"
+            className="flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 hover:bg-emerald-500/20 hover:border-emerald-400/50 shadow-[0_0_12px_rgba(16,185,129,0.12)] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 shrink-0 cursor-pointer"
+          >
+            {isAnalyzing ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-300" />
+            ) : (
+              <Gauge className="h-3.5 w-3.5 text-emerald-300" />
+            )}
+            Analyze
+          </button>
 
-      <button
-        onClick={onExplain}
-        disabled={isExplaining}
-        title="Learning Mode: explain this code"
-        className="flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium text-purple-300 bg-purple-500/10 border border-purple-500/25 hover:bg-purple-500/20 hover:border-purple-400/50 shadow-[0_0_12px_rgba(168,85,247,0.12)] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 shrink-0 cursor-pointer"
-      >
-        {isExplaining ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-300" />
-        ) : (
-          <GraduationCap className="h-3.5 w-3.5 text-purple-300" />
-        )}
-        Explain
-      </button>
+          <button
+            onClick={onDebug}
+            disabled={isDebugging}
+            title="Open Visual Debugger"
+            className="flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium text-amber-300 bg-amber-500/10 border border-amber-500/25 hover:bg-amber-500/20 hover:border-amber-400/50 shadow-[0_0_12px_rgba(245,158,11,0.12)] hover:shadow-[0_0_20px_rgba(245,158,11,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 shrink-0 cursor-pointer"
+          >
+            {isDebugging ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-amber-300" />
+            ) : (
+              <Bug className="h-3.5 w-3.5 text-amber-300" />
+            )}
+            Debug
+          </button>
 
-      <button
-        onClick={onConvert}
-        title="Convert to another language"
-        className="flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 hover:border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.12)] hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
-      >
-        <ArrowLeftRight className="h-3.5 w-3.5 text-cyan-300" />
-        Convert
-      </button>
+          <button
+            onClick={onExplain}
+            disabled={isExplaining}
+            title="Learning Mode: explain this code"
+            className="flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium text-purple-300 bg-purple-500/10 border border-purple-500/25 hover:bg-purple-500/20 hover:border-purple-400/50 shadow-[0_0_12px_rgba(168,85,247,0.12)] hover:shadow-[0_0_20px_rgba(168,85,247,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 shrink-0 cursor-pointer"
+          >
+            {isExplaining ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-300" />
+            ) : (
+              <GraduationCap className="h-3.5 w-3.5 text-purple-300" />
+            )}
+            Explain
+          </button>
 
-      <button
-        onClick={onToggleAIPanel}
-        title="Toggle AI Assistant panel"
-        className={`hidden md:flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium transition-all transform hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer ${
-          aiPanelOpen
-            ? "bg-indigo-500/20 text-indigo-300 border border-indigo-400/50 shadow-[0_0_15px_rgba(99,102,241,0.35)]"
-            : "bg-indigo-500/10 text-indigo-300/80 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300"
-        }`}
-      >
-        <PanelRight className="h-3.5 w-3.5" />
-        AI
-      </button>
+          <button
+            onClick={onConvert}
+            title="Convert to another language"
+            className="flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium text-cyan-300 bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 hover:border-cyan-400/50 shadow-[0_0_12px_rgba(6,182,212,0.12)] hover:shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
+          >
+            <ArrowLeftRight className="h-3.5 w-3.5 text-cyan-300" />
+            Convert
+          </button>
+
+          <button
+            onClick={onToggleAIPanel}
+            title="Toggle AI Assistant panel"
+            className={`hidden md:flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium transition-all transform hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer ${
+              aiPanelOpen
+                ? "bg-indigo-500/20 text-indigo-300 border border-indigo-400/50 shadow-[0_0_15px_rgba(99,102,241,0.35)]"
+                : "bg-indigo-500/10 text-indigo-300/80 border border-indigo-500/20 hover:bg-indigo-500/20 hover:text-indigo-300"
+            }`}
+          >
+            <PanelRight className="h-3.5 w-3.5" />
+            AI
+          </button>
+        </>
+      )}
 
       <button
         onClick={onShowShortcuts}

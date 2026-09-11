@@ -7,6 +7,7 @@ import { GripVertical, Bot, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Toolbar from "@/components/compiler/Toolbar";
 import BottomPanel, { BottomTab } from "@/components/compiler/BottomPanel";
+import AssignmentProblemPanel from "@/components/compiler/AssignmentProblemPanel";
 import { EditorSettings } from "@/components/compiler/CodeEditor";
 import { LANGUAGES, LanguageId, LanguageConfig, getLanguage } from "@/lib/languages";
 import { getStoredTheme, Theme } from "@/lib/theme";
@@ -227,6 +228,7 @@ export default function CompilerPage() {
   const [activeAssignment, setActiveAssignment] = useState<AssignmentItem | null>(null);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [isSubmittingAssignment, setIsSubmittingAssignment] = useState(false);
+  const [isProblemSpecsOpen, setIsProblemSpecsOpen] = useState(true);
   const [submissionResultModal, setSubmissionResultModal] = useState<{
     success: boolean;
     message: string;
@@ -253,11 +255,38 @@ export default function CompilerPage() {
 
   const handleSelectAssignment = useCallback((asg: AssignmentItem | null) => {
     setActiveAssignment(asg);
-    if (asg && asg.languageMode === "RESTRICTED" && asg.allowedLanguages && asg.allowedLanguages.length > 0) {
-      const allowedNorm = asg.allowedLanguages.map((l) => l.toLowerCase());
-      if (!allowedNorm.includes(language.toLowerCase())) {
-        setLanguage(allowedNorm[0]);
+    if (asg) {
+      setIsProblemSpecsOpen(true);
+      setAiPanelOpen(false);
+
+      if (asg.testCases && asg.testCases.length > 0) {
+        setTestCases(
+          asg.testCases.map((tc, idx) => ({
+            id: tc.id || `tc_${idx + 1}`,
+            input: tc.input || "",
+            expectedOutput: tc.expectedOutput || "",
+            isHidden: !!tc.isHidden,
+            explanation: tc.explanation || "",
+            status: "idle",
+            actualOutput: "",
+            error: "",
+            executionTime: "—",
+          }))
+        );
+      } else {
+        setTestCases([]);
       }
+
+      if (asg.languageMode === "RESTRICTED" && asg.allowedLanguages && asg.allowedLanguages.length > 0) {
+        const allowedNorm = asg.allowedLanguages.map((l) => l.toLowerCase());
+        if (!allowedNorm.includes(language.toLowerCase())) {
+          setLanguage(allowedNorm[0]);
+        }
+      }
+      setBottomTab("testcase");
+    } else {
+      setTestCases([]);
+      setBottomTab("terminal");
     }
   }, [language]);
 
@@ -266,46 +295,92 @@ export default function CompilerPage() {
     setIsSubmittingAssignment(true);
 
     const code = codeMap[language] || "";
-    // Execute code to get results
-    const execRes = await executeCode({
-      language,
-      sourceCode: code,
-      stdin: input,
-    });
+    const casesToEvaluate =
+      testCases.length > 0 ? testCases : activeAssignment.testCases || [];
 
-    const isSuccess = execRes.success && !execRes.compileError && execRes.statusId === 3;
-    const compileErr = execRes.success ? execRes.compileError : execRes.message;
-    const execTime = execRes.success ? formatTime(execRes.time) : "0 ms";
-    const subStatus = isSuccess ? "Success" : (execRes.success && execRes.compileError) ? "Compile Error" : "Execution Error";
-    const subScore = isSuccess ? 100 : (execRes.success && execRes.compileError) ? 50 : 60;
+    let passedCount = 0;
+    const totalCount = casesToEvaluate.length;
+    const updated = [...casesToEvaluate];
+
+    setBottomTab("result");
+
+    for (let i = 0; i < totalCount; i++) {
+      const tc = casesToEvaluate[i];
+      const execRes = await executeCode({
+        language,
+        sourceCode: code,
+        stdin: tc.input || "",
+      });
+
+      if (!execRes.success) {
+        updated[i] = {
+          ...tc,
+          status: "error",
+          actualOutput: "",
+          error: execRes.message || "Execution error",
+          executionTime: "0 ms",
+        };
+      } else {
+        const isOk = !execRes.compileError && !execRes.runtimeError;
+        const actual = (execRes.output || "").trim();
+        const expected = (tc.expectedOutput || "").trim();
+        const passed = isOk && actual === expected;
+
+        if (passed) passedCount++;
+
+        updated[i] = {
+          ...tc,
+          status: passed ? "pass" : isOk ? "fail" : "error",
+          actualOutput: execRes.output || "",
+          error: execRes.compileError || execRes.runtimeError || "",
+          executionTime: formatTime(execRes.time),
+        };
+      }
+    }
+
+    if (totalCount > 0) {
+      setTestCases(updated);
+    }
+
+    const maxPoints = activeAssignment.points || 100;
+    const computedScore =
+      totalCount > 0 ? Math.round((passedCount / totalCount) * maxPoints) : 100;
+    const subStatus =
+      totalCount === 0 || passedCount === totalCount
+        ? "Success"
+        : passedCount > 0
+        ? "Partial"
+        : "Wrong Answer";
 
     const res = await submitStudentAssignment(activeAssignment.id, {
       language,
       sourceCode: code,
       status: subStatus,
-      score: subScore,
-      executionTime: execTime,
-      compilerErrors: compileErr || "",
+      score: computedScore,
+      executionTime: "0.05s",
+      compilerErrors: "",
       aiExplanation: "",
     });
 
     if (res.success) {
       setSubmissionResultModal({
         success: true,
-        message: `Assignment "${activeAssignment.title}" submitted successfully using ${language.toUpperCase()}!`,
-        score: res.data?.score || subScore,
+        message: `Assignment "${activeAssignment.title}" submitted!\n${
+          totalCount > 0
+            ? `${passedCount} of ${totalCount} test cases passed. Score: ${computedScore}/${maxPoints}`
+            : `Score: ${computedScore}/${maxPoints}`
+        }`,
+        score: res.data?.score ?? computedScore,
       });
-      // Refresh assignments
       fetchStudentAssignments().then((r) => r.success && r.data && setStudentAssignments(r.data));
     } else {
-      // Backend Validation Rejection message (Requirement 6)
       setSubmissionResultModal({
         success: false,
         message: res.message || "Assignment submission rejected.",
       });
     }
     setIsSubmittingAssignment(false);
-  }, [activeAssignment, language, codeMap, input]);
+  }, [activeAssignment, language, codeMap, testCases]);
 
   // Load persisted editor state on mount (one-time hydration from
   // localStorage, which only exists client-side, so an effect is correct here)
@@ -884,14 +959,23 @@ export default function CompilerPage() {
   }, []);
 
   const handleRunTestCases = useCallback(
-    async (cases: any[]) => {
-      if (cases.length === 0) return;
-      setBottomTab("output");
+    async (casesToRun?: any[]) => {
+      const targetCases = casesToRun || testCases;
+      if (!targetCases || targetCases.length === 0) return;
+
+      const revealed = targetCases.filter((tc) => !tc.isHidden);
+      if (revealed.length === 0) return;
+
+      setBottomTab("result");
       setIsRunning(true);
       setStatus("running");
 
-      const updated = [...cases];
+      const code = codeMap[language] || "";
+      const updated = [...targetCases];
+
       for (let i = 0; i < updated.length; i++) {
+        if (updated[i].isHidden) continue;
+
         updated[i] = { ...updated[i], status: "running" };
         setTestCases([...updated]);
 
@@ -906,16 +990,19 @@ export default function CompilerPage() {
             ...updated[i],
             status: "error",
             actualOutput: "",
-            error: result.message,
+            error: result.message || "Execution error",
+            executionTime: "0 ms",
           };
         } else {
           const actual = (result.output || "").trim();
           const expected = (updated[i].expectedOutput || "").trim();
-          const passed = actual === expected;
+          const passed = !result.compileError && actual === expected;
           updated[i] = {
             ...updated[i],
             status: passed ? "pass" : "fail",
-            actualOutput: result.output,
+            actualOutput: result.output || "",
+            error: result.compileError || result.runtimeError || "",
+            executionTime: formatTime(result.time),
           };
         }
         setTestCases([...updated]);
@@ -923,7 +1010,7 @@ export default function CompilerPage() {
       setIsRunning(false);
       setStatus("success");
     },
-    [language, code]
+    [testCases, language, codeMap]
   );
 
   // Track active execution session inputs so previous run data is never saved or leaked across runs
@@ -1396,7 +1483,9 @@ export default function CompilerPage() {
           activeAssignment={activeAssignment}
           onSubmitAssignment={handleAssignmentSubmit}
           isSubmittingAssignment={isSubmittingAssignment}
-          onRun={handleRun}
+          onToggleProblemSpecs={() => setIsProblemSpecsOpen((v) => !v)}
+          isProblemSpecsOpen={isProblemSpecsOpen}
+          onRun={activeAssignment && testCases.length > 0 ? () => handleRunTestCases() : handleRun}
           onCompile={handleCompile}
           onClear={handleClear}
           onUpload={handleUpload}
@@ -1431,26 +1520,36 @@ export default function CompilerPage() {
           onShowShortcuts={() => setShortcutsOpen(true)}
         />
 
-        {/* Active Assignment Header (Requirement 4) */}
+        {/* Active Assignment Header */}
         {activeAssignment && (
-          <div className="px-4 py-2 bg-gradient-to-r from-purple-900/30 via-indigo-900/30 to-purple-900/30 border-b border-purple-500/20 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-            <div className="flex items-center gap-3">
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30">
+          <div className="px-4 py-2 bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-purple-900/40 border-b border-purple-500/25 flex flex-wrap items-center justify-between gap-3 text-xs font-mono shrink-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-sm">
                 Assignment Mode
               </span>
-              <h3 className="font-bold text-[var(--ink)]">{activeAssignment.title}</h3>
-              <span className="text-[var(--ink-dim)]">|</span>
+              <h3 className="font-bold text-zinc-100">{activeAssignment.title}</h3>
+              <span className="text-zinc-600">|</span>
+              <span className="text-zinc-400">Class: <strong className="text-purple-300 font-semibold">{activeAssignment.className || "Class Section"}</strong></span>
+              <span className="text-zinc-600">|</span>
+              <span className="text-zinc-400">Points: <strong className="text-amber-300 font-semibold">{activeAssignment.points || 100} pts</strong></span>
+              <span className="text-zinc-600">|</span>
               <div className="flex items-center gap-1">
-                <span className="text-[var(--ink-dim)]">Allowed Languages:</span>
+                <span className="text-zinc-400">Allowed Languages:</span>
                 <strong className={activeAssignment.languageMode === "RESTRICTED" ? "text-amber-300" : "text-emerald-300"}>
-                  {activeAssignment.languageMode === "RESTRICTED" && activeAssignment.allowedLanguages.length > 0
+                  {activeAssignment.languageMode === "RESTRICTED" && activeAssignment.allowedLanguages?.length > 0
                     ? activeAssignment.allowedLanguages.map((l) => (l === "cpp" ? "C++" : l.toUpperCase())).join(", ")
                     : "Any Supported Language"}
                 </strong>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsProblemSpecsOpen((v) => !v)}
+                className="flex items-center gap-1 text-[11px] text-purple-300 hover:text-purple-200 cursor-pointer font-bold"
+              >
+                <span>{isProblemSpecsOpen ? "Hide Problem" : "Show Problem"}</span>
+              </button>
               <button
                 onClick={() => setShowAssignmentModal(true)}
                 className="text-[11px] text-[var(--syn-keyword)] hover:underline cursor-pointer"
@@ -1458,7 +1557,11 @@ export default function CompilerPage() {
                 Change Assignment
               </button>
               <button
-                onClick={() => setActiveAssignment(null)}
+                onClick={() => {
+                  setActiveAssignment(null);
+                  setTestCases([]);
+                  setBottomTab("terminal");
+                }}
                 className="text-[11px] text-rose-400 hover:underline cursor-pointer"
               >
                 Exit
@@ -1468,6 +1571,15 @@ export default function CompilerPage() {
         )}
 
         <div className="flex flex-1 min-h-0">
+          {/* Assignment Problem Statement & Specs Panel */}
+          {activeAssignment && (
+            <AssignmentProblemPanel
+              assignment={activeAssignment}
+              isOpen={isProblemSpecsOpen}
+              onToggle={() => setIsProblemSpecsOpen((v) => !v)}
+            />
+          )}
+
           {/* Editor + bottom panel */}
           <div className="flex flex-col flex-1 min-w-0">
             <div className="flex-1 min-h-0">
@@ -1486,13 +1598,15 @@ export default function CompilerPage() {
                     ? trace.steps[debugStepIndex]?.line ?? null
                     : null
                 }
-                onRun={handleRun}
+                onRun={activeAssignment && testCases.length > 0 ? () => handleRunTestCases() : handleRun}
                 onCompile={handleCompile}
                 onDownloadCode={handleDownloadCode}
-                onToggleAIPanel={() => setAiPanelOpen((v) => !v)}
+                onToggleAIPanel={() => !activeAssignment && setAiPanelOpen((v) => !v)}
                 onFocusAIChat={() => {
-                  setAiPanelOpen(true);
-                  setTimeout(() => document.getElementById("ai-chat-input")?.focus(), 60);
+                  if (!activeAssignment) {
+                    setAiPanelOpen(true);
+                    setTimeout(() => document.getElementById("ai-chat-input")?.focus(), 60);
+                  }
                 }}
                 onShowShortcuts={() => setShortcutsOpen(true)}
               />
@@ -1519,8 +1633,12 @@ export default function CompilerPage() {
                 onTabChange={setBottomTab}
                 executionTime={executionTime}
                 memoryUsage={memoryUsage}
+                isAssignmentMode={!!activeAssignment}
+                testCases={testCases}
+                onRunTestCases={() => handleRunTestCases()}
+                isRunningTestCases={isRunning && bottomTab === "result"}
                 onTriggerAiExplain={() => {
-                  if (errors) {
+                  if (!activeAssignment && errors) {
                     void triggerAIExplain(errors, language, code);
                   }
                 }}
@@ -1532,8 +1650,8 @@ export default function CompilerPage() {
             </div>
           </div>
 
-          {/* Resizable AI Assistant Panel — desktop (Docked Mode) */}
-          {aiPanelOpen && !aiFloating && (
+          {/* Resizable AI Assistant Panel — desktop (Docked Mode) : ONLY rendered when NOT in assignment */}
+          {!activeAssignment && aiPanelOpen && !aiFloating && (
             <>
               {/* Drag handle between Code Editor/Output & AI Panel */}
               <div
@@ -1573,9 +1691,9 @@ export default function CompilerPage() {
         </div>
       </div>
 
-      {/* Floating Movable Pop-up App Window for AI Explanations */}
+      {/* Floating Movable Pop-up App Window for AI Explanations : ONLY rendered when NOT in assignment */}
       <AnimatePresence>
-        {aiPanelOpen && aiFloating && (
+        {!activeAssignment && aiPanelOpen && aiFloating && (
           <motion.div
             drag
             dragMomentum={false}
