@@ -37,6 +37,7 @@ exports.updateProfile = async (req, res, next) => {
       name,
       avatar,
       bio,
+      title,
       rollNo,
       collegeName,
       stream,
@@ -58,6 +59,7 @@ exports.updateProfile = async (req, res, next) => {
     if (name !== undefined) updateData.name = name.trim();
     if (avatar !== undefined) updateData.avatar = avatar;
     if (bio !== undefined) updateData.bio = bio;
+    if (title !== undefined) updateData.title = title.trim();
     if (rollNo !== undefined) updateData.rollNo = rollNo;
     if (collegeName !== undefined) updateData.collegeName = collegeName;
     if (stream !== undefined) updateData.stream = stream;

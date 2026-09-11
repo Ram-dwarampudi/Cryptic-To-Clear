@@ -265,6 +265,10 @@ export default function StudentProfileDashboard() {
       return;
     }
     if (user) {
+      if (user.role === "faculty" || user.isDemoAccount) {
+        router.replace("/faculty");
+        return;
+      }
       loadDashboard();
       loadLeaderboard();
     }

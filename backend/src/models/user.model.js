@@ -124,6 +124,7 @@ class UserModel {
       departmentId: dbUser.departmentId,
       department: dbUser.department ? dbUser.department.name : null,
       plan: (dbUser.role || "").toUpperCase() === "FACULTY" ? "enterprise" : "free",
+      title: dbUser.title || (String(dbUser.role || "").toLowerCase() === "faculty" ? "Professor of CS" : null),
       subscriptionStatus: "active",
       subscriptionExpiry: null,
       credits: (dbUser.role || "").toUpperCase() === "FACULTY" ? 10000 : 100,
@@ -225,12 +226,14 @@ class UserModel {
 
     if (prisma) {
       try {
+        const { title, ...prismaData } = updateData;
         const dbUser = await prisma.user.update({
           where: { id },
-          data: updateData,
+          data: prismaData,
           include: { university: true, department: true },
         });
         const userObj = this._formatUser(dbUser);
+        if (title !== undefined) userObj.title = title;
         this.users.set(id, userObj);
         return userObj;
       } catch (err) {

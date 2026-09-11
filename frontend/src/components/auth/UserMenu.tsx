@@ -61,14 +61,27 @@ export default function UserMenu() {
           </div>
 
           <div className="py-1">
-            <Link
-              href="/profile"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-3 py-2 text-xs font-mono text-[#E8C97A] hover:bg-[var(--border)] rounded-lg transition-colors font-semibold"
-            >
-              <UserIcon className="w-4 h-4 text-[#D4AF37]" />
-              <span>Student Profile</span>
-            </Link>
+            {!isFaculty && (
+              <Link
+                href="/profile"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-xs font-mono text-[#E8C97A] hover:bg-[var(--border)] rounded-lg transition-colors font-semibold"
+              >
+                <UserIcon className="w-4 h-4 text-[#D4AF37]" />
+                <span>Student Profile</span>
+              </Link>
+            )}
+
+            {isFaculty && (
+              <Link
+                href="/faculty"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-xs font-mono text-purple-300 hover:bg-purple-500/15 rounded-lg transition-colors font-bold"
+              >
+                <GraduationCap className="w-4 h-4 text-purple-400" />
+                <span>Faculty Dashboard</span>
+              </Link>
+            )}
 
             <Link
               href="/compiler"
@@ -78,25 +91,6 @@ export default function UserMenu() {
               <LayoutDashboard className="w-4 h-4 text-[var(--syn-keyword)]" />
               <span>Compiler Workspace</span>
             </Link>
-
-            {isFaculty && (
-              <Link
-                href="/faculty"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-xs font-mono text-[var(--syn-keyword)] hover:bg-purple-500/10 rounded-lg transition-colors font-bold"
-              >
-                <GraduationCap className="w-4 h-4 text-[var(--syn-keyword)]" />
-                <span>Faculty Dashboard</span>
-              </Link>
-            )}
-
-            <div className="flex items-center justify-between px-3 py-2 text-xs font-mono text-[var(--ink-dim)] hover:bg-[var(--border)] rounded-lg">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[var(--syn-string)]" />
-                <span>AI Credits</span>
-              </div>
-              <span className="text-[11px] font-bold text-[var(--syn-string)]">{user.credits}</span>
-            </div>
           </div>
 
           <div className="pt-1 border-t border-[var(--border)]">

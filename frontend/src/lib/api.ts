@@ -604,6 +604,10 @@ export interface User {
   university?: string;
   department?: string;
   title?: string;
+  bio?: string;
+  collegeName?: string;
+  stream?: string;
+  rollNo?: string;
   isDemoAccount?: boolean;
   plan: "free" | "pro" | "team" | "enterprise";
   subscriptionStatus: "active" | "inactive" | "trialing" | "canceled";
@@ -1401,6 +1405,7 @@ export async function updateStudentProfile(
     name?: string;
     avatar?: string;
     bio?: string;
+    title?: string;
     rollNo?: string;
     collegeName?: string;
     stream?: string;
