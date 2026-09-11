@@ -1,3 +1,7 @@
+const path = require("path");
+// Always resolve backend/.env and root .env regardless of where the node process was launched
+require("dotenv").config({ path: path.resolve(__dirname, "../../.env"), override: true });
+require("dotenv").config({ path: path.resolve(__dirname, "../../../.env"), override: true });
 require("dotenv").config({ override: true });
 
 const parseCorsOrigins = (value) => {
