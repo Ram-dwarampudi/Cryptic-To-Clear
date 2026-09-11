@@ -18,6 +18,9 @@ const historyRoutes = require("../history/history.routes");
 const projectsRoutes = require("../projects/projects.routes");
 const interviewsRoutes = require("../interviews/interviews.routes");
 const doubtsRoutes = require("../doubts/doubts.routes");
+const connectionsRoutes = require("../connections/connections.routes");
+const messagesRoutes = require("../messages/messages.routes");
+const notificationsRoutes = require("../notifications/notifications.routes");
 
 const router = express.Router();
 
@@ -38,5 +41,8 @@ router.use("/history", historyRoutes);
 router.use("/projects", projectsRoutes);
 router.use("/interviews", interviewsRoutes);
 router.use("/doubts", doubtsRoutes);
+router.use("/connections", connectionsRoutes);
+router.use("/messages", messagesRoutes);
+router.use("/notifications", notificationsRoutes);
 
 module.exports = router;

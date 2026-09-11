@@ -50,8 +50,16 @@ import {
   Medal,
   Crown,
   UserCheck,
+  Users,
+  MessageSquare,
+  UserPlus,
 } from "lucide-react";
 import AvatarPicker from "@/components/auth/AvatarPicker";
+import StudentPublicProfileModal from "@/components/social/StudentPublicProfileModal";
+import DirectMessageDrawer from "@/components/social/DirectMessageDrawer";
+import NotificationsDropdown from "@/components/social/NotificationsDropdown";
+import ConnectionsModal from "@/components/social/ConnectionsModal";
+import StudentSearchBar from "@/components/social/StudentSearchBar";
 
 export default function StudentProfileDashboard() {
   const router = useRouter();
@@ -73,6 +81,23 @@ export default function StudentProfileDashboard() {
   const [selectedPlatform, setSelectedPlatform] = useState<"leetcode" | "codeforces" | "codechef" | "hackerrank" | "github">("codechef");
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // Social & Community States
+  const [selectedStudentForProfile, setSelectedStudentForProfile] = useState<{ id: string; student?: any } | null>(null);
+  const [isPublicProfileModalOpen, setIsPublicProfileModalOpen] = useState(false);
+  const [selectedPeerForMessage, setSelectedPeerForMessage] = useState<any | null>(null);
+  const [isMessageDrawerOpen, setIsMessageDrawerOpen] = useState(false);
+  const [isConnectionsModalOpen, setIsConnectionsModalOpen] = useState(false);
+
+  const handleOpenStudentProfile = (studentId: string, initialData?: any) => {
+    setSelectedStudentForProfile({ id: studentId, student: initialData });
+    setIsPublicProfileModalOpen(true);
+  };
+
+  const handleOpenMessage = (peer: any) => {
+    setSelectedPeerForMessage(peer);
+    setIsMessageDrawerOpen(true);
+  };
 
   const openPlatformModal = (platform: "leetcode" | "codeforces" | "codechef" | "hackerrank" | "github") => {
     setSelectedPlatform(platform);
@@ -486,6 +511,39 @@ export default function StudentProfileDashboard() {
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 pb-20 space-y-10">
+        {/* =========================================================================
+            STUDENT COMMUNITY & DISCOVERY ACTION DECK
+           ========================================================================= */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 glass-strong p-4 rounded-3xl border border-white/10 shadow-2xl">
+          {/* Search Bar */}
+          <div className="w-full sm:flex-1">
+            <StudentSearchBar
+              token={token}
+              currentUserId={user?.id}
+              localStudents={leaderboard}
+              onOpenProfile={handleOpenStudentProfile}
+              onOpenMessage={handleOpenMessage}
+            />
+          </div>
+
+          {/* Network & Notifications Controls */}
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <button
+              onClick={() => setIsConnectionsModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-xs font-mono text-gray-300 hover:text-white transition-all cursor-pointer shadow-sm hover:border-[#D4AF37]/30"
+              title="View your campus network & connection requests"
+            >
+              <Users className="w-4 h-4 text-[#D4AF37]" />
+              <span>My Network</span>
+            </button>
+
+            <NotificationsDropdown
+              token={token}
+              onOpenMessage={handleOpenMessage}
+              onConnectionAccepted={loadLeaderboard}
+            />
+          </div>
+        </div>
         {/* =========================================================================
             SECTION 1: HERO COMMAND DECK (Identity + Coding Performance Stats)
            ========================================================================= */}

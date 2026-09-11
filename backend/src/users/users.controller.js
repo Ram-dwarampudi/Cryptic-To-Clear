@@ -1,13 +1,12 @@
 const userModel = require("../models/user.model");
 const facultyModel = require("../models/faculty.model");
+const connectionsModel = require("../connections/connections.model");
 let prisma = null;
 try {
   prisma = require("../config/db");
 } catch {
   console.warn("Prisma not loaded in users.controller");
 }
-
-
 
 /**
  * @route GET /api/users/profile
@@ -833,6 +832,119 @@ exports.getLeaderboard = async (req, res, next) => {
       success: true,
       data: students,
       count: students.length,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @route GET /api/users/search
+ * @desc Search students by name, email, rollNo, handles, college, stream
+ */
+exports.searchStudents = async (req, res, next) => {
+  try {
+    const q = req.query.q || "";
+    if (!q.trim()) {
+      return res.status(200).json({ success: true, data: [] });
+    }
+    const students = await userModel.searchStudents(q);
+    return res.status(200).json({
+      success: true,
+      data: students,
+      count: students.length,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * @route GET /api/users/:id/public-profile
+ * @desc Get LinkedIn-style public student profile
+ */
+exports.getPublicProfile = async (req, res, next) => {
+  try {
+    const targetUserId = req.params.id;
+    const currentUserId = req.user?.id || null;
+
+    const user = await userModel.findById(targetUserId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Student profile not found." });
+    }
+
+    const leaderboard = await userModel.getLeaderboard();
+    const rankIndex = leaderboard.findIndex((s) => s.id === user.id);
+    const rank = rankIndex !== -1 ? rankIndex + 1 : null;
+
+    let stats = user.externalStats;
+    if (typeof stats === "string") {
+      try {
+        stats = JSON.parse(stats);
+      } catch {
+        stats = null;
+      }
+    }
+
+    const overallScore = user.overallScore || stats?.summary?.overallScore || 0;
+    const tierInfo = getTierInfo(overallScore);
+
+    let connectionStatus = "SELF";
+    if (currentUserId && currentUserId !== user.id) {
+      connectionStatus = await connectionsModel.getConnectionStatus(currentUserId, user.id);
+    }
+
+    let assignments = [];
+    try {
+      assignments = facultyModel.getStudentAssignments(user.id) || [];
+    } catch {
+      assignments = [];
+    }
+
+    const publicProfile = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+      rollNo: user.rollNo || "",
+      bio: user.bio || "",
+      collegeName: user.collegeName || "Vishnu Educational Society",
+      stream: user.stream || "",
+      primaryLanguage: user.primaryLanguage || "",
+      graduationYear: user.graduationYear || null,
+      karmaPoints: user.karmaPoints || 0,
+      overallScore,
+      rank,
+      tier: tierInfo.tier,
+      tierColor: tierInfo.color,
+      connectionStatus,
+      handles: {
+        leetcode: user.leetcodeHandle || "",
+        codeforces: user.codeforcesHandle || "",
+        codechef: user.codechefHandle || "",
+        hackerrank: user.hackerrankHandle || "",
+        github: user.githubHandle || "",
+      },
+      platforms: stats?.platforms || {
+        leetcode: { connected: Boolean(user.leetcodeHandle), handle: user.leetcodeHandle, totalSolved: 0 },
+        codeforces: { connected: Boolean(user.codeforcesHandle), handle: user.codeforcesHandle, rating: null, totalSolved: 0 },
+        codechef: { connected: Boolean(user.codechefHandle), handle: user.codechefHandle, rating: null, totalSolved: 0 },
+        hackerrank: { connected: Boolean(user.hackerrankHandle), handle: user.hackerrankHandle, totalSolved: 0 },
+        github: { connected: Boolean(user.githubHandle), handle: user.githubHandle, repos: 0 },
+      },
+      summary: stats?.summary || {
+        problemsSolved: 0,
+        overallScore,
+      },
+      coursework: {
+        totalAssignments: assignments.length,
+        submittedAssignments: assignments.filter((a) => a.submitted).length,
+      },
+    };
+
+    return res.status(200).json({
+      success: true,
+      profile: publicProfile,
     });
   } catch (err) {
     next(err);

@@ -81,6 +81,13 @@ model User {
   doubts       Doubt[]
   answers      DoubtAnswer[]
   upvotes      DoubtUpvote[]
+
+  // Social & Networking Relations
+  sentConnections     Connection[]    @relation("SentConnections")
+  receivedConnections Connection[]    @relation("ReceivedConnections")
+  sentMessages        DirectMessage[] @relation("SentMessages")
+  receivedMessages    DirectMessage[] @relation("ReceivedMessages")
+  notifications       Notification[]  @relation("UserNotifications")
 }
 
 model InterviewExperience {
@@ -172,4 +179,41 @@ model DoubtUpvote {
   createdAt DateTime @default(now())
 
   @@unique([userId, doubtId])
+}
+
+model Connection {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("SentConnections", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedConnections", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([senderId, receiverId])
+}
+
+model DirectMessage {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  content    String
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  actorId   String?
+  type      String   // CONNECTION_REQUEST, CONNECTION_ACCEPTED, MESSAGE, LEADERBOARD, SYSTEM
+  title     String
+  message   String
+  data      String?  // JSON string
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

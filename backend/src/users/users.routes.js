@@ -4,8 +4,10 @@ const { requireAuth } = require("../auth/middleware/auth.middleware");
 
 const router = express.Router();
 
-// Public / student accessible leaderboard
+// Public / student accessible leaderboard & search
 router.get("/leaderboard", usersController.getLeaderboard);
+router.get("/search", usersController.searchStudents);
+router.get("/:id/public-profile", usersController.getPublicProfile);
 
 router.use(requireAuth);
 router.get("/profile", usersController.getProfile);

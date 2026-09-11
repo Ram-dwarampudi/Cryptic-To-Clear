@@ -1496,3 +1496,341 @@ export async function fetchStudentLeaderboard(
   }
 }
 
+export interface PublicStudentProfile {
+  id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  rollNo?: string;
+  bio?: string;
+  collegeName?: string;
+  stream?: string;
+  primaryLanguage?: string;
+  graduationYear?: number | null;
+  karmaPoints: number;
+  overallScore: number;
+  rank?: number | null;
+  tier?: string;
+  tierColor?: string;
+  connectionStatus?: "SELF" | "NONE" | "PENDING_SENT" | "PENDING_RECEIVED" | "ACCEPTED";
+  handles: {
+    leetcode?: string;
+    codeforces?: string;
+    codechef?: string;
+    hackerrank?: string;
+    github?: string;
+  };
+  platforms: {
+    leetcode?: { connected: boolean; handle?: string; totalSolved?: number; easy?: number; medium?: number; hard?: number; ranking?: number; rating?: number };
+    codeforces?: { connected: boolean; handle?: string; rating?: number; rank?: string; totalSolved?: number };
+    codechef?: { connected: boolean; handle?: string; rating?: number; stars?: string; totalSolved?: number };
+    hackerrank?: { connected: boolean; handle?: string; totalSolved?: number };
+    github?: { connected: boolean; handle?: string; repos?: number; followers?: number };
+  };
+  summary: {
+    problemsSolved: number;
+    overallScore: number;
+  };
+  coursework?: {
+    totalAssignments: number;
+    submittedAssignments: number;
+  };
+}
+
+export interface DirectMessageItem {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+  sender?: { id: string; name: string; avatar?: string; email: string };
+  receiver?: { id: string; name: string; avatar?: string; email: string };
+}
+
+export interface ConversationSummary {
+  peerId: string;
+  peer: {
+    id: string;
+    name: string;
+    avatar?: string;
+    email: string;
+    stream?: string;
+    collegeName?: string;
+  };
+  lastMessage: {
+    content: string;
+    createdAt: string;
+    senderId: string;
+  };
+  unreadCount: number;
+}
+
+export interface NotificationItem {
+  id: string;
+  userId: string;
+  actorId?: string;
+  type: "CONNECTION_REQUEST" | "CONNECTION_ACCEPTED" | "MESSAGE" | "LEADERBOARD" | "SYSTEM" | string;
+  title: string;
+  message: string;
+  data?: any;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface ConnectionData {
+  connections: Array<{ connectionId: string; connectedAt: string; peer: any }>;
+  pendingReceived: Array<{ requestId: string; receivedAt: string; peer: any }>;
+  pendingSent: Array<{ requestId: string; sentAt: string; peer: any }>;
+}
+
+export async function searchStudents(
+  query: string,
+  token?: string | null
+): Promise<{ success: boolean; data: LeaderboardStudent[]; count?: number; message?: string }> {
+  try {
+    if (!query.trim()) return { success: true, data: [], count: 0 };
+    const res = await fetch(`${API_BASE_URL}/api/users/search?q=${encodeURIComponent(query)}`, {
+      method: "GET",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, data: [], message: json?.message || "Failed to search students." };
+    }
+    return { success: true, data: json.data || [], count: json.count || 0 };
+  } catch {
+    return { success: false, data: [], message: "Network error searching students." };
+  }
+}
+
+export async function fetchPublicStudentProfile(
+  studentId: string,
+  token?: string | null
+): Promise<{ success: boolean; profile?: PublicStudentProfile; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/users/${studentId}/public-profile`, {
+      method: "GET",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, message: json?.message || "Failed to fetch student profile." };
+    }
+    return { success: true, profile: json.profile };
+  } catch {
+    return { success: false, message: "Network error fetching student profile." };
+  }
+}
+
+export async function fetchConnections(
+  token?: string | null
+): Promise<{ success: boolean; connections: any[]; pendingReceived: any[]; pendingSent: any[]; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/connections`, {
+      method: "GET",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, connections: [], pendingReceived: [], pendingSent: [], message: json?.message };
+    }
+    return json;
+  } catch {
+    return { success: false, connections: [], pendingReceived: [], pendingSent: [], message: "Network error fetching connections." };
+  }
+}
+
+export async function sendConnectionRequest(
+  targetUserId: string,
+  token?: string | null
+): Promise<{ success: boolean; message?: string; connection?: any }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/connections/request`, {
+      method: "POST",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      body: JSON.stringify({ targetUserId }),
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, message: json?.message || "Failed to send connection request." };
+    }
+    return json;
+  } catch {
+    return { success: false, message: "Network error sending connection request." };
+  }
+}
+
+export async function respondConnectionRequest(
+  requestId: string,
+  action: "accept" | "decline",
+  token?: string | null
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/connections/respond`, {
+      method: "POST",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId, action }),
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, message: json?.message || "Failed to respond to request." };
+    }
+    return json;
+  } catch {
+    return { success: false, message: "Network error responding to request." };
+  }
+}
+
+export async function removeConnection(
+  targetUserId: string,
+  token?: string | null
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/connections/${targetUserId}`, {
+      method: "DELETE",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, message: json?.message || "Failed to remove connection." };
+    }
+    return json;
+  } catch {
+    return { success: false, message: "Network error removing connection." };
+  }
+}
+
+export async function getConnectionStatus(
+  targetUserId: string,
+  token?: string | null
+): Promise<{ success: boolean; status: "SELF" | "NONE" | "PENDING_SENT" | "PENDING_RECEIVED" | "ACCEPTED" }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/connections/status/${targetUserId}`, {
+      method: "GET",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    return { success: Boolean(json?.success), status: json?.status || "NONE" };
+  } catch {
+    return { success: false, status: "NONE" };
+  }
+}
+
+export async function fetchConversations(
+  token?: string | null
+): Promise<{ success: boolean; data: ConversationSummary[]; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/messages/conversations`, {
+      method: "GET",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, data: [], message: json?.message || "Failed to fetch conversations." };
+    }
+    return { success: true, data: json.data || [] };
+  } catch {
+    return { success: false, data: [], message: "Network error fetching conversations." };
+  }
+}
+
+export async function fetchDirectMessages(
+  peerId: string,
+  token?: string | null
+): Promise<{ success: boolean; data: DirectMessageItem[]; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/messages/${peerId}`, {
+      method: "GET",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, data: [], message: json?.message || "Failed to fetch messages." };
+    }
+    return { success: true, data: json.data || [] };
+  } catch {
+    return { success: false, data: [], message: "Network error fetching messages." };
+  }
+}
+
+export async function sendDirectMessage(
+  receiverId: string,
+  content: string,
+  token?: string | null
+): Promise<{ success: boolean; message?: string; data?: DirectMessageItem }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/messages`, {
+      method: "POST",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      body: JSON.stringify({ receiverId, content }),
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, message: json?.message || "Failed to send message." };
+    }
+    return json;
+  } catch {
+    return { success: false, message: "Network error sending message." };
+  }
+}
+
+export async function fetchNotifications(
+  token?: string | null
+): Promise<{ success: boolean; data: NotificationItem[]; unreadCount: number; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/notifications`, {
+      method: "GET",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    const json = await res.json().catch(() => null);
+    if (!res.ok || !json?.success) {
+      return { success: false, data: [], unreadCount: 0, message: json?.message || "Failed to fetch notifications." };
+    }
+    return { success: true, data: json.data || [], unreadCount: json.unreadCount || 0 };
+  } catch {
+    return { success: false, data: [], unreadCount: 0, message: "Network error fetching notifications." };
+  }
+}
+
+export async function markNotificationRead(
+  id: string,
+  token?: string | null
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
+      method: "PATCH",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    return await res.json().catch(() => ({ success: false }));
+  } catch {
+    return { success: false, message: "Network error marking notification as read." };
+  }
+}
+
+export async function markAllNotificationsRead(
+  token?: string | null
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/notifications/read-all`, {
+      method: "PATCH",
+      headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      credentials: "include",
+    });
+    return await res.json().catch(() => ({ success: false }));
+  } catch {
+    return { success: false, message: "Network error marking notifications as read." };
+  }
+}

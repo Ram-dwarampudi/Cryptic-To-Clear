@@ -442,8 +442,62 @@ class UserModel {
         rank: idx + 1,
         ...this.sanitizeUser(u),
       }));
-
     return students;
+  }
+
+  async searchStudents(query) {
+    if (!query || !query.trim()) return [];
+    const q = query.trim().toLowerCase();
+    if (prisma) {
+      try {
+        const dbUsers = await prisma.user.findMany({
+          where: {
+            AND: [
+              { OR: [{ role: 'STUDENT' }, { role: 'student' }] },
+              {
+                OR: [
+                  { name: { contains: q, mode: 'insensitive' } },
+                  { email: { contains: q, mode: 'insensitive' } },
+                  { rollNo: { contains: q, mode: 'insensitive' } },
+                  { collegeName: { contains: q, mode: 'insensitive' } },
+                  { stream: { contains: q, mode: 'insensitive' } },
+                  { leetcodeHandle: { contains: q, mode: 'insensitive' } },
+                  { codechefHandle: { contains: q, mode: 'insensitive' } },
+                  { codeforcesHandle: { contains: q, mode: 'insensitive' } },
+                  { githubHandle: { contains: q, mode: 'insensitive' } },
+                ],
+              },
+            ],
+          },
+          include: { university: true, department: true },
+          take: 20,
+        });
+        if (dbUsers && dbUsers.length > 0) {
+          return dbUsers.map((u) => this.sanitizeUser(this._formatUser(u)));
+        }
+      } catch (err) {
+        console.warn('Prisma searchStudents error, fallback to memory:', err.message);
+      }
+    }
+    const matched = [];
+    for (const u of this.users.values()) {
+      if ((u.role || '').toLowerCase() !== 'student') continue;
+      const match =
+        (u.name && u.name.toLowerCase().includes(q)) ||
+        (u.email && u.email.toLowerCase().includes(q)) ||
+        (u.rollNo && u.rollNo.toLowerCase().includes(q)) ||
+        (u.collegeName && u.collegeName.toLowerCase().includes(q)) ||
+        (u.stream && u.stream.toLowerCase().includes(q)) ||
+        (u.leetcodeHandle && u.leetcodeHandle.toLowerCase().includes(q)) ||
+        (u.codechefHandle && u.codechefHandle.toLowerCase().includes(q)) ||
+        (u.codeforcesHandle && u.codeforcesHandle.toLowerCase().includes(q)) ||
+        (u.githubHandle && u.githubHandle.toLowerCase().includes(q));
+      if (match) {
+        matched.push(this.sanitizeUser(u));
+        if (matched.length >= 20) break;
+      }
+    }
+    return matched;
   }
 }
 
