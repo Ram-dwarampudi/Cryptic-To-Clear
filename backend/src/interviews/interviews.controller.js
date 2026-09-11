@@ -233,7 +233,7 @@ exports.createInterview = async (req, res) => {
       tips,
       preparationResources,
       isAnonymous = false,
-      studentId = "usr_demo_001",
+      studentId,
     } = req.body;
 
     if (!companyName || !roleTitle || !summary) {
@@ -243,11 +243,24 @@ exports.createInterview = async (req, res) => {
       });
     }
 
-    // Associate with default demo student or logged-in student
-    const student = await prisma.user.findUnique({
-      where: { id: studentId },
+    // Associate with logged-in student, requested ID, or active student in DB
+    const candidateId = req.user?.id || studentId || "usr_demo_001";
+    let student = await prisma.user.findUnique({
+      where: { id: candidateId },
       select: { id: true, universityId: true, batchYear: true },
     });
+
+    if (!student) {
+      student = await prisma.user.findFirst({
+        where: { role: "STUDENT" },
+        select: { id: true, universityId: true, batchYear: true },
+      });
+      if (!student) {
+        student = await prisma.user.findFirst({
+          select: { id: true, universityId: true, batchYear: true },
+        });
+      }
+    }
 
     if (!student) {
       return res.status(400).json({

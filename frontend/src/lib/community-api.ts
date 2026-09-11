@@ -4,7 +4,28 @@
  * - Campus Doubt Resolution Forum
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const DEFAULT_API_BASE_URL =
+  typeof window !== "undefined"
+    ? `http://${window.location.hostname}:5000`
+    : "http://127.0.0.1:5000";
+
+const RAW_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  DEFAULT_API_BASE_URL;
+
+const API_BASE_URL = RAW_BASE_URL.replace(/\/$/, "").replace(/\/api$/, "") + "/api";
+
+function getCommunityHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const token = typeof window !== "undefined" ? localStorage.getItem("c2c_token") : null;
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
 
 export interface InterviewRound {
   roundNumber: number;
@@ -135,7 +156,10 @@ export async function fetchInterviews(params: {
     if (params.year) query.append("year", params.year);
     if (params.page) query.append("page", String(params.page));
 
-    const res = await fetch(`${API_BASE_URL}/interviews?${query.toString()}`);
+    const res = await fetch(`${API_BASE_URL}/interviews?${query.toString()}`, {
+      headers: getCommunityHeaders(),
+      credentials: "include",
+    });
     const data = await res.json();
     return { success: data.success, data: data.data || [], total: data.pagination?.total };
   } catch {
@@ -145,7 +169,10 @@ export async function fetchInterviews(params: {
 
 export async function fetchCompanyStats(): Promise<{ success: boolean; data: CompanyStat[] }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/interviews/companies`);
+    const res = await fetch(`${API_BASE_URL}/interviews/companies`, {
+      headers: getCommunityHeaders(),
+      credentials: "include",
+    });
     const data = await res.json();
     return { success: data.success, data: data.data || [] };
   } catch {
@@ -155,7 +182,10 @@ export async function fetchCompanyStats(): Promise<{ success: boolean; data: Com
 
 export async function fetchInterviewById(id: string): Promise<{ success: boolean; data?: InterviewExperience }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/interviews/${id}`);
+    const res = await fetch(`${API_BASE_URL}/interviews/${id}`, {
+      headers: getCommunityHeaders(),
+      credentials: "include",
+    });
     const data = await res.json();
     return { success: data.success, data: data.data };
   } catch {
@@ -182,7 +212,8 @@ export async function createInterviewExperience(payload: {
   try {
     const res = await fetch(`${API_BASE_URL}/interviews`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getCommunityHeaders(),
+      credentials: "include",
       body: JSON.stringify(payload),
     });
     return await res.json();
@@ -193,7 +224,11 @@ export async function createInterviewExperience(payload: {
 
 export async function upvoteInterview(id: string): Promise<{ success: boolean; upvotes?: number }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/interviews/${id}/upvote`, { method: "POST" });
+    const res = await fetch(`${API_BASE_URL}/interviews/${id}/upvote`, {
+      method: "POST",
+      headers: getCommunityHeaders(),
+      credentials: "include",
+    });
     return await res.json();
   } catch {
     return { success: false };
@@ -223,7 +258,10 @@ export async function fetchDoubts(params: {
     if (params.currentUserId) query.append("currentUserId", params.currentUserId);
     if (params.userRole) query.append("userRole", params.userRole);
 
-    const res = await fetch(`${API_BASE_URL}/doubts?${query.toString()}`);
+    const res = await fetch(`${API_BASE_URL}/doubts?${query.toString()}`, {
+      headers: getCommunityHeaders(),
+      credentials: "include",
+    });
     const data = await res.json();
     return { success: data.success, data: data.data || [], total: data.pagination?.total };
   } catch {
@@ -237,7 +275,10 @@ export async function fetchDoubtById(
   currentUserId = "usr_demo_001"
 ): Promise<{ success: boolean; data?: DoubtItem }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/doubts/${id}?userRole=${userRole}&currentUserId=${currentUserId}`);
+    const res = await fetch(`${API_BASE_URL}/doubts/${id}?userRole=${userRole}&currentUserId=${currentUserId}`, {
+      headers: getCommunityHeaders(),
+      credentials: "include",
+    });
     const data = await res.json();
     return { success: data.success, data: data.data };
   } catch {
@@ -257,7 +298,8 @@ export async function createDoubt(payload: {
   try {
     const res = await fetch(`${API_BASE_URL}/doubts`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getCommunityHeaders(),
+      credentials: "include",
       body: JSON.stringify(payload),
     });
     return await res.json();
@@ -277,7 +319,8 @@ export async function createDoubtAnswer(
   try {
     const res = await fetch(`${API_BASE_URL}/doubts/${doubtId}/answers`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getCommunityHeaders(),
+      credentials: "include",
       body: JSON.stringify(payload),
     });
     return await res.json();
@@ -293,6 +336,8 @@ export async function acceptDoubtAnswer(
   try {
     const res = await fetch(`${API_BASE_URL}/doubts/${doubtId}/accept/${answerId}`, {
       method: "PATCH",
+      headers: getCommunityHeaders(),
+      credentials: "include",
     });
     return await res.json();
   } catch {
@@ -302,7 +347,10 @@ export async function acceptDoubtAnswer(
 
 export async function fetchUserDoubtStats(userId = "usr_demo_001"): Promise<{ success: boolean; data?: UserDoubtStats }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/doubts/stats/me?userId=${userId}`);
+    const res = await fetch(`${API_BASE_URL}/doubts/stats/me?userId=${userId}`, {
+      headers: getCommunityHeaders(),
+      credentials: "include",
+    });
     const data = await res.json();
     return { success: data.success, data: data.data };
   } catch {

@@ -344,10 +344,33 @@ class FacultyModel {
     return this.assignments.find((a) => a.id === id) || null;
   }
 
+  _findClassById(classId) {
+    if (!classId) return null;
+    const custom = this.classes.find((c) => c.id === classId);
+    if (custom) return custom;
+
+    for (const b of ACADEMIC_BRANCHES) {
+      for (const s of ACADEMIC_SECTIONS) {
+        const id = `cls_${b.toLowerCase()}_${s.toLowerCase()}`;
+        if (id === classId) {
+          return {
+            id,
+            name: `${b} (${BRANCH_NAMES[b] || b})`,
+            branch: b,
+            section: `Section ${s}`,
+            sectionCode: s,
+            studentCount: 35,
+          };
+        }
+      }
+    }
+    return null;
+  }
+
   addAssignment(data) {
     this._migrateAssignments();
     const id = `asg_${Date.now().toString(36)}`;
-    const targetClass = this.classes.find((c) => c.id === data.classId) || this.classes[0];
+    const targetClass = this._findClassById(data.classId) || this.classes[0];
 
     const languageMode = data.languageMode === "RESTRICTED" ? "RESTRICTED" : "ANY";
     const allowedLanguages = languageMode === "RESTRICTED" && Array.isArray(data.allowedLanguages)
@@ -423,7 +446,7 @@ class FacultyModel {
 
     if (data.classId && data.classId !== asg.classId) {
       asg.classId = data.classId;
-      const targetClass = this.classes.find((c) => c.id === data.classId);
+      const targetClass = this._findClassById(data.classId);
       if (targetClass) {
         asg.className = `${targetClass.name} (${targetClass.section})`;
         asg.totalAssigned = targetClass.studentCount;

@@ -174,11 +174,12 @@ exports.createAssignment = async (req, res, next) => {
       classId,
       languageMode,
       allowedLanguages,
+      testCases,
       points,
       difficulty,
       maxAttempts,
       startDate,
-    } = req.body;
+    } = req.body || {};
 
     if (!title || !deadline) {
       return res.status(400).json({
@@ -202,6 +203,7 @@ exports.createAssignment = async (req, res, next) => {
       classId,
       languageMode: languageMode === "RESTRICTED" ? "RESTRICTED" : "ANY",
       allowedLanguages: allowedLanguages || [],
+      testCases: Array.isArray(testCases) ? testCases : [],
       points,
       difficulty,
       maxAttempts,
@@ -232,10 +234,11 @@ exports.updateAssignment = async (req, res, next) => {
       classId,
       languageMode,
       allowedLanguages,
+      testCases,
       points,
       difficulty,
       maxAttempts,
-    } = req.body;
+    } = req.body || {};
 
     if (languageMode === "RESTRICTED" && (!Array.isArray(allowedLanguages) || allowedLanguages.length === 0)) {
       return res.status(400).json({
@@ -252,6 +255,7 @@ exports.updateAssignment = async (req, res, next) => {
       classId,
       languageMode,
       allowedLanguages,
+      testCases: Array.isArray(testCases) ? testCases : undefined,
       points,
       difficulty,
       maxAttempts,

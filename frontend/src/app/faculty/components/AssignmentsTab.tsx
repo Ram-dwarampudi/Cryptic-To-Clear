@@ -160,7 +160,7 @@ export default function AssignmentsTab() {
 
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !deadline) {
+    if (!title.trim() || !deadline) {
       setError("Please fill in assignment title and submission deadline.");
       return;
     }
@@ -186,18 +186,28 @@ export default function AssignmentsTab() {
     setError(null);
     setSubmitting(true);
 
+    let isoDeadline = deadline;
+    try {
+      const d = new Date(deadline);
+      if (!isNaN(d.getTime())) {
+        isoDeadline = d.toISOString();
+      }
+    } catch {
+      isoDeadline = deadline;
+    }
+
     const payload = {
-      title,
-      description,
-      instructions,
-      deadline: new Date(deadline).toISOString(),
+      title: title.trim(),
+      description: description.trim(),
+      instructions: instructions.trim(),
+      deadline: isoDeadline,
       classId: classId || (classes[0] ? classes[0].id : "cls_cs3a"),
       languageMode,
       allowedLanguages: languageMode === "RESTRICTED" ? selectedLanguages : [],
       testCases,
-      points,
+      points: Number(points) || 100,
       difficulty,
-      maxAttempts,
+      maxAttempts: Number(maxAttempts) || 5,
     };
 
     let res;
@@ -344,53 +354,68 @@ export default function AssignmentsTab() {
 
       {/* Create / Edit Assignment Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-          <div className="glass-strong border border-[var(--border-strong)] rounded-2xl p-6 sm:p-8 max-w-lg w-full space-y-5 relative editor-grid my-8">
-            <button onClick={() => setShowCreateModal(false)} className="absolute top-4 right-4 p-1.5 text-[var(--ink-dim)] hover:text-[var(--ink)] cursor-pointer">
-              <X className="w-5 h-5" />
-            </button>
-
-            <h2 className="text-lg font-display font-semibold text-[var(--ink)]">
-              {editingAssignment ? "Edit Assignment Configuration" : "Create Coding Assignment"}
-            </h2>
-
-            {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-mono flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {/* Confirmation Warning if Editing Assignment with Submissions */}
-            {showConfirmEditWarning && (
-              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-mono space-y-3">
-                <div className="flex items-center gap-2 font-bold text-amber-400">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Submissions Already Received</span>
-                </div>
-                <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed font-sans">
-                  Changing allowed languages may affect existing submissions ({editingAssignment?.submissionsCount} recorded). Are you sure you want to continue?
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md overflow-hidden">
+          <div className="glass-strong border border-[var(--border-strong)] rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col relative shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Sticky Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0 bg-[var(--card)]/80 backdrop-blur-sm">
+              <div>
+                <h2 className="text-lg font-display font-bold text-[var(--ink)]">
+                  {editingAssignment ? "Edit Assignment Configuration" : "Create Coding Assignment"}
+                </h2>
+                <p className="text-[11px] font-mono text-[var(--ink-dim)] mt-0.5">
+                  Set problem statement, test cases, target class, and constraints
                 </p>
-                <div className="flex items-center gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmEditWarning(false)}
-                    className="px-3 py-1 rounded bg-white/5 border border-white/10 text-[var(--ink)] hover:bg-white/10"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => handleSubmitForm(e)}
-                    className="px-3 py-1 rounded bg-amber-500 text-[#0a0d13] font-bold hover:brightness-110"
-                  >
-                    Confirm & Update Language Rules
-                  </button>
-                </div>
               </div>
-            )}
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="p-1.5 rounded-lg text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <form onSubmit={handleSubmitForm} className="space-y-4 text-xs font-mono">
+            {/* Scrollable Form Body */}
+            <form
+              id="assignment-create-form"
+              onSubmit={handleSubmitForm}
+              className="flex-1 overflow-y-auto px-6 py-5 space-y-5 text-xs font-mono custom-scrollbar"
+            >
+              {error && (
+                <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-mono flex items-start gap-2.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Confirmation Warning if Editing Assignment with Submissions */}
+              {showConfirmEditWarning && (
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-mono space-y-3">
+                  <div className="flex items-center gap-2 font-bold text-amber-400">
+                    <AlertTriangle className="w-4 h-4" />
+                    <span>Submissions Already Received</span>
+                  </div>
+                  <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed font-sans">
+                    Changing allowed languages may affect existing submissions ({editingAssignment?.submissionsCount} recorded). Are you sure you want to continue?
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmEditWarning(false)}
+                      className="px-3 py-1 rounded bg-white/5 border border-white/10 text-[var(--ink)] hover:bg-white/10"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleSubmitForm(e)}
+                      className="px-3 py-1 rounded bg-amber-500 text-[#0a0d13] font-bold hover:brightness-110"
+                    >
+                      Confirm & Update Language Rules
+                    </button>
+                  </div>
+                </div>
+              )}
               <div>
                 <label htmlFor="asg-title" className="block text-[var(--ink-dim)] mb-1">Assignment Title <span className="text-red-400">*</span></label>
                 <input
@@ -684,24 +709,26 @@ export default function AssignmentsTab() {
                   />
                 </div>
               </div>
-
-              <div className="pt-3 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-2.5 rounded-xl glass border border-white/10 text-[var(--ink-dim)] hover:text-[var(--ink)] cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-[var(--syn-keyword)] to-[var(--syn-function)] text-[#0a0d13] font-bold flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : editingAssignment ? "Update Assignment" : "Publish Assignment"}
-                </button>
-              </div>
             </form>
+
+            {/* Sticky Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border)] shrink-0 bg-[var(--card)]/90 backdrop-blur-sm">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="px-5 py-2.5 rounded-xl glass border border-white/10 text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5 transition-colors cursor-pointer text-xs font-mono"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="assignment-create-form"
+                disabled={submitting}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[var(--syn-keyword)] to-[var(--syn-function)] text-[#0a0d13] font-bold flex items-center justify-center gap-2 cursor-pointer text-xs font-mono hover:brightness-110 shadow-lg shadow-[var(--syn-keyword)]/20 transition-all disabled:opacity-60"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : editingAssignment ? "Update Assignment" : "Publish Assignment"}
+              </button>
+            </div>
           </div>
         </div>
       )}

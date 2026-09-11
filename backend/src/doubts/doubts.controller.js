@@ -12,11 +12,16 @@ exports.getDoubts = async (req, res) => {
       tag,
       language,
       authorId,
-      userRole = "STUDENT",
-      currentUserId = "usr_demo_001",
+      userRole: queryUserRole,
+      currentUserId: queryCurrentUserId,
       limit = 20,
       page = 1,
     } = req.query;
+
+    const currentUserId = req.user?.id || queryCurrentUserId || "usr_demo_001";
+    const userRole =
+      (req.user?.role ? req.user.role.toUpperCase() : null) ||
+      (queryUserRole ? queryUserRole.toUpperCase() : "STUDENT");
 
     const where = {};
 
@@ -146,7 +151,11 @@ exports.getDoubts = async (req, res) => {
 exports.getDoubtById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { userRole = "STUDENT", currentUserId = "usr_demo_001" } = req.query;
+    const { userRole: queryUserRole, currentUserId: queryCurrentUserId } = req.query;
+    const currentUserId = req.user?.id || queryCurrentUserId || "usr_demo_001";
+    const userRole =
+      (req.user?.role ? req.user.role.toUpperCase() : null) ||
+      (queryUserRole ? queryUserRole.toUpperCase() : "STUDENT");
 
     const doubt = await prisma.doubt.findUnique({
       where: { id },
@@ -240,7 +249,7 @@ exports.createDoubt = async (req, res) => {
       language = "python",
       tags = [],
       privacy = "PUBLIC", // PUBLIC, ANONYMOUS_PEERS, FACULTY_ONLY
-      authorId = "usr_demo_001",
+      authorId,
     } = req.body;
 
     if (!title || !description) {
@@ -250,13 +259,26 @@ exports.createDoubt = async (req, res) => {
       });
     }
 
-    const author = await prisma.user.findUnique({
-      where: { id: authorId },
+    const candidateId = req.user?.id || authorId || "usr_demo_001";
+    let author = await prisma.user.findUnique({
+      where: { id: candidateId },
       select: { id: true, universityId: true },
     });
 
     if (!author) {
-      return res.status(400).json({ success: false, message: "Author not found." });
+      author = await prisma.user.findFirst({
+        where: { role: "STUDENT" },
+        select: { id: true, universityId: true },
+      });
+      if (!author) {
+        author = await prisma.user.findFirst({
+          select: { id: true, universityId: true },
+        });
+      }
+    }
+
+    if (!author) {
+      return res.status(400).json({ success: false, message: "No active user account found in database." });
     }
 
     const created = await prisma.doubt.create({
@@ -296,7 +318,7 @@ exports.createDoubt = async (req, res) => {
 exports.createAnswer = async (req, res) => {
   try {
     const { id } = req.params; // doubt ID
-    const { content, codeSnippet, authorId = "usr_demo_001" } = req.body;
+    const { content, codeSnippet, authorId } = req.body;
 
     if (!content) {
       return res.status(400).json({ success: false, message: "Answer content is required." });
@@ -307,10 +329,23 @@ exports.createAnswer = async (req, res) => {
       return res.status(404).json({ success: false, message: "Doubt post not found." });
     }
 
-    const author = await prisma.user.findUnique({
-      where: { id: authorId },
+    const candidateId = req.user?.id || authorId || "usr_demo_001";
+    let author = await prisma.user.findUnique({
+      where: { id: candidateId },
       select: { id: true, name: true, role: true },
     });
+
+    if (!author) {
+      author = await prisma.user.findFirst({
+        where: { role: "STUDENT" },
+        select: { id: true, name: true, role: true },
+      });
+      if (!author) {
+        author = await prisma.user.findFirst({
+          select: { id: true, name: true, role: true },
+        });
+      }
+    }
 
     if (!author) {
       return res.status(400).json({ success: false, message: "Author not found." });
@@ -437,7 +472,22 @@ exports.endorseAnswer = async (req, res) => {
 exports.upvoteDoubt = async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId = "usr_demo_001" } = req.body;
+    const candidateId = req.user?.id || req.body.userId || "usr_demo_001";
+
+    let voter = await prisma.user.findUnique({
+      where: { id: candidateId },
+      select: { id: true },
+    });
+
+    if (!voter) {
+      voter = await prisma.user.findFirst({ select: { id: true } });
+    }
+
+    if (!voter) {
+      return res.status(400).json({ success: false, message: "User account required to upvote." });
+    }
+
+    const userId = voter.id;
 
     const existing = await prisma.doubtUpvote.findUnique({
       where: { userId_doubtId: { userId, doubtId: id } },
@@ -465,16 +515,24 @@ exports.upvoteDoubt = async (req, res) => {
  */
 exports.getUserDoubtStats = async (req, res) => {
   try {
-    const { userId = "usr_demo_001" } = req.query;
+    const candidateId = req.user?.id || req.query.userId || "usr_demo_001";
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    let user = await prisma.user.findUnique({
+      where: { id: candidateId },
       select: { id: true, name: true, karmaPoints: true, role: true },
     });
 
     if (!user) {
+      user = await prisma.user.findFirst({
+        select: { id: true, name: true, karmaPoints: true, role: true },
+      });
+    }
+
+    if (!user) {
       return res.status(404).json({ success: false, message: "User not found." });
     }
+
+    const userId = user.id;
 
     const [askedCount, answeredCount, acceptedSolutions] = await Promise.all([
       prisma.doubt.count({ where: { authorId: userId } }),

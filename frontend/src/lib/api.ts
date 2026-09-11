@@ -6,7 +6,9 @@ const DEFAULT_API_BASE_URL =
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_BASE_URL).replace(/\/$/, "");
 
 export function getAuthHeaders(token?: string | null): Record<string, string> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
   const authToken =
     token || (typeof window !== "undefined" ? localStorage.getItem("c2c_token") : null);
   if (authToken) {
@@ -1149,6 +1151,7 @@ export async function createFacultyAssignment(
     classId: string;
     languageMode: "ANY" | "RESTRICTED";
     allowedLanguages?: string[];
+    testCases?: Array<{ id?: string; input: string; expectedOutput: string; isHidden?: boolean; explanation?: string }>;
     points?: number;
     difficulty?: "easy" | "medium" | "hard";
     maxAttempts?: number;
@@ -1181,6 +1184,7 @@ export async function updateFacultyAssignment(
     classId?: string;
     languageMode?: "ANY" | "RESTRICTED";
     allowedLanguages?: string[];
+    testCases?: Array<{ id?: string; input: string; expectedOutput: string; isHidden?: boolean; explanation?: string }>;
     points?: number;
     difficulty?: "easy" | "medium" | "hard";
     maxAttempts?: number;

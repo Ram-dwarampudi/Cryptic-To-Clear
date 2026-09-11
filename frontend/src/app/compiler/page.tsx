@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import Toolbar from "@/components/compiler/Toolbar";
 import BottomPanel, { BottomTab } from "@/components/compiler/BottomPanel";
 import { EditorSettings } from "@/components/compiler/CodeEditor";
-import { LANGUAGES, LanguageConfig, getLanguage } from "@/lib/languages";
+import { LANGUAGES, LanguageId, LanguageConfig, getLanguage } from "@/lib/languages";
 import { getStoredTheme, Theme } from "@/lib/theme";
 import {
   executeCode,
@@ -33,7 +33,6 @@ import {
   printPlainText,
   buildShareUrl,
   decodeShareState,
-  interleaveInputWithOutput,
 } from "@/lib/exportUtils";
 import {
   ChatMessage,
@@ -211,6 +210,9 @@ export default function CompilerPage() {
   );
   const [isRunning, setIsRunning] = useState(false);
   const [isCompiling, setIsCompiling] = useState(false);
+
+  // Interactive terminal lines — built incrementally so it feels like a real shell
+  const [terminalLines, setTerminalLines] = useState<{ type: "output" | "input" | "error"; content: string }[]>([]);
   const [exportNote, setExportNote] = useState("");
   const [fullscreen, setFullscreen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -461,14 +463,112 @@ export default function CompilerPage() {
     }
   };
 
+  // Detect language from code content using scoring heuristics
+  const detectLanguageFromCode = useCallback((code: string): LanguageId | null => {
+    const c = code.trim();
+    if (!c || c.length < 6) return null;
+
+    // Has C/C++ preprocessor directives (#include, #define, etc.)
+    // Java and Python NEVER use #include or #define.
+    const hasInclude = /#\s*include\b/i.test(c);
+    const hasDefine = /#\s*define\b/i.test(c);
+    const hasPreprocessor = hasInclude || hasDefine;
+
+    let javaScore = 0;
+    let pythonScore = 0;
+    let cppScore = 0;
+    let cScore = 0;
+
+    // --- C++ Heuristics ---
+    if (/#\s*include\s*[<"]\s*(iostream|vector|string|algorithm|map|set|queue|stack|deque|numeric|utility|cmath|bits\/stdc\+\+|fstream|sstream|iomanip|list|tuple|unordered_map|unordered_set)\s*[>"]/i.test(c)) cppScore += 15;
+    if (/\busing\s+namespace\s+std\s*;/i.test(c)) cppScore += 12;
+    if (/\bstd\s*::\s*(cout|cin|cerr|endl|vector|string|map|set|pair|sort|make_pair)/.test(c)) cppScore += 12;
+    if (/\bcout\s*<<|\bcin\s*>>/.test(c)) cppScore += 10;
+    if (/\btemplate\s*<\s*(typename|class)\b/.test(c)) cppScore += 8;
+    if (/\bclass\s+\w+\s*\{[\s\S]*?(public|private|protected)\s*:/i.test(c)) cppScore += 10;
+    if (/\b(vector|map|set|unordered_map)\s*<[\w\s,<>]+>\s*\w+/.test(c)) cppScore += 8;
+
+    // --- C Heuristics ---
+    // Standard C library headers with <> or "" (e.g. #include<stdio.h>, #include "stdio.h", conio.h, etc.)
+    if (/#\s*include\s*[<"]\s*(stdio|stdlib|string|math|ctype|stdbool|limits|time|conio|assert|float|stddef|stdint)\.h\s*[>"]/i.test(c)) cScore += 15;
+    // Any generic #include without C++ specific indicators is a strong C indicator
+    if (hasInclude && cppScore === 0) cScore += 10;
+    if (/\b(printf|scanf)\s*\(/i.test(c) && !/\bstd\s*::/.test(c) && !/\bcout\b/.test(c) && !/\bSystem\./.test(c)) cScore += 8;
+    if (/\b(int|void)\s+main\s*\([^)]*\)/.test(c) && cppScore === 0) cScore += 6;
+    if (/\b(malloc|calloc|realloc|free)\s*\(/i.test(c) && cppScore === 0) cScore += 6;
+    if (/\b(getch|clrscr)\s*\(\s*\)/i.test(c) && cppScore === 0) cScore += 6;
+
+    // --- Java Heuristics (STRICTLY DISQUALIFIED IF #include OR #define PRESENT) ---
+    if (!hasPreprocessor) {
+      if (/\bimport\s+(java|javax)\./i.test(c)) javaScore += 12;
+      if (/\bpackage\s+[\w.]+;/i.test(c)) javaScore += 10;
+      if (/\bpublic\s+(final\s+|abstract\s+)?class\s+\w+/i.test(c)) javaScore += 10;
+      if (/\bclass\s+\w+/.test(c) && /;\s*$/m.test(c)) javaScore += 3;
+      if (/\bpublic\s+static\s+void\s+main\s*\(\s*String\s*(\[\s*\]\s*\w+|\w+\s*\[\s*\])/.test(c)) javaScore += 12;
+      if (/\bSystem\.(out|err)\.(println|print|printf)\s*\(/i.test(c)) javaScore += 12;
+      if (/\bnew\s+Scanner\s*\(\s*System\.in\s*\)/i.test(c)) javaScore += 12;
+      if (/\b(Scanner|BufferedReader|StringBuilder|ArrayList|HashMap)\b/.test(c)) javaScore += 6;
+      if (/\bboolean\b/.test(c) && !/\bdef\b/.test(c)) javaScore += 3;
+    }
+
+    // --- Python Heuristics (STRICTLY DISQUALIFIED IF #include OR #define PRESENT) ---
+    if (!hasPreprocessor) {
+      if (/^\s*def\s+\w+\s*\([^)]*\)\s*:/m.test(c)) pythonScore += 10;
+      if (/^\s*class\s+\w+(\([^)]*\))?\s*:/m.test(c)) pythonScore += 8;
+      if (/\bif\s+__name__\s*==\s*['"]__main__['"]\s*:/m.test(c)) pythonScore += 12;
+      if (/^\s*(from\s+[\w.]+\s+import|import\s+(sys|os|math|random|json|re|datetime|collections|typing|numpy|pandas))\b/m.test(c)) pythonScore += 10;
+      if (/^\s*elif\s+.*:/m.test(c)) pythonScore += 8;
+      if (/\bfor\s+\w+\s+in\s+(range|enumerate|zip)\s*\(/m.test(c)) pythonScore += 8;
+      if (/\bprint\s*\(/.test(c) && !/;\s*$/m.test(c) && !/\bSystem\./.test(c)) pythonScore += 6;
+      if (/\binput\s*\(/.test(c) && !/\bScanner\b/.test(c)) pythonScore += 6;
+      if (/^\s*#\s+[^\n]*/m.test(c)) pythonScore += 3;
+      if (!/[{};]/.test(c) && (pythonScore > 0 || /:\s*$/.test(c))) pythonScore += 4;
+    }
+
+    const scores = [
+      { lang: "c" as LanguageId, score: cScore },
+      { lang: "cpp" as LanguageId, score: cppScore },
+      { lang: "java" as LanguageId, score: javaScore },
+      { lang: "python" as LanguageId, score: pythonScore },
+    ];
+
+    scores.sort((a, b) => b.score - a.score);
+
+    // Require at least 4 score points and strictly higher than 2nd place
+    if (scores[0].score >= 4 && scores[0].score > scores[1].score) {
+      return scores[0].lang;
+    }
+
+    return null;
+  }, []);
+
   const handleCodeChange = useCallback(
     (value: string) => {
-      setCodeMap((m) => ({ ...m, [language]: value }));
       // A manual edit moves the file past any applied fix — clear the
       // highlight rather than show a stale diff.
       setHighlightLines([]);
+
+      // Auto-detect language if it changed and user is not in a restricted assignment
+      const detected = detectLanguageFromCode(value);
+      const isRestricted =
+        activeAssignment?.languageMode === "RESTRICTED" &&
+        activeAssignment.allowedLanguages &&
+        activeAssignment.allowedLanguages.length > 0;
+      const isAllowed =
+        !isRestricted ||
+        (activeAssignment!.allowedLanguages!.map((l) => l.toLowerCase()).includes(detected?.toLowerCase() || ""));
+
+      if (detected && detected !== language && isAllowed) {
+        setLanguage(detected);
+        // Move the code to the detected language slot
+        setCodeMap((m) => ({ ...m, [detected]: value }));
+        const matched = LANGUAGES.find((l) => l.id === detected);
+        showExportNote(`Language detected: ${matched?.label ?? detected.toUpperCase()}`);
+      } else {
+        setCodeMap((m) => ({ ...m, [language]: value }));
+      }
     },
-    [language]
+    [language, activeAssignment, detectLanguageFromCode]
   );
 
   const handleLanguageChange = (id: LanguageConfig["id"]) => {
@@ -846,20 +946,39 @@ export default function CompilerPage() {
     setBottomTab("output");
     setOutput("");
     setErrors("");
+    // Clear terminal for fresh run
+    setTerminalLines([]);
 
     // Execute with initial preset input (if any)
     const initialStdin = input || "";
+
+    // Double-check if the source code unambiguously matches a specific language (e.g. #include<stdio.h> -> C)
+    const detectedLang = detectLanguageFromCode(code);
+    const isRestricted =
+      activeAssignment?.languageMode === "RESTRICTED" &&
+      activeAssignment.allowedLanguages &&
+      activeAssignment.allowedLanguages.length > 0;
+    const isAllowed =
+      !isRestricted ||
+      (activeAssignment!.allowedLanguages!.map((l) => l.toLowerCase()).includes(detectedLang?.toLowerCase() || ""));
+    const effectiveLang = (detectedLang && isAllowed) ? detectedLang : language;
+
+    if (effectiveLang !== language) {
+      setLanguage(effectiveLang);
+      setCodeMap((m) => ({ ...m, [effectiveLang]: code }));
+    }
+
     const result = await executeCode({
-      language,
+      language: effectiveLang,
       sourceCode: code,
       stdin: initialStdin,
     });
-    console.log("[EXECUTE RESULT]:", result);
 
     if (!result.success) {
       setStatus("error");
       setBottomTab("errors");
       setErrors(result.message);
+      setTerminalLines([{ type: "error", content: result.message }]);
       setExecutionTime("—");
       setMemoryUsage("—");
       setIsRunning(false);
@@ -872,10 +991,32 @@ export default function CompilerPage() {
         ? `Runtime Error:\n${result.runtimeError}`
         : "";
 
-    setOutput(interleaveInputWithOutput(result.output || "", initialStdin));
+    const rawOutput = result.output || "";
+    setOutput(rawOutput);
     setErrors(errorText);
     setExecutionTime(formatTime(result.time));
     setMemoryUsage(formatMemory(result.memory));
+
+    // Build terminal lines: interleave input echoes with output lines
+    const newLines: { type: "output" | "input" | "error"; content: string }[] = [];
+    if (rawOutput) {
+      const outLines = rawOutput.split("\n");
+      // If there was pre-set stdin, interleave it inline
+      const stdinLines = initialStdin ? initialStdin.split("\n").map((l) => l.trim()).filter(Boolean) : [];
+      let stdinIdx = 0;
+      for (const line of outLines) {
+        newLines.push({ type: "output", content: line });
+        // If line looks like a prompt and we have stdin to echo, add it as input echo
+        if (stdinLines[stdinIdx] !== undefined && /[:?]\s*$|^(enter|input|type|please)\b/i.test(line.trim())) {
+          newLines.push({ type: "input", content: stdinLines[stdinIdx] });
+          stdinIdx++;
+        }
+      }
+    }
+    if (errorText) {
+      newLines.push({ type: "error", content: errorText });
+    }
+    setTerminalLines(newLines);
 
     if (errorText) {
       setBottomTab("errors");
@@ -908,9 +1049,18 @@ export default function CompilerPage() {
         return;
       }
 
+      // IMMEDIATELY echo the user's input in the terminal (like a real shell)
+      setTerminalLines((prev) => [
+        ...prev,
+        { type: "input" as const, content: inputValueLine },
+      ]);
+
       setIsRunning(true);
       setStatus("running");
       setBottomTab("output");
+
+      // Snapshot the current output line count so we can compute the delta
+      const prevOutputLineCount = terminalLines.filter((l) => l.type === "output").length;
 
       const result = await executeCode({
         language,
@@ -922,6 +1072,10 @@ export default function CompilerPage() {
         setStatus("error");
         setBottomTab("errors");
         setErrors(result.message);
+        setTerminalLines((prev) => [
+          ...prev,
+          { type: "error" as const, content: result.message },
+        ]);
         setExecutionTime("—");
         setMemoryUsage("—");
         setIsRunning(false);
@@ -934,10 +1088,21 @@ export default function CompilerPage() {
           ? `Runtime Error:\n${result.runtimeError}`
           : "";
 
-      setOutput(interleaveInputWithOutput(result.output || "", nextSessionInput));
+      const rawOutput = result.output || "";
+      setOutput(rawOutput);
       setErrors(errorText);
       setExecutionTime(formatTime(result.time));
       setMemoryUsage(formatMemory(result.memory));
+
+      // Compute only the NEW output lines since last run (the delta)
+      const allOutputLines = rawOutput ? rawOutput.split("\n") : [];
+      const newOutputLines = allOutputLines.slice(prevOutputLineCount);
+
+      setTerminalLines((prev) => [
+        ...prev,
+        ...newOutputLines.map((l) => ({ type: "output" as const, content: l })),
+        ...(errorText ? [{ type: "error" as const, content: errorText }] : []),
+      ]);
 
       if (errorText) {
         setBottomTab("errors");
@@ -948,7 +1113,7 @@ export default function CompilerPage() {
       }
       setIsRunning(false);
     },
-    [currentLang, language, code, sessionInput, input]
+    [currentLang, language, code, sessionInput, input, terminalLines]
   );
 
   const handleCompile = useCallback(async () => {
@@ -966,8 +1131,24 @@ export default function CompilerPage() {
     setBottomTab("errors");
     setErrors("");
 
+    // Double-check if the source code unambiguously matches a specific language (e.g. #include<stdio.h> -> C)
+    const detectedLang = detectLanguageFromCode(code);
+    const isRestricted =
+      activeAssignment?.languageMode === "RESTRICTED" &&
+      activeAssignment.allowedLanguages &&
+      activeAssignment.allowedLanguages.length > 0;
+    const isAllowed =
+      !isRestricted ||
+      (activeAssignment!.allowedLanguages!.map((l) => l.toLowerCase()).includes(detectedLang?.toLowerCase() || ""));
+    const effectiveLang = (detectedLang && isAllowed) ? detectedLang : language;
+
+    if (effectiveLang !== language) {
+      setLanguage(effectiveLang);
+      setCodeMap((m) => ({ ...m, [effectiveLang]: code }));
+    }
+
     const result = await executeCode({
-      language,
+      language: effectiveLang,
       sourceCode: code,
       stdin: input,
     });
@@ -1320,6 +1501,7 @@ export default function CompilerPage() {
               <BottomPanel
                 output={output}
                 errors={errors}
+                terminalLines={terminalLines}
                 status={status}
                 onSubmitInput={handleSubmitTerminalInput}
                 onClearOutput={() => {
@@ -1327,6 +1509,7 @@ export default function CompilerPage() {
                   setErrors("");
                   setStatus("idle");
                   setSessionInput("");
+                  setTerminalLines([]);
                 }}
                 onStopExecution={handleStopExecution}
                 isRunning={isRunning}
