@@ -354,10 +354,10 @@ export default function AssignmentsTab() {
 
       {/* Create / Edit Assignment Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-md overflow-hidden">
-          <div className="glass-strong border border-[var(--border-strong)] rounded-2xl max-w-2xl w-full max-h-[92vh] flex flex-col relative shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-3 sm:p-6 bg-black/80 backdrop-blur-md">
+          <div className="glass-strong border border-[var(--border-strong)] rounded-2xl max-w-2xl w-full my-auto max-h-[calc(100vh-3rem)] flex flex-col relative shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 shrink-0">
             {/* Sticky Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0 bg-[var(--card)]/80 backdrop-blur-sm">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] shrink-0 bg-[var(--card)] z-10">
               <div>
                 <h2 className="text-lg font-display font-bold text-[var(--ink)]">
                   {editingAssignment ? "Edit Assignment Configuration" : "Create Coding Assignment"}
@@ -379,7 +379,7 @@ export default function AssignmentsTab() {
             <form
               id="assignment-create-form"
               onSubmit={handleSubmitForm}
-              className="flex-1 overflow-y-auto px-6 py-5 space-y-5 text-xs font-mono custom-scrollbar"
+              className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-5 text-xs font-mono custom-scrollbar"
             >
               {error && (
                 <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-mono flex items-start gap-2.5">
@@ -712,7 +712,7 @@ export default function AssignmentsTab() {
             </form>
 
             {/* Sticky Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border)] shrink-0 bg-[var(--card)]/90 backdrop-blur-sm">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--border)] shrink-0 bg-[var(--card)] z-10">
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
