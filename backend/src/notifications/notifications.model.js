@@ -1,4 +1,3 @@
-const { v4: uuidv4 } = require("uuid") || { v4: () => "notif_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9) };
 let prisma = null;
 try {
   prisma = require("../config/db");
