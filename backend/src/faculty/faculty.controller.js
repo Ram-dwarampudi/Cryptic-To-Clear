@@ -5,7 +5,7 @@ const facultyModel = require("../models/faculty.model");
  */
 exports.getOverview = async (req, res, next) => {
   try {
-    const data = facultyModel.getOverview();
+    const data = await facultyModel.getOverview();
     return res.status(200).json({
       success: true,
       data,
@@ -32,7 +32,7 @@ exports.getStudents = async (req, res, next) => {
       limit,
     } = req.query;
 
-    const data = facultyModel.getStudents({
+    const data = await facultyModel.getStudents({
       search: search || "",
       branch: branch || "",
       section: section || "",
@@ -59,7 +59,7 @@ exports.getStudents = async (req, res, next) => {
 exports.getStudentDetail = async (req, res, next) => {
   try {
     const { studentId } = req.params;
-    const data = facultyModel.getStudentDetail(studentId);
+    const data = await facultyModel.getStudentDetail(studentId);
 
     if (!data) {
       return res.status(404).json({
@@ -112,7 +112,7 @@ exports.getLanguageAnalytics = async (req, res, next) => {
  */
 exports.getClasses = async (req, res, next) => {
   try {
-    const data = facultyModel.getClasses();
+    const data = await facultyModel.getClasses();
     return res.status(200).json({
       success: true,
       data,
@@ -361,8 +361,8 @@ exports.getStudentAssignments = async (req, res, next) => {
  */
 exports.getReports = async (req, res, next) => {
   try {
-    const overview = facultyModel.getOverview();
-    const studentsRes = facultyModel.getStudents({ limit: 100 });
+    const overview = await facultyModel.getOverview();
+    const studentsRes = await facultyModel.getStudents({ limit: 1000 });
     const errors = facultyModel.getErrorAnalytics();
     const languages = facultyModel.getLanguageAnalytics();
 

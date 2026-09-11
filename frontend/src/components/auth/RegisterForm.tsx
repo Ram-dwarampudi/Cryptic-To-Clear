@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import AvatarPicker from "./AvatarPicker";
+import { ACADEMIC_BRANCHES, ACADEMIC_SECTIONS, BRANCH_NAMES } from "@/lib/constants/academic";
 
 interface RegisterFormProps {
   onSwitchTab: (tab: "login") => void;
@@ -55,6 +56,8 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
 
   // Student specific
   const [rollNo, setRollNo] = useState("");
+  const [branch, setBranch] = useState<string>("");
+  const [section, setSection] = useState<string>("");
 
   // Faculty specific
   const [facultyId, setFacultyId] = useState("");
@@ -69,6 +72,18 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
     if (role !== "student") return { rollNo: "", collegeName: "", stream: "", batchYear: null, graduationYear: null };
     return resolveStudentDetails(rollNo, email);
   }, [rollNo, email, role]);
+
+  // Smart suggestion: auto-select branch from roll number if detected and not yet chosen
+  useEffect(() => {
+    if (role === "student" && rollNo.trim().length >= 4 && !branch) {
+      const roll = rollNo.toUpperCase();
+      if (roll.includes("57") || roll.includes("CSBS")) setBranch("CSBS");
+      else if (roll.includes("05") || roll.includes("CSE")) setBranch("CSE");
+      else if (roll.includes("12") || roll.includes("IT")) setBranch("IT");
+      else if (roll.includes("54") || roll.includes("AIDS") || roll.includes("AI-DS")) setBranch("AIDS");
+      else if (roll.includes("42") || roll.includes("AIML") || roll.includes("AI-ML")) setBranch("AIML");
+    }
+  }, [rollNo, role, branch]);
 
   // Compute password strength score (0-3)
   const getPasswordStrength = () => {
@@ -92,6 +107,14 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
     if (role === "student") {
       if (!rollNo.trim() || !name.trim() || !email.trim() || !password) {
         setError("Please fill in Registration Number, Preferred Name, College Email, and Password.");
+        return;
+      }
+      if (!branch) {
+        setError("Please select your academic branch (CSE, CSBS, IT, AIDS, AIML).");
+        return;
+      }
+      if (!section) {
+        setError("Please select your section (A, B, C, D, E).");
         return;
       }
     } else {
@@ -121,6 +144,8 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
           : {
               role: "student" as const,
               rollNo: rollNo.trim().toUpperCase(),
+              branch,
+              section,
               avatar: avatar || undefined,
             };
 
@@ -268,6 +293,77 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Academic Branch and Section Selectors */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="register-branch" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
+                Academic Branch <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <GraduationCap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
+                <select
+                  id="register-branch"
+                  value={branch}
+                  onChange={(e) => {
+                    const newBranch = e.target.value;
+                    setBranch(newBranch);
+                    if (!newBranch) {
+                      setSection("");
+                    }
+                  }}
+                  className="w-full bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-8 py-2 text-sm text-[var(--ink)] transition-all font-mono outline-none cursor-pointer appearance-none"
+                  required
+                >
+                  <option value="" disabled className="bg-[#0a0e18] text-gray-400">
+                    -- Select Branch --
+                  </option>
+                  {ACADEMIC_BRANCHES.map((b) => (
+                    <option key={b} value={b} className="bg-[#0a0e18] text-white">
+                      {b} ({BRANCH_NAMES[b]})
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-[var(--ink-faint)]">
+                  ▼
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="register-section" className="block text-xs font-mono text-[var(--ink-dim)] mb-1 font-medium">
+                Section <span className="text-red-400">*</span>
+                {!branch && <span className="text-[10px] text-amber-400/80 ml-1.5 font-normal">(Select branch first)</span>}
+              </label>
+              <div className="relative">
+                <Hash className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)] pointer-events-none" />
+                <select
+                  id="register-section"
+                  value={section}
+                  onChange={(e) => setSection(e.target.value)}
+                  disabled={!branch}
+                  className={`w-full bg-[rgba(10,14,24,0.7)] border rounded-xl pl-10 pr-8 py-2 text-sm transition-all font-mono outline-none appearance-none ${
+                    !branch
+                      ? "border-white/10 text-[var(--ink-faint)] cursor-not-allowed opacity-60 bg-white/[0.02]"
+                      : "border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 text-[var(--ink)] cursor-pointer"
+                  }`}
+                  required
+                >
+                  <option value="" disabled className="bg-[#0a0e18] text-gray-400">
+                    {branch ? "-- Select Section --" : "-- Choose Branch First --"}
+                  </option>
+                  {ACADEMIC_SECTIONS.map((sec) => (
+                    <option key={sec} value={sec} className="bg-[#0a0e18] text-white">
+                      Section {sec}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-[var(--ink-faint)]">
+                  ▼
+                </div>
+              </div>
+            </div>
+          </div>
         </>
       )}
 

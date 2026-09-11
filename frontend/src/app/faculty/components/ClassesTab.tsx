@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { ClassSection, fetchFacultyClasses, addClassSection } from "@/lib/api";
+import { ACADEMIC_BRANCHES, ACADEMIC_SECTIONS } from "@/lib/constants/academic";
 import { FolderGit2, Plus, Users, GraduationCap, Building2, Check, Loader2, X } from "lucide-react";
 
 export default function ClassesTab() {
   const [classesData, setClassesData] = useState<{ institutionName: string; department: string; classes: ClassSection[] } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedBranch, setSelectedBranch] = useState<string>("ALL");
 
   // New Class Modal State
   const [showModal, setShowModal] = useState(false);
@@ -57,6 +59,11 @@ export default function ClassesTab() {
       </div>
     );
   }
+
+  const allFilteredClasses = (classesData?.classes || []).filter((cls) => {
+    if (selectedBranch === "ALL") return true;
+    return cls.branch === selectedBranch || cls.name.startsWith(selectedBranch);
+  });
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -117,21 +124,67 @@ export default function ClassesTab() {
         </div>
       </div>
 
+      {/* Branch Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 font-mono text-xs">
+        <button
+          onClick={() => setSelectedBranch("ALL")}
+          className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
+            selectedBranch === "ALL"
+              ? "bg-[var(--syn-keyword)] text-[#0a0d13] font-bold shadow-sm"
+              : "glass border border-white/10 text-[var(--ink-dim)] hover:text-white"
+          }`}
+        >
+          All Branches ({classesData?.classes.length || 0})
+        </button>
+        {ACADEMIC_BRANCHES.map((b) => {
+          const count = (classesData?.classes || []).filter(
+            (c) => c.branch === b || c.name.startsWith(b)
+          ).length;
+          const studentsInBranch = (classesData?.classes || [])
+            .filter((c) => c.branch === b || c.name.startsWith(b))
+            .reduce((acc, c) => acc + c.studentCount, 0);
+
+          return (
+            <button
+              key={b}
+              onClick={() => setSelectedBranch(b)}
+              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                selectedBranch === b
+                  ? "bg-[var(--syn-keyword)] text-[#0a0d13] font-bold shadow-sm"
+                  : "glass border border-white/10 text-[var(--ink-dim)] hover:text-white"
+              }`}
+            >
+              <span>{b}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${selectedBranch === b ? "bg-black/20 text-[#0a0d13]" : "bg-white/10 text-white/70"}`}>
+                {studentsInBranch} std
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Class Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {classesData?.classes.map((cls) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {allFilteredClasses.map((cls) => (
           <div
             key={cls.id}
-            className="glass-strong border border-[var(--border-strong)] rounded-2xl p-6 space-y-4 hover:border-[var(--syn-keyword)]/40 transition-all flex flex-col justify-between"
+            className="glass-strong border border-[var(--border-strong)] rounded-2xl p-5 space-y-4 hover:border-[var(--syn-keyword)]/40 transition-all flex flex-col justify-between group"
           >
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-bold px-2.5 py-1 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                  {cls.section}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                    {cls.branch || cls.name.split(" ")[0]}
+                  </span>
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-white/5 text-[var(--ink)] border border-white/10">
+                    {cls.section}
+                  </span>
+                </div>
                 <span className="text-xs font-mono text-[var(--ink-dim)]">Year {cls.year}</span>
               </div>
-              <h3 className="text-base font-display font-semibold text-[var(--ink)]">{cls.name}</h3>
+              <h3 className="text-sm font-display font-semibold text-[var(--ink)] group-hover:text-[var(--syn-keyword)] transition-colors">
+                {cls.name}
+              </h3>
             </div>
 
             <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between text-xs font-mono text-[var(--ink-dim)]">
@@ -139,7 +192,9 @@ export default function ClassesTab() {
                 <Users className="w-4 h-4 text-[var(--syn-function)]" />
                 <strong className="text-[var(--ink)] font-bold">{cls.studentCount}</strong> Enrolled Students
               </span>
-              <span className="text-[var(--syn-string)] font-semibold">Active</span>
+              <span className="text-emerald-400 font-semibold flex items-center gap-1 text-[11px]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Active
+              </span>
             </div>
           </div>
         ))}

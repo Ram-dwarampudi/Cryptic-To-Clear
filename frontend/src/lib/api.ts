@@ -714,6 +714,8 @@ export interface RegisterOptions {
   batchYear?: number;
   collegeName?: string;
   stream?: string;
+  branch?: string;
+  section?: string;
   title?: string;
   avatar?: string;
 }
@@ -929,7 +931,9 @@ export interface ClassSection {
   institutionId: string;
   facultyId: string;
   name: string;
+  branch?: string;
   section: string;
+  classCode?: string;
   year: number;
   studentCount: number;
 }

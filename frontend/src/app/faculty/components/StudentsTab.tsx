@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { StudentSummary, fetchFacultyStudents } from "@/lib/api";
+import { ACADEMIC_BRANCHES, ACADEMIC_SECTIONS } from "@/lib/constants/academic";
 import {
   Search,
   Filter,
@@ -100,31 +101,38 @@ export default function StudentsTab({ onSelectStudent }: StudentsTabProps) {
 
           {/* Filter Branch */}
           <select
+            id="filter-branch"
             value={branch}
             onChange={(e) => {
               setBranch(e.target.value);
               setPage(1);
             }}
-            className="bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--ink)] font-mono focus:outline-none focus:border-[var(--syn-keyword)]"
+            className="bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--ink)] font-mono focus:outline-none focus:border-[var(--syn-keyword)] cursor-pointer"
           >
             <option value="">All Branches</option>
-            <option value="CSE">CSE</option>
-            <option value="IT">IT</option>
+            {ACADEMIC_BRANCHES.map((b) => (
+              <option key={b} value={b}>
+                {b}
+              </option>
+            ))}
           </select>
 
           {/* Filter Section */}
           <select
+            id="filter-section"
             value={section}
             onChange={(e) => {
               setSection(e.target.value);
               setPage(1);
             }}
-            className="bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--ink)] font-mono focus:outline-none focus:border-[var(--syn-keyword)]"
+            className="bg-[var(--bg)] border border-[var(--border)] rounded-xl px-3 py-2 text-xs text-[var(--ink)] font-mono focus:outline-none focus:border-[var(--syn-keyword)] cursor-pointer"
           >
             <option value="">All Sections</option>
-            <option value="CS-3A">CS-3A</option>
-            <option value="CS-3B">CS-3B</option>
-            <option value="CS-2A">CS-2A</option>
+            {ACADEMIC_SECTIONS.map((sec) => (
+              <option key={sec} value={sec}>
+                Section {sec}
+              </option>
+            ))}
           </select>
 
           {/* Filter Status */}
@@ -219,9 +227,14 @@ export default function StudentsTab({ onSelectStudent }: StudentsTabProps) {
                       <td className="py-3.5 px-3 font-semibold text-[var(--ink-dim)]">{student.rollNumber}</td>
 
                       <td className="py-3.5 px-3">
-                        <span className="px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[var(--ink-dim)]">
-                          {student.branch} • {student.section}
-                        </span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30">
+                            {student.branch || "CSE"}
+                          </span>
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-white/5 border border-white/10 text-[var(--ink-dim)]">
+                            Sec {student.section || "A"}
+                          </span>
+                        </div>
                       </td>
 
                       <td className="py-3.5 px-3">

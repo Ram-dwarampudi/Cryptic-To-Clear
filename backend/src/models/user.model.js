@@ -109,6 +109,8 @@ class UserModel {
       bio: dbUser.bio || "",
       collegeName: dbUser.collegeName || (dbUser.university ? dbUser.university.name : null),
       stream: dbUser.stream || (dbUser.department ? dbUser.department.name : null),
+      branch: dbUser.branch || null,
+      section: dbUser.section || null,
       primaryLanguage: dbUser.primaryLanguage || null,
       graduationYear: dbUser.graduationYear || dbUser.batchYear || null,
       leetcodeHandle: dbUser.leetcodeHandle || "",
@@ -250,6 +252,11 @@ class UserModel {
     return null;
   }
 
+  async comparePassword(password, passwordHash) {
+    if (!password || !passwordHash) return false;
+    return bcrypt.compare(password, passwordHash);
+  }
+
   async create({
     name,
     email,
@@ -261,6 +268,8 @@ class UserModel {
     batchYear = null,
     collegeName = null,
     stream = null,
+    branch = null,
+    section = null,
     graduationYear = null,
     universityId = null,
     departmentId = null,
@@ -303,6 +312,8 @@ class UserModel {
             batchYear: batchYear ? parseInt(batchYear, 10) : null,
             collegeName: collegeName || null,
             stream: stream || null,
+            branch: branch || null,
+            section: section || null,
             graduationYear: graduationYear ? parseInt(graduationYear, 10) : null,
             avatar: avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(normalizedEmail)}`,
             karmaPoints: 0,
@@ -314,32 +325,7 @@ class UserModel {
           include: { university: true, department: true },
         });
 
-        const userObj = {
-          id: createdDbUser.id,
-          name: createdDbUser.name,
-          email: createdDbUser.email,
-          passwordHash: createdDbUser.passwordHash,
-          avatar: createdDbUser.avatar,
-          provider: "local",
-          role: createdDbUser.role.toLowerCase(),
-          rollNo: createdDbUser.rollNo,
-          batchYear: createdDbUser.batchYear,
-          collegeName: createdDbUser.collegeName,
-          stream: createdDbUser.stream,
-          graduationYear: createdDbUser.graduationYear,
-          karmaPoints: createdDbUser.karmaPoints,
-          universityId: createdDbUser.universityId,
-          university: createdDbUser.university ? createdDbUser.university.name : null,
-          departmentId: createdDbUser.departmentId,
-          department: createdDbUser.department ? createdDbUser.department.name : null,
-          plan: createdDbUser.role === "FACULTY" ? "enterprise" : "free",
-          subscriptionStatus: "active",
-          subscriptionExpiry: null,
-          credits: createdDbUser.role === "FACULTY" ? 10000 : 100,
-          createdAt: createdDbUser.createdAt.toISOString(),
-          updatedAt: createdDbUser.updatedAt.toISOString(),
-        };
-
+        const userObj = this._formatUser(createdDbUser);
         this.users.set(createdDbUser.id, userObj);
         return userObj;
       } catch (err) {
@@ -360,6 +346,11 @@ class UserModel {
       role: role ? role.toLowerCase() : "student",
       rollNo,
       batchYear: batchYear ? parseInt(batchYear, 10) : null,
+      collegeName,
+      stream,
+      branch: branch || null,
+      section: section || null,
+      graduationYear: graduationYear ? parseInt(graduationYear, 10) : null,
       university: null,
       department: null,
       institutionId: null,
@@ -367,7 +358,7 @@ class UserModel {
       plan: role === "faculty" ? "enterprise" : "free",
       subscriptionStatus: "active",
       subscriptionExpiry: null,
-      credits: role === "faculty" ? 5000 : 50,
+      credits: role === "faculty" ? 10000 : 100,
       createdAt: now,
       updatedAt: now,
       lastLogin: now,
@@ -401,9 +392,29 @@ class UserModel {
     return user;
   }
 
-  async comparePassword(password, passwordHash) {
-    if (!password || !passwordHash) return false;
-    return bcrypt.compare(password, passwordHash);
+  async getAllStudents() {
+    if (prisma) {
+      try {
+        const dbUsers = await prisma.user.findMany({
+          where: {
+            OR: [
+              { role: "STUDENT" },
+              { role: "student" },
+            ],
+          },
+          include: { university: true, department: true },
+          orderBy: { createdAt: "desc" },
+        });
+        if (dbUsers && dbUsers.length > 0) {
+          return dbUsers.map((u) => this._formatUser(u));
+        }
+      } catch (err) {
+        console.warn("Prisma getAllStudents error, fallback to memory:", err.message);
+      }
+    }
+    return Array.from(this.users.values()).filter(
+      (u) => (u.role || "").toLowerCase() === "student"
+    );
   }
 
   async getLeaderboard() {

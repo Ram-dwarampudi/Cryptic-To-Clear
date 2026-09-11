@@ -4,6 +4,7 @@ const axios = require("axios");
 const env = require("../config/env");
 const userModel = require("../models/user.model");
 const { resolveStudentFromRegistration } = require("../utils/studentLookup");
+const { ACADEMIC_BRANCHES, ACADEMIC_SECTIONS } = require("../constants/academic");
 
 /**
  * Generate JWT token for user
@@ -79,10 +80,30 @@ exports.register = async (req, res, next) => {
     }
 
     const isFaculty = (role || "").toLowerCase() === "faculty";
+    let branch = req.body.branch ? req.body.branch.trim().toUpperCase() : null;
+    let section = req.body.section ? req.body.section.trim().toUpperCase() : null;
+
+    if (!isFaculty) {
+      if (!branch || !ACADEMIC_BRANCHES.includes(branch)) {
+        return res.status(400).json({
+          success: false,
+          message: `Please select a valid branch (${ACADEMIC_BRANCHES.join(", ")}).`,
+        });
+      }
+      if (!section || !ACADEMIC_SECTIONS.includes(section)) {
+        return res.status(400).json({
+          success: false,
+          message: `Please select a valid section (${ACADEMIC_SECTIONS.join(", ")}).`,
+        });
+      }
+    }
+
     let academicDetails = {
       rollNo: rollNo ? rollNo.trim().toUpperCase() : null,
       collegeName: req.body.collegeName || null,
       stream: req.body.stream || req.body.department || null,
+      branch,
+      section,
       batchYear: req.body.batchYear ? parseInt(req.body.batchYear, 10) : null,
       graduationYear: req.body.graduationYear ? parseInt(req.body.graduationYear, 10) : null,
     };
@@ -93,6 +114,8 @@ exports.register = async (req, res, next) => {
         ...academicDetails,
         ...resolved,
         rollNo: resolved.rollNo || rollNo.trim().toUpperCase(),
+        branch: branch || resolved.branch || null,
+        section: section || resolved.section || null,
       };
     }
 
@@ -105,6 +128,8 @@ exports.register = async (req, res, next) => {
       rollNo: academicDetails.rollNo || rollNo,
       collegeName: academicDetails.collegeName,
       stream: academicDetails.stream,
+      branch: academicDetails.branch,
+      section: academicDetails.section,
       batchYear: academicDetails.batchYear,
       graduationYear: academicDetails.graduationYear,
       provider: "local",

@@ -54,6 +54,8 @@ model User {
   // Academic & Profile Details
   collegeName     String?
   stream          String?     // e.g. "Computer Science & Engineering"
+  branch          String?     // CSE, CSBS, IT, AIDS, AIML
+  section         String?     // A, B, C, D, E
   primaryLanguage String?     // e.g. "Java", "C++", "Python"
   graduationYear  Int?        // e.g. 2026
 

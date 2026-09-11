@@ -1,6 +1,9 @@
+const userModel = require("./user.model");
+const { ACADEMIC_BRANCHES, ACADEMIC_SECTIONS, BRANCH_NAMES } = require("../constants/academic");
+
 /**
- * In-Memory Institutional Faculty Repository with rich synthetic seed data
- * and DB migration readiness (Prisma / Mongoose compatible).
+ * Institutional Faculty Repository connecting registered students,
+ * 25 Branch-Section classes, and academic performance.
  */
 
 class FacultyModel {
@@ -34,17 +37,80 @@ class FacultyModel {
     this._migrateAssignments();
   }
 
+  /**
+   * Helper to retrieve all enrolled student accounts dynamically from UserModel
+   */
+  async _getAllEnrolledStudents() {
+    const dbStudents = await userModel.getAllStudents();
+    return dbStudents.map((u, idx) => {
+      let branch = u.branch;
+      let section = u.section;
+
+      // Safe fallback / migration inference for existing students without branch/section
+      if (!branch || !ACADEMIC_BRANCHES.includes(branch)) {
+        if (u.rollNo) {
+          const roll = u.rollNo.toUpperCase();
+          if (roll.includes("57") || roll.includes("CSBS")) branch = "CSBS";
+          else if (roll.includes("05") || roll.includes("CSE")) branch = "CSE";
+          else if (roll.includes("12") || roll.includes("IT")) branch = "IT";
+          else if (roll.includes("54") || roll.includes("AIDS") || roll.includes("AI-DS")) branch = "AIDS";
+          else if (roll.includes("42") || roll.includes("AIML") || roll.includes("AI-ML")) branch = "AIML";
+        }
+        if (!branch && u.stream) {
+          const s = u.stream.toUpperCase();
+          if (s.includes("BUSINESS") || s.includes("CSBS")) branch = "CSBS";
+          else if (s.includes("INFORMATION") || s.includes("IT")) branch = "IT";
+          else if (s.includes("DATA SCIENCE") || s.includes("AIDS")) branch = "AIDS";
+          else if (s.includes("MACHINE LEARNING") || s.includes("AIML")) branch = "AIML";
+          else branch = "CSE";
+        }
+        if (!branch) branch = "CSE";
+      }
+
+      if (!section || !ACADEMIC_SECTIONS.includes(section)) {
+        section = "A";
+      }
+
+      const rollNumber = u.rollNo || `24${branch}${String(idx + 1).padStart(3, "0")}`;
+      const codingScore = u.overallScore > 0 ? Math.min(100, Math.round(u.overallScore / 10)) : 78;
+      const status = codingScore >= 70 ? "Active" : codingScore >= 50 ? "At Risk" : "Inactive";
+
+      return {
+        id: u.id,
+        userId: u.id,
+        name: u.name || "Student",
+        rollNumber,
+        email: u.email,
+        branch,
+        section,
+        year: u.batchYear ? Math.max(1, Math.min(4, new Date().getFullYear() - u.batchYear + 1)) : 3,
+        institutionId: u.institutionId || "inst_01",
+        programsExecuted: u.overallScore ? Math.max(1, Math.floor(u.overallScore / 15)) : 22,
+        successfulExecutions: u.overallScore ? Math.max(1, Math.floor(u.overallScore / 18)) : 19,
+        compilerErrors: 3,
+        aiExplanations: 0,
+        codingScore,
+        lastActive: u.lastLogin || u.updatedAt || new Date().toISOString(),
+        status,
+        avatar: u.avatar,
+        frequentMistakes: ["Syntax Error", "Logic Error"],
+        languageStats: { c: 6, cpp: 12, java: 4, python: 2 },
+      };
+    });
+  }
+
   // Institutional overview data
-  getOverview() {
-    const totalStudents = this.students.length;
-    const activeStudents = this.students.filter((s) => s.status === "Active").length;
-    const atRiskStudents = this.students.filter((s) => s.status === "At Risk").length;
-    const programsExecuted = this.submissions.length;
-    const compilationErrors = this.submissions.filter((s) => s.status === "Compile Error").length;
+  async getOverview() {
+    const students = await this._getAllEnrolledStudents();
+    const totalStudents = students.length;
+    const activeStudents = students.filter((s) => s.status === "Active").length;
+    const atRiskStudents = students.filter((s) => s.status === "At Risk").length;
+    const programsExecuted = students.reduce((acc, s) => acc + (s.programsExecuted || 0), 0) + this.submissions.length;
+    const compilationErrors = students.reduce((acc, s) => acc + (s.compilerErrors || 0), 0);
     const aiExplanationsUsed = 0;
     const averageCodingScore =
-      this.submissions.length > 0
-        ? Number((this.submissions.reduce((a, b) => a + (b.score || 0), 0) / this.submissions.length).toFixed(1))
+      students.length > 0
+        ? Number((students.reduce((a, b) => a + (b.codingScore || 0), 0) / students.length).toFixed(1))
         : 0;
 
     return {
@@ -62,13 +128,16 @@ class FacultyModel {
   }
 
   // Student directory with search, filter, sort, pagination
-  getStudents({ search = "", branch = "", section = "", year = "", status = "", sortBy = "codingScore", sortOrder = "desc", page = 1, limit = 10 }) {
-    let result = [...this.students];
+  async getStudents({ search = "", branch = "", section = "", year = "", status = "", sortBy = "codingScore", sortOrder = "desc", page = 1, limit = 10 }) {
+    let result = await this._getAllEnrolledStudents();
 
     if (search) {
-      const q = search.toLowerCase();
+      const q = search.toLowerCase().trim();
       result = result.filter(
-        (s) => s.name.toLowerCase().includes(q) || s.rollNumber.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)
+        (s) =>
+          (s.name && s.name.toLowerCase().includes(q)) ||
+          (s.rollNumber && s.rollNumber.toLowerCase().includes(q)) ||
+          (s.email && s.email.toLowerCase().includes(q))
       );
     }
 
@@ -106,20 +175,21 @@ class FacultyModel {
   }
 
   // Student detailed performance
-  getStudentDetail(studentId) {
-    const student = this.students.find((s) => s.id === studentId || s.userId === studentId);
+  async getStudentDetail(studentId) {
+    const students = await this._getAllEnrolledStudents();
+    const student = students.find((s) => s.id === studentId || s.userId === studentId);
     if (!student) return null;
 
     return {
       ...student,
       institutionName: this.institution.name,
-      department: "Computer Science & Engineering",
+      department: BRANCH_NAMES[student.branch] || "Computer Science & Engineering",
       progressTimeline: [
         { week: "Week 1", score: 65, executions: 20, errors: 8 },
         { week: "Week 2", score: 72, executions: 35, errors: 10 },
         { week: "Week 3", score: 80, executions: 42, errors: 6 },
         { week: "Week 4", score: 88, executions: 55, errors: 5 },
-        { week: "Week 5", score: student.codingScore, executions: student.programsAttempted, errors: student.compilerErrors },
+        { week: "Week 5", score: student.codingScore, executions: student.programsAttempted || 25, errors: student.compilerErrors },
       ],
       errorCategories: [
         { category: "Syntax Errors", count: Math.round(student.compilerErrors * 0.35) },
@@ -186,13 +256,44 @@ class FacultyModel {
     };
   }
 
-  // Classes / Sections
-  getClasses() {
+  // Classes / Sections: 5 branches x 5 sections = 25 classes
+  async getClasses() {
+    const students = await this._getAllEnrolledStudents();
+
+    const classes = [];
+    for (const b of ACADEMIC_BRANCHES) {
+      for (const s of ACADEMIC_SECTIONS) {
+        const matchingStudents = students.filter(
+          (std) => std.branch === b && std.section === s
+        );
+
+        classes.push({
+          id: `cls_${b.toLowerCase()}_${s.toLowerCase()}`,
+          institutionId: this.institution.id,
+          facultyId: "usr_faculty_demo",
+          name: `${b} (${BRANCH_NAMES[b] || b})`,
+          branch: b,
+          section: `Section ${s}`,
+          sectionCode: s,
+          classCode: `${b}-${s}`,
+          year: 3,
+          studentCount: matchingStudents.length,
+        });
+      }
+    }
+
+    // Append any custom added classes if any
+    for (const customCls of this.classes) {
+      if (!classes.some((c) => c.id === customCls.id)) {
+        classes.push(customCls);
+      }
+    }
+
     return {
       institutionId: this.institution.id,
       institutionName: this.institution.name,
-      department: "Computer Science & Engineering",
-      classes: this.classes,
+      department: "School of Computing & Engineering",
+      classes,
     };
   }
 
