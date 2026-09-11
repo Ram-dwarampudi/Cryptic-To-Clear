@@ -1532,7 +1532,9 @@ export default function StudentProfileDashboard() {
                 return (
                   <div
                     key={st.id || st.email}
-                    className={`relative p-4 rounded-2xl border transition-all overflow-hidden ${
+                    onClick={() => handleOpenStudentProfile(st.id, st)}
+                    title="Click to view LinkedIn-style student profile"
+                    className={`relative p-4 rounded-2xl border transition-all overflow-hidden cursor-pointer group hover:scale-[1.02] hover:border-[#D4AF37] hover:shadow-xl ${
                       isFirst
                         ? "bg-gradient-to-b from-[#D4AF37]/15 to-[#161b22] border-[#D4AF37]/40 shadow-lg shadow-[#D4AF37]/10"
                         : isSecond
@@ -1653,8 +1655,12 @@ export default function StudentProfileDashboard() {
                           )}
                         </td>
 
-                        {/* Student Details */}
-                        <td className="py-3.5 px-4">
+                        {/* Student Details - Clickable to open LinkedIn-style profile */}
+                        <td
+                          className="py-3.5 px-4 cursor-pointer group/student"
+                          onClick={() => handleOpenStudentProfile(student.id, student)}
+                          title="Click to view LinkedIn-style student profile"
+                        >
                           <div className="flex items-center gap-3">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -1664,15 +1670,31 @@ export default function StudentProfileDashboard() {
                                 `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(student.email)}`
                               }
                               alt={student.name}
-                              className="w-8 h-8 rounded-full border border-white/10 bg-black/40 flex-shrink-0 object-cover"
+                              className="w-8 h-8 rounded-full border border-white/10 group-hover/student:border-[#D4AF37] bg-black/40 flex-shrink-0 object-cover transition-colors"
                             />
                             <div>
                               <div className="flex items-center gap-2 font-sans font-semibold text-white">
-                                <span>{student.name}</span>
+                                <span className="group-hover/student:text-amber-300 group-hover/student:underline underline-offset-2 transition-colors flex items-center gap-1">
+                                  {student.name}
+                                  <span className="text-[10px] text-amber-400 opacity-0 group-hover/student:opacity-100 transition-opacity font-mono">↗</span>
+                                </span>
                                 {isCurrentUser && (
                                   <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-[#D4AF37] text-black font-extrabold uppercase tracking-wider">
                                     You
                                   </span>
+                                )}
+                                {!isCurrentUser && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleOpenMessage(student);
+                                    }}
+                                    className="p-1 rounded-md bg-white/5 hover:bg-cyan-500/20 text-gray-400 hover:text-cyan-300 transition-colors ml-1 cursor-pointer"
+                                    title="Send direct message"
+                                  >
+                                    <MessageSquare className="w-3 h-3" />
+                                  </button>
                                 )}
                               </div>
                               <div className="text-[11px] text-[var(--ink-dim)] font-mono">{student.email}</div>
@@ -2875,6 +2897,38 @@ export default function StudentProfileDashboard() {
           </div>
         )}
       </AnimatePresence>
+
+
+      {/* LinkedIn-Style Public Student Profile Modal */}
+      <StudentPublicProfileModal
+        isOpen={isPublicProfileModalOpen}
+        onClose={() => setIsPublicProfileModalOpen(false)}
+        studentId={selectedStudentForProfile?.id || null}
+        initialStudent={selectedStudentForProfile?.student || null}
+        token={token}
+        currentUserId={user?.id}
+        onOpenMessage={handleOpenMessage}
+        onConnectionChange={loadLeaderboard}
+      />
+
+      {/* Direct Messaging Drawer */}
+      <DirectMessageDrawer
+        isOpen={isMessageDrawerOpen}
+        onClose={() => setIsMessageDrawerOpen(false)}
+        peer={selectedPeerForMessage}
+        token={token}
+        currentUserId={user?.id}
+      />
+
+      {/* My Network & Connections Modal */}
+      <ConnectionsModal
+        isOpen={isConnectionsModalOpen}
+        onClose={() => setIsConnectionsModalOpen(false)}
+        token={token}
+        onOpenProfile={handleOpenStudentProfile}
+        onOpenMessage={handleOpenMessage}
+      />
+
     </div>
   );
 }
