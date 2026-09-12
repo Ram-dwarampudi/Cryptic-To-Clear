@@ -85,10 +85,21 @@ exports.getDoubts = async (req, res) => {
             },
           },
           answers: {
-            select: {
-              id: true,
-              isAccepted: true,
-              isFacultyEndorsed: true,
+            orderBy: [{ isAccepted: "desc" }, { isFacultyEndorsed: "desc" }, { upvotes: "desc" }],
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  role: true,
+                  avatar: true,
+                  karmaPoints: true,
+                  stream: true,
+                  collegeName: true,
+                  department: { select: { code: true, name: true } },
+                },
+              },
             },
           },
         },
@@ -129,6 +140,7 @@ exports.getDoubts = async (req, res) => {
       };
     });
 
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     res.json({
       success: true,
       data: sanitized,
@@ -177,10 +189,13 @@ exports.getDoubtById = async (req, res) => {
               select: {
                 id: true,
                 name: true,
+                email: true,
                 role: true,
                 avatar: true,
                 karmaPoints: true,
-                department: { select: { code: true } },
+                stream: true,
+                collegeName: true,
+                department: { select: { code: true, name: true } },
               },
             },
           },
@@ -223,6 +238,7 @@ exports.getDoubtById = async (req, res) => {
       parsedTags = [];
     }
 
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     res.json({
       success: true,
       data: {

@@ -793,19 +793,20 @@ const CONVERSION_SCHEMA = {
 };
 
 const CONVERSION_SYSTEM_PROMPT =
-  "You are Cryptic to Clear's code converter. Convert the submitted source code from one language to another while preserving exact logic.\n" +
-  "Respond ONLY with a JSON object in this exact format:\n" +
-  "{\n" +
-  '  "convertedCode": "Full runnable converted code in the target language as a single string",\n' +
-  '  "preservedLogicSummary": "1-2 sentences confirming what logic was preserved",\n' +
-  '  "differences": [\n' +
-  '    {"aspect": "Syntax", "explanation": "Explanation of differences"}\n' +
-  '  ],\n' +
-  '  "conversionNotes": "Any caveats or assumptions"\n' +
-  "}\n" +
-  "RULES:\n" +
-  "1. Return valid raw JSON starting with { and ending with } only.\n" +
-  "2. Write convertedCode as a single complete runnable code string with newline characters.";
+  "You are Cryptic to Clear's polyglot code converter. Convert the submitted source code from one language to another while preserving exact logic, control flow, functions, types, and input/output behavior.\\n" +
+  "Respond ONLY with a JSON object in this exact format:\\n" +
+  "{\\n" +
+  '  "convertedCode": "Full runnable converted code in the target language as a single string",\\n' +
+  '  "preservedLogicSummary": "1-2 sentences confirming what logic was preserved",\\n' +
+  '  "differences": [\\n' +
+  '    {"aspect": "Syntax", "explanation": "Explanation of differences"}\\n' +
+  '  ],\\n' +
+  '  "conversionNotes": "Any caveats or assumptions"\\n' +
+  "}\\n" +
+  "RULES:\\n" +
+  "1. Return valid raw JSON starting with { and ending with } only.\\n" +
+  "2. Write convertedCode as a single complete runnable code string with newline characters without markdown backticks or code blocks.\\n" +
+  "3. Maintain all variables, input handling, algorithm logic, and standard I/O accurately in the target language.";
 
 function buildConversionPrompt({ sourceLanguage, targetLanguage, sourceCode }) {
   return [
@@ -827,7 +828,7 @@ async function convertCode({ sourceLanguage, targetLanguage, sourceCode }) {
   try {
     const { content } = await requestWithFallback({
       temperature: 0.2,
-      maxTokens: 1200,
+      maxTokens: 3500,
       messages: [
         { role: "system", content: CONVERSION_SYSTEM_PROMPT },
         {
@@ -861,6 +862,14 @@ async function convertCode({ sourceLanguage, targetLanguage, sourceCode }) {
       if (fenceMatch && fenceMatch[1].trim()) {
         codeString = fenceMatch[1].trim();
       }
+    }
+
+    // Strip markdown fences from codeString if present
+    if (codeString) {
+      codeString = codeString
+        .replace(/^```[a-zA-Z0-9_+-]*\n?/, "")
+        .replace(/\n?```$/, "")
+        .trim();
     }
 
     // If still no code string or if AI failed, use fallback convert
@@ -1567,7 +1576,7 @@ const LEARNING_SYSTEM_PROMPT =
   '  "intermediateExplanation": "Intermediate explanation (3-4 sentences)",\n' +
   '  "advancedExplanation": "Advanced explanation (3-4 sentences)",\n' +
   '  "realLifeExample": "Relatable real-world analogy",\n' +
-  '  "flowchartMermaid": "flowchart TD\\n  A[Start] --> B[Run Code] --> C[End]",\n' +
+  '  "flowchartMermaid": "flowchart TD\\n  A[\\"Start\\"] --> B[\\"Run Code\\"] --> C[\\"End\\"]",\n' +
   '  "pseudoCode": "Clear pseudocode logic",\n' +
   '  "complexityAnalysis": {\n    "timeComplexity": "O(1)",\n    "spaceComplexity": "O(1)",\n    "explanation": "Brief explanation"\n  },\n' +
   '  "practiceQuestion": {\n    "question": "Practice question",\n    "hint": "Hint text"\n  },\n' +
@@ -1576,7 +1585,8 @@ const LEARNING_SYSTEM_PROMPT =
   "}\n" +
   "RULES:\n" +
   "1. Return valid JSON only starting with { and ending with }.\n" +
-  "2. Keep the Mermaid flowchart definition simple (flowchart TD) with short node labels.";
+  "2. Keep the Mermaid flowchart definition simple (flowchart TD) with short node labels.\n" +
+  "3. ALWAYS enclose node label text inside double quotes, e.g. A[\"Start\"] --> B[\"Process code\"] --> C[\"End\"]. Never leave unquoted brackets inside labels.";
 
 function buildLearningPrompt({ language, sourceCode }) {
   return [

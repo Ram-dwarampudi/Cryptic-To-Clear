@@ -10,6 +10,81 @@ const DATA_FILE_PATH = path.join(__dirname, "../data/faculty_store.json");
  * 25 Branch-Section classes, and academic performance.
  */
 
+function detectLanguageFromCode(code) {
+  const c = (code || "").trim();
+  if (!c || c.length < 6) return null;
+
+  const hasInclude = /#\s*include\b/i.test(c);
+  const hasDefine = /#\s*define\b/i.test(c);
+  const hasPreprocessor = hasInclude || hasDefine;
+
+  let javaScore = 0;
+  let pythonScore = 0;
+  let cppScore = 0;
+  let cScore = 0;
+
+  // --- Decisive C++ Indicators ---
+  const hasCppHeader = /#\s*include\s*[<"]\s*(iostream|vector|string|algorithm|map|set|queue|stack|deque|numeric|utility|cmath|bits\/stdc\+\+(\.h)?|fstream|sstream|iomanip|list|tuple|unordered_map|unordered_set|memory|functional|chrono)\s*[>"]/i.test(c);
+  const hasCppKeywords = /\b(using\s+namespace\s+std|std\s*::|cout\s*<<|cin\s*>>|cerr\s*<<|nullptr|template\s*<)\b/.test(c);
+
+  if (hasCppHeader) cppScore += 25;
+  if (hasCppKeywords) cppScore += 20;
+  if (/\bclass\s+\w+\s*\{[\s\S]*?(public|private|protected)\s*:/i.test(c)) cppScore += 15;
+  if (/\b(vector|map|set|unordered_map|pair|tuple)\s*<[\w\s,<>]+>\s*\w+/.test(c)) cppScore += 10;
+  if (/\b(new\s+\w+(\[|\()|delete\s+(\[\]|\w+))/.test(c) && !/java/i.test(c)) cppScore += 8;
+
+  // --- C Indicators ---
+  const hasCHeader = /#\s*include\s*[<"]\s*(stdio|stdlib|string|math|ctype|stdbool|limits|time|conio|assert|float|stddef|stdint)\.h\s*[>"]/i.test(c);
+  if (hasCHeader && !hasCppHeader && !hasCppKeywords) cScore += 25;
+  if (hasInclude && !hasCppHeader && !hasCppKeywords && cppScore === 0) cScore += 10;
+  if (/\b(printf|scanf)\s*\(/i.test(c) && !hasCppKeywords && !/\bSystem\./.test(c)) cScore += 8;
+  if (/\b(int|void)\s+main\s*\([^)]*\)/.test(c) && !hasCppHeader && !hasCppKeywords) cScore += 6;
+  if (/\b(malloc|calloc|realloc|free)\s*\(/i.test(c) && !hasCppKeywords) cScore += 6;
+  if (/\b(getch|clrscr)\s*\(\s*\)/i.test(c)) cScore += 6;
+  if (/\b(struct|typedef\s+struct)\s+\w+/.test(c) && !hasCppKeywords) cScore += 5;
+
+  // --- Java Heuristics ---
+  if (!hasPreprocessor) {
+    if (/\bimport\s+(java|javax)\./i.test(c)) javaScore += 25;
+    if (/\bpackage\s+[\w.]+;/i.test(c)) javaScore += 15;
+    if (/\bpublic\s+(final\s+|abstract\s+)?class\s+\w+/i.test(c)) javaScore += 20;
+    if (/\b(public\s+)?static\s+void\s+main\s*\(\s*String\s*(\[\s*\]\s*\w+|\w+\s*\[\s*\])/.test(c)) javaScore += 25;
+    if (/\bSystem\.(out|err)\.(println|print|printf)\s*\(/i.test(c)) javaScore += 20;
+    if (/\bnew\s+Scanner\s*\(\s*System\.in\s*\)/i.test(c)) javaScore += 20;
+    if (/\b(Scanner|BufferedReader|StringBuilder|ArrayList|HashMap|Integer|Double|Boolean)\b/.test(c) && /;\s*$/m.test(c)) javaScore += 8;
+    if (/\bclass\s+\w+\s*\{/i.test(c) && /;\s*$/m.test(c)) javaScore += 10;
+  }
+
+  // --- Python Heuristics ---
+  if (!hasPreprocessor) {
+    if (/^\s*def\s+\w+\s*\([^)]*\)\s*:/m.test(c)) pythonScore += 20;
+    if (/^\s*class\s+\w+(\([^)]*\))?\s*:/m.test(c)) pythonScore += 15;
+    if (/\bif\s+__name__\s*==\s*['"]__main__['"]\s*:/m.test(c)) pythonScore += 25;
+    if (/^\s*(from\s+[\w.]+\s+import|import\s+(sys|os|math|random|json|re|datetime|collections|typing|numpy|pandas))\b/m.test(c)) pythonScore += 15;
+    if (/^\s*elif\s+.*:/m.test(c) || /^\s*else\s*:/m.test(c)) pythonScore += 8;
+    if (/\bfor\s+\w+\s+in\s+[^:]+:/m.test(c)) pythonScore += 12;
+    if (/\bwhile\s+[^:]+:/m.test(c)) pythonScore += 10;
+    if (/\bprint\s*\(/.test(c) && !/;\s*$/m.test(c) && !/\bSystem\./.test(c)) pythonScore += 10;
+    if (/\binput\s*\(/.test(c) && !/\bScanner\b/.test(c)) pythonScore += 10;
+    if (/\b(True|False|None)\b/.test(c) && !/;\s*$/m.test(c)) pythonScore += 6;
+    if (/^\s*#\s+[^\n]*/m.test(c) && !hasInclude) pythonScore += 4;
+    if (!/[{};]/.test(c) && (pythonScore > 0 || /:\s*$/.test(c))) pythonScore += 6;
+  }
+
+  const scores = [
+    { lang: "c", score: cScore },
+    { lang: "cpp", score: cppScore },
+    { lang: "java", score: javaScore },
+    { lang: "python", score: pythonScore },
+  ];
+
+  scores.sort((a, b) => b.score - a.score);
+  if (scores[0].score >= 4 && scores[0].score > scores[1].score) {
+    return scores[0].lang;
+  }
+  return null;
+}
+
 class FacultyModel {
   constructor() {
     this.institution = {
@@ -53,8 +128,9 @@ class FacultyModel {
         description: "Given an array of integers, find and return the largest element present in the array. Read the number of elements N followed by N space-separated integers, and output the single maximum value.",
         instructions: "Read N followed by N integers from standard input. Constraints: 1 <= N <= 10^5, -10^9 <= arr[i] <= 10^9.",
         assignmentType: "coding",
-        languageMode: "ANY",
-        allowedLanguages: [],
+        languageMode: "RESTRICTED",
+        preferredLanguage: "c",
+        allowedLanguages: ["c"],
         points: 100,
         difficulty: "easy",
         startDate: new Date().toISOString(),
@@ -111,8 +187,9 @@ class FacultyModel {
         description: "Check if the given string reads the same forwards and backwards. Output 'true' if the string is a palindrome, otherwise output 'false'.",
         instructions: "Read a single word from standard input without whitespace. Constraints: 1 <= length(S) <= 10^4.",
         assignmentType: "coding",
-        languageMode: "ANY",
-        allowedLanguages: [],
+        languageMode: "RESTRICTED",
+        preferredLanguage: "python",
+        allowedLanguages: ["python"],
         points: 100,
         difficulty: "easy",
         startDate: new Date().toISOString(),
@@ -155,8 +232,9 @@ class FacultyModel {
         description: "Given an array of integers and a target sum, determine if there exists two distinct elements whose sum equals target. Output 'YES' if such a pair exists, otherwise 'NO'.",
         instructions: "Line 1: N and Target. Line 2: N space-separated integers. Constraints: 2 <= N <= 10^5.",
         assignmentType: "coding",
-        languageMode: "ANY",
-        allowedLanguages: [],
+        languageMode: "RESTRICTED",
+        preferredLanguage: "java",
+        allowedLanguages: ["java"],
         points: 100,
         difficulty: "medium",
         startDate: new Date().toISOString(),
@@ -585,10 +663,16 @@ class FacultyModel {
     const id = `asg_${Date.now().toString(36)}`;
     const targetClass = this._findClassById(data.classId) || this.classes[0];
 
-    const languageMode = data.languageMode === "RESTRICTED" ? "RESTRICTED" : "ANY";
-    const allowedLanguages = languageMode === "RESTRICTED" && Array.isArray(data.allowedLanguages)
-      ? data.allowedLanguages.map((l) => l.toLowerCase().trim())
-      : [];
+    const preferredLanguage = data.preferredLanguage ? data.preferredLanguage.toLowerCase().trim() : null;
+    const languageMode = (data.languageMode === "RESTRICTED" || preferredLanguage) ? "RESTRICTED" : "ANY";
+    let allowedLanguages = [];
+    if (languageMode === "RESTRICTED") {
+      if (Array.isArray(data.allowedLanguages) && data.allowedLanguages.length > 0) {
+        allowedLanguages = data.allowedLanguages.map((l) => l.toLowerCase().trim());
+      } else if (preferredLanguage) {
+        allowedLanguages = [preferredLanguage];
+      }
+    }
 
     const testCases = Array.isArray(data.testCases)
       ? data.testCases.map((tc, idx) => ({
@@ -610,6 +694,7 @@ class FacultyModel {
       instructions: data.instructions || "",
       assignmentType: data.assignmentType || "coding",
       languageMode,
+      preferredLanguage,
       allowedLanguages,
       testCases,
       points: Number(data.points) || 100,
@@ -641,11 +726,16 @@ class FacultyModel {
     if (data.deadline) asg.deadline = data.deadline;
     if (data.maxAttempts !== undefined) asg.maxAttempts = Number(data.maxAttempts);
 
+    if (data.preferredLanguage !== undefined) {
+      asg.preferredLanguage = data.preferredLanguage ? data.preferredLanguage.toLowerCase().trim() : null;
+    }
     if (data.languageMode !== undefined) {
-      asg.languageMode = data.languageMode === "RESTRICTED" ? "RESTRICTED" : "ANY";
+      asg.languageMode = (data.languageMode === "RESTRICTED" || asg.preferredLanguage) ? "RESTRICTED" : "ANY";
     }
     if (data.allowedLanguages !== undefined && Array.isArray(data.allowedLanguages)) {
       asg.allowedLanguages = data.allowedLanguages.map((l) => l.toLowerCase().trim());
+    } else if (asg.preferredLanguage && (!asg.allowedLanguages || asg.allowedLanguages.length === 0)) {
+      asg.allowedLanguages = [asg.preferredLanguage];
     }
 
     if (Array.isArray(data.testCases)) {
@@ -687,13 +777,35 @@ class FacultyModel {
       throw err;
     }
 
-    // Backend Validation Requirement 6 & 7:
-    if (asg.languageMode === "RESTRICTED") {
-      const permittedNorm = (asg.allowedLanguages || []).map((l) => l.toLowerCase().trim());
-      if (!permittedNorm.includes(selectedLangNorm)) {
-        const readablePermitted = permittedNorm.map((l) => (l === "cpp" ? "C++" : l.toUpperCase())).join(", ");
+    // Strict Language & Source Code Validation
+    const requiredLangs = (
+      asg.preferredLanguage
+        ? [asg.preferredLanguage]
+        : (asg.allowedLanguages && asg.allowedLanguages.length > 0)
+        ? asg.allowedLanguages
+        : asg.languageMode === "RESTRICTED" && asg.allowedLanguages
+        ? asg.allowedLanguages
+        : []
+    ).map((l) => l.toLowerCase().trim());
+
+    if (requiredLangs.length > 0) {
+      const readable = requiredLangs.map((l) => (l === "cpp" ? "C++" : l.toUpperCase())).join(" or ");
+
+      // 1. Validate submission language
+      if (!requiredLangs.includes(selectedLangNorm)) {
         const err = new Error(
-          `${language} is not allowed for this assignment. Please select one of the permitted languages: ${readablePermitted || "None"}.`
+          `Language mismatch: This assignment requires ${readable}. Your submission was in ${language ? language.toUpperCase() : "Unknown"}. Submission rejected.`
+        );
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // 2. Validate source code content against forbidden languages
+      const detectedCodeLang = detectLanguageFromCode(sourceCode);
+      if (detectedCodeLang && !requiredLangs.includes(detectedCodeLang)) {
+        const detName = detectedCodeLang === "cpp" ? "C++" : detectedCodeLang.toUpperCase();
+        const err = new Error(
+          `Code mismatch: The submitted source code appears to be written in ${detName}, but this assignment strictly requires ${readable}. Submission rejected.`
         );
         err.statusCode = 400;
         throw err;

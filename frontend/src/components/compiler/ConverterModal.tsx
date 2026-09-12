@@ -104,7 +104,14 @@ export default function ConverterModal({
     });
 
     if (result.success) {
-      setConversion(result.conversion);
+      const cleanCode = (result.conversion.convertedCode || "")
+        .replace(/^```[a-zA-Z0-9_+-]*\n?/, "")
+        .replace(/\n?```$/, "")
+        .trim();
+      setConversion({
+        ...result.conversion,
+        convertedCode: cleanCode,
+      });
       setStatus("success");
     } else {
       setErrorMessage(result.message);
@@ -125,34 +132,37 @@ export default function ConverterModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-8">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-6xl max-h-[90vh] flex flex-col glass-strong rounded-xl shadow-2xl overflow-hidden"
+      <div className="relative w-full max-w-6xl max-h-[90vh] flex flex-col glass-strong rounded-2xl border border-[rgba(212,175,55,0.3)] shadow-[0_0_40px_rgba(0,0,0,0.8)] overflow-hidden"
         role="dialog"
         aria-modal="true"
         aria-label="Code Conversion"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-[var(--border)] shrink-0">
-          <p className="text-[13.5px] font-medium text-[var(--ink)]">Code Conversion</p>
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-white/10 shrink-0 bg-black/40">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#E8C97A]" />
+            <p className="text-[13.5px] font-semibold text-white font-serif">Polyglot Code Converter</p>
+          </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="h-8 w-8 flex items-center justify-center rounded-md text-[var(--ink-faint)] hover:text-[var(--ink)] hover:bg-white/5 transition-colors"
+            className="h-8 w-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Language selectors */}
-        <div className="flex flex-wrap items-center gap-2.5 px-4 sm:px-5 py-3 border-b border-[var(--border)] shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 px-4 sm:px-5 py-3 border-b border-white/10 shrink-0 bg-black/20">
           <LanguageDropdown value={sourceLang} onChange={(id) => { setSourceLang(id); setStatus("idle"); }} />
           <button
             onClick={handleSwap}
             title="Swap languages"
-            className="h-9 w-9 flex items-center justify-center rounded-lg glass hover:border-[var(--border-strong)] transition-colors shrink-0"
+            className="h-9 w-9 flex items-center justify-center rounded-lg glass border border-white/10 hover:border-[#D4AF37]/50 transition-colors shrink-0 cursor-pointer"
           >
-            <ArrowLeftRight className="h-4 w-4 text-[var(--syn-function)]" />
+            <ArrowLeftRight className="h-4 w-4 text-[#E8C97A]" />
           </button>
           <LanguageDropdown value={targetLang} onChange={(id) => { setTargetLang(id); setStatus("idle"); }} />
 
@@ -161,18 +171,18 @@ export default function ConverterModal({
           <button
             onClick={() => void handleConvert()}
             disabled={status === "loading"}
-            className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-[12.5px] font-medium text-[#0a0d13] bg-gradient-to-r from-[var(--syn-keyword)] via-[var(--syn-function)] to-[var(--syn-string)] hover:brightness-110 transition-all disabled:opacity-60 shrink-0"
+            className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-bold text-black bg-gradient-to-r from-[#D4AF37] to-amber-500 hover:brightness-110 shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all disabled:opacity-50 shrink-0 cursor-pointer"
           >
             {status === "loading" ? (
               <motion.span
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="h-3.5 w-3.5 rounded-full border-2 border-[#0a0d13] border-t-transparent"
+                className="h-3.5 w-3.5 rounded-full border-2 border-black border-t-transparent"
               />
             ) : (
               <Sparkles className="h-3.5 w-3.5" />
             )}
-            Convert
+            <span>Convert Code</span>
           </button>
         </div>
 
@@ -229,7 +239,7 @@ export default function ConverterModal({
                     </button>
                     <button
                       onClick={() => onUseInEditor(targetLang, conversion.convertedCode)}
-                      className="flex items-center gap-1 text-[10.5px] font-mono text-[var(--syn-function)] hover:text-[var(--ink)] transition-colors"
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#D4AF37]/20 text-[#E8C97A] border border-[#D4AF37]/40 hover:bg-[#D4AF37] hover:text-black transition-all text-[11px] font-mono font-bold cursor-pointer shadow-[0_0_10px_rgba(212,175,55,0.15)]"
                     >
                       <FileOutput className="h-3 w-3" />
                       Use in Editor
@@ -240,13 +250,13 @@ export default function ConverterModal({
               <div className="flex-1 overflow-auto">
                 {status === "loading" ? (
                   <div className="flex items-center justify-center h-full py-10">
-                    <p className="text-[12px] text-[var(--ink-faint)] font-mono">Converting…</p>
+                    <p className="text-[12px] text-zinc-400 font-mono">Converting…</p>
                   </div>
                 ) : conversion ? (
                   <CodePane language={targetMeta.monacoId} code={conversion.convertedCode} />
                 ) : (
                   <div className="flex items-center justify-center h-full py-10">
-                    <p className="text-[12px] text-[var(--ink-faint)] font-mono">
+                    <p className="text-[12px] text-zinc-400 font-mono">
                       Click Convert to see the {targetMeta.label} version.
                     </p>
                   </div>
@@ -260,17 +270,17 @@ export default function ConverterModal({
             <>
               <div className="grid sm:grid-cols-2 gap-3">
                 {conversion.differences.map((d, i) => (
-                  <div key={i} className="glass rounded-lg p-3">
-                    <p className="text-[11.5px] font-medium text-[var(--syn-keyword)] mb-1">{d.aspect}</p>
-                    <p className="text-[11.5px] text-[var(--ink-dim)] leading-relaxed">{d.explanation}</p>
+                  <div key={i} className="glass rounded-xl p-3.5 border border-white/10">
+                    <p className="text-[11.5px] font-bold text-[#E8C97A] mb-1 font-serif">{d.aspect}</p>
+                    <p className="text-[11.5px] text-zinc-300 leading-relaxed">{d.explanation}</p>
                   </div>
                 ))}
               </div>
 
               {conversion.conversionNotes && (
-                <div className="glass rounded-lg p-3.5">
-                  <p className="text-[11px] font-mono text-[var(--ink-faint)] uppercase mb-1.5">Conversion Notes</p>
-                  <p className="text-[12px] text-[var(--ink-dim)] leading-relaxed">{conversion.conversionNotes}</p>
+                <div className="glass rounded-xl p-3.5 border border-white/10">
+                  <p className="text-[11px] font-mono text-[#E8C97A] uppercase mb-1.5 font-bold tracking-wider">Conversion Notes</p>
+                  <p className="text-[12px] text-zinc-300 leading-relaxed">{conversion.conversionNotes}</p>
                 </div>
               )}
             </>

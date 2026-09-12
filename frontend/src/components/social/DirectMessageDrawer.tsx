@@ -25,7 +25,7 @@ interface DirectMessageDrawerProps {
     id: string;
     name: string;
     avatar?: string;
-    email: string;
+    email?: string;
     stream?: string;
     collegeName?: string;
   } | null;
@@ -141,10 +141,10 @@ export default function DirectMessageDrawer({
               <img
                 src={
                   peer.avatar ||
-                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(peer.email)}`
+                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(peer.email || peer.name || "peer")}`
                 }
                 alt={peer.name}
-                className="w-10 h-10 rounded-full border border-white/10 bg-black/50 object-cover"
+                className="w-10 h-10 rounded-full border border-[#D4AF37]/30 bg-black/50 object-cover"
               />
               <div>
                 <div className="font-semibold text-sm text-white flex items-center gap-1.5">

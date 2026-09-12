@@ -9,16 +9,19 @@
       "description": "Given an array of integers, find and return the largest element present in the array. Read the number of elements N followed by N space-separated integers, and output the single maximum value.",
       "instructions": "Read N followed by N integers from standard input. Constraints: 1 <= N <= 10^5, -10^9 <= arr[i] <= 10^9.",
       "assignmentType": "coding",
-      "languageMode": "ANY",
-      "allowedLanguages": [],
+      "languageMode": "RESTRICTED",
+      "preferredLanguage": "c",
+      "allowedLanguages": [
+        "c"
+      ],
       "points": 100,
       "difficulty": "easy",
       "startDate": "2026-09-12T03:47:30.820Z",
       "deadline": "2026-09-26T03:47:30.820Z",
       "maxAttempts": 5,
       "totalAssigned": 35,
-      "submissionsCount": 0,
-      "avgScore": 0,
+      "submissionsCount": 1,
+      "avgScore": 100,
       "createdAt": "2026-09-12T03:47:30.820Z",
       "testCases": [
         {
@@ -67,8 +70,11 @@
       "description": "Check if the given string reads the same forwards and backwards. Output 'true' if the string is a palindrome, otherwise output 'false'.",
       "instructions": "Read a single word from standard input without whitespace. Constraints: 1 <= length(S) <= 10^4.",
       "assignmentType": "coding",
-      "languageMode": "ANY",
-      "allowedLanguages": [],
+      "languageMode": "RESTRICTED",
+      "preferredLanguage": "python",
+      "allowedLanguages": [
+        "python"
+      ],
       "points": 100,
       "difficulty": "easy",
       "startDate": "2026-09-12T03:47:30.820Z",
@@ -111,8 +117,11 @@
       "description": "Given an array of integers and a target sum, determine if there exists two distinct elements whose sum equals target. Output 'YES' if such a pair exists, otherwise 'NO'.",
       "instructions": "Line 1: N and Target. Line 2: N space-separated integers. Constraints: 2 <= N <= 10^5.",
       "assignmentType": "coding",
-      "languageMode": "ANY",
-      "allowedLanguages": [],
+      "languageMode": "RESTRICTED",
+      "preferredLanguage": "java",
+      "allowedLanguages": [
+        "java"
+      ],
       "points": 100,
       "difficulty": "medium",
       "startDate": "2026-09-12T03:47:30.820Z",
@@ -155,5 +164,21 @@
     }
   ],
   "classes": [],
-  "submissions": []
+  "submissions": [
+    {
+      "id": "sub_mtxy1189",
+      "assignmentId": "asg_find_largest",
+      "studentId": "usr_std_001",
+      "studentName": "Alex Rivera",
+      "rollNumber": "21CS001",
+      "language": "c",
+      "sourceCode": "#include <stdio.h>\nint main() {\n    printf(\"Max: 20\\n\");\n    return 0;\n}\n",
+      "status": "Success",
+      "score": 100,
+      "submittedAt": "2026-09-12T05:27:16.857Z",
+      "executionTime": "15ms",
+      "compilerErrors": "",
+      "aiExplanation": ""
+    }
+  ]
 }

@@ -60,6 +60,7 @@ export default function AssignmentsTab() {
 
   // Language Mode: "ANY" | "RESTRICTED"
   const [languageMode, setLanguageMode] = useState<"ANY" | "RESTRICTED">("ANY");
+  const [preferredLanguage, setPreferredLanguage] = useState<string>("");
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>(["c", "cpp", "java", "python"]);
 
   // Test Cases State (Item 7 Requirement)
@@ -104,6 +105,7 @@ export default function AssignmentsTab() {
     setDifficulty("medium");
     setMaxAttempts(5);
     setLanguageMode("ANY");
+    setPreferredLanguage("");
     setSelectedLanguages(["c", "cpp", "java", "python"]);
     setTestCases([
       { input: "5\n10 20 30 40 50", expectedOutput: "10 20 30 40 50", isHidden: false, explanation: "Standard array elements" },
@@ -125,6 +127,7 @@ export default function AssignmentsTab() {
     setDifficulty(asg.difficulty || "medium");
     setMaxAttempts(asg.maxAttempts || 5);
     setLanguageMode(asg.languageMode || "ANY");
+    setPreferredLanguage(asg.preferredLanguage || (asg.allowedLanguages && asg.allowedLanguages.length === 1 ? asg.allowedLanguages[0] : ""));
     setSelectedLanguages(asg.allowedLanguages && asg.allowedLanguages.length > 0 ? asg.allowedLanguages : ["c", "cpp", "java", "python"]);
     setTestCases(
       asg.testCases && asg.testCases.length > 0
@@ -203,6 +206,7 @@ export default function AssignmentsTab() {
       deadline: isoDeadline,
       classId: classId || (classes[0] ? classes[0].id : "cls_cs3a"),
       languageMode,
+      preferredLanguage: preferredLanguage || (languageMode === "RESTRICTED" && selectedLanguages.length === 1 ? selectedLanguages[0] : undefined),
       allowedLanguages: languageMode === "RESTRICTED" ? selectedLanguages : [],
       testCases,
       points: Number(points) || 100,
@@ -258,15 +262,17 @@ export default function AssignmentsTab() {
       <div className="grid grid-cols-1 gap-4">
         {assignments.map((asg) => {
           const submissionPct = Math.round((asg.submissionsCount / (asg.totalAssigned || 1)) * 100);
-          const isRestricted = asg.languageMode === "RESTRICTED";
-          const readableLangs = isRestricted && asg.allowedLanguages && asg.allowedLanguages.length > 0
+          const isRestricted = asg.languageMode === "RESTRICTED" || !!asg.preferredLanguage;
+          const readableLangs = asg.preferredLanguage
+            ? (asg.preferredLanguage === "cpp" ? "C++ (Required)" : `${asg.preferredLanguage.toUpperCase()} (Required)`)
+            : isRestricted && asg.allowedLanguages && asg.allowedLanguages.length > 0
             ? asg.allowedLanguages.map((l) => (l === "cpp" ? "C++" : l.toUpperCase())).join(", ")
-            : "Any";
+            : "Any Supported Language";
 
           return (
             <div
               key={asg.id}
-              className="glass-strong border border-[var(--border-strong)] rounded-2xl p-6 space-y-4 hover:border-[var(--syn-keyword)]/40 transition-all"
+              className="glass-strong border border-[var(--border-strong)] rounded-2xl p-6 space-y-4 hover:border-[#D4AF37]/50 hover:shadow-[0_4px_20px_rgba(212,175,55,0.1)] transition-all"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
@@ -483,66 +489,126 @@ export default function AssignmentsTab() {
                 </div>
               </div>
 
-              {/* Requirement 14: Allowed Languages (Optional) with Radio Mode */}
+              {/* Allowed & Preferred Languages */}
               <div className="p-4 rounded-xl bg-white/[0.03] border border-[var(--border-strong)] space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block font-bold text-[var(--ink)] flex items-center gap-1.5">
-                    <Code2 className="w-4 h-4 text-[var(--syn-keyword)]" />
-                    <span>Allowed Languages (Optional)</span>
+                  <label className="block font-bold text-white flex items-center gap-1.5">
+                    <Code2 className="w-4 h-4 text-[#E8C97A]" />
+                    <span>Required / Preferred Programming Language</span>
                   </label>
                 </div>
 
                 <p className="text-[11px] text-[var(--ink-dim)] leading-relaxed font-sans">
-                  Students can choose any supported programming language unless you restrict the assignment.
+                  Choose whether students can submit in any language or must submit in a strictly required language.
                 </p>
 
-                <div className="space-y-2 pt-1">
-                  <label
-                    onClick={() => setLanguageMode("ANY")}
-                    className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguageMode("ANY");
+                      setPreferredLanguage("");
+                      setSelectedLanguages(["c", "cpp", "java", "python"]);
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-mono transition-all text-left cursor-pointer ${
                       languageMode === "ANY"
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300 font-semibold"
-                        : "glass border-white/10 text-[var(--ink-dim)] hover:text-[var(--ink)]"
+                        ? "bg-[#D4AF37]/20 border-[#D4AF37] text-white font-bold shadow-md shadow-[#D4AF37]/10"
+                        : "glass border-white/10 text-zinc-400 hover:text-white"
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="langMode"
-                        checked={languageMode === "ANY"}
-                        onChange={() => setLanguageMode("ANY")}
-                        className="accent-emerald-500"
-                      />
-                      <span>Any Supported Language (Recommended)</span>
-                    </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Default</span>
-                  </label>
+                    <div className="font-bold">Any Language</div>
+                    <div className="text-[10px] text-zinc-400">Open Choice</div>
+                  </button>
 
-                  <label
-                    onClick={() => setLanguageMode("RESTRICTED")}
-                    className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
-                      languageMode === "RESTRICTED"
-                        ? "bg-purple-500/10 border-purple-500/30 text-purple-300 font-semibold"
-                        : "glass border-white/10 text-[var(--ink-dim)] hover:text-[var(--ink)]"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguageMode("RESTRICTED");
+                      setPreferredLanguage("c");
+                      setSelectedLanguages(["c"]);
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-mono transition-all text-left cursor-pointer ${
+                      languageMode === "RESTRICTED" && preferredLanguage === "c" && selectedLanguages.length === 1
+                        ? "bg-[#D4AF37]/20 border-[#D4AF37] text-[#E8C97A] font-bold shadow-md shadow-[#D4AF37]/10"
+                        : "glass border-white/10 text-zinc-400 hover:text-white"
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="langMode"
-                        checked={languageMode === "RESTRICTED"}
-                        onChange={() => setLanguageMode("RESTRICTED")}
-                        className="accent-purple-500"
-                      />
-                      <span>Restrict to Selected Languages</span>
-                    </div>
-                  </label>
+                    <div className="font-bold">C Only</div>
+                    <div className="text-[10px] text-zinc-400">GCC Compiler</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguageMode("RESTRICTED");
+                      setPreferredLanguage("cpp");
+                      setSelectedLanguages(["cpp"]);
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-mono transition-all text-left cursor-pointer ${
+                      languageMode === "RESTRICTED" && preferredLanguage === "cpp" && selectedLanguages.length === 1
+                        ? "bg-[#D4AF37]/20 border-[#D4AF37] text-[#E8C97A] font-bold shadow-md shadow-[#D4AF37]/10"
+                        : "glass border-white/10 text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <div className="font-bold">C++ Only</div>
+                    <div className="text-[10px] text-zinc-400">G++ Compiler</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguageMode("RESTRICTED");
+                      setPreferredLanguage("java");
+                      setSelectedLanguages(["java"]);
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-mono transition-all text-left cursor-pointer ${
+                      languageMode === "RESTRICTED" && preferredLanguage === "java" && selectedLanguages.length === 1
+                        ? "bg-[#D4AF37]/20 border-[#D4AF37] text-[#E8C97A] font-bold shadow-md shadow-[#D4AF37]/10"
+                        : "glass border-white/10 text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <div className="font-bold">Java Only</div>
+                    <div className="text-[10px] text-zinc-400">OpenJDK</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguageMode("RESTRICTED");
+                      setPreferredLanguage("python");
+                      setSelectedLanguages(["python"]);
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-mono transition-all text-left cursor-pointer ${
+                      languageMode === "RESTRICTED" && preferredLanguage === "python" && selectedLanguages.length === 1
+                        ? "bg-[#D4AF37]/20 border-[#D4AF37] text-[#E8C97A] font-bold shadow-md shadow-[#D4AF37]/10"
+                        : "glass border-white/10 text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <div className="font-bold">Python Only</div>
+                    <div className="text-[10px] text-zinc-400">Python 3</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLanguageMode("RESTRICTED");
+                      setPreferredLanguage("");
+                    }}
+                    className={`p-2.5 rounded-xl border text-xs font-mono transition-all text-left cursor-pointer ${
+                      languageMode === "RESTRICTED" && (!preferredLanguage || selectedLanguages.length > 1)
+                        ? "bg-[#D4AF37]/20 border-[#D4AF37] text-[#E8C97A] font-bold shadow-md shadow-[#D4AF37]/10"
+                        : "glass border-white/10 text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    <div className="font-bold">Custom Multi</div>
+                    <div className="text-[10px] text-zinc-400">Select Multiple</div>
+                  </button>
                 </div>
 
-                {/* Multi-select checkboxes if RESTRICTED */}
-                {languageMode === "RESTRICTED" && (
-                  <div className="pt-2 pl-4 space-y-2 border-l-2 border-purple-500/30">
-                    <p className="text-[10px] text-[var(--ink-dim)] uppercase tracking-wider font-bold">Select Permitted Languages:</p>
+                {/* Multi-select checkboxes if Custom RESTRICTED */}
+                {languageMode === "RESTRICTED" && (!preferredLanguage || selectedLanguages.length > 1) && (
+                  <div className="pt-2 pl-4 space-y-2 border-l-2 border-[#D4AF37]/40">
+                    <p className="text-[10px] text-[#E8C97A] uppercase tracking-wider font-bold">Select Permitted Languages:</p>
                     <div className="grid grid-cols-2 gap-2">
                       {PLATFORM_LANGUAGES.map((lang) => {
                         const isChecked = selectedLanguages.includes(lang.id);
@@ -553,11 +619,11 @@ export default function AssignmentsTab() {
                             onClick={() => handleToggleLanguage(lang.id)}
                             className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-mono transition-all cursor-pointer ${
                               isChecked
-                                ? "bg-purple-500/20 border-purple-500/40 text-purple-200 font-bold"
+                                ? "bg-[#D4AF37]/20 border-[#D4AF37]/50 text-[#E8C97A] font-bold"
                                 : "bg-white/5 border-white/10 text-[var(--ink-faint)] hover:text-[var(--ink-dim)]"
                             }`}
                           >
-                            {isChecked ? <CheckSquare className="w-4 h-4 text-purple-400" /> : <Square className="w-4 h-4" />}
+                            {isChecked ? <CheckSquare className="w-4 h-4 text-[#D4AF37]" /> : <Square className="w-4 h-4" />}
                             <span>{lang.label}</span>
                           </button>
                         );

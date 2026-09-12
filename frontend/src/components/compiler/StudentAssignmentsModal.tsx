@@ -84,8 +84,10 @@ export default function StudentAssignmentsModal({
           ) : (
             assignments.map((asg) => {
               const isSelected = activeAssignment?.id === asg.id;
-              const isRestricted = asg.languageMode === "RESTRICTED";
-              const allowedText = isRestricted && asg.allowedLanguages && asg.allowedLanguages.length > 0
+              const isRestricted = asg.languageMode === "RESTRICTED" || !!asg.preferredLanguage;
+              const allowedText = asg.preferredLanguage
+                ? (asg.preferredLanguage === "cpp" ? "C++ (Required)" : `${asg.preferredLanguage.toUpperCase()} (Required)`)
+                : isRestricted && asg.allowedLanguages && asg.allowedLanguages.length > 0
                 ? asg.allowedLanguages.map((l) => (l === "cpp" ? "C++" : l.toUpperCase())).join(", ")
                 : "Any Supported Language";
 

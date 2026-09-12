@@ -177,23 +177,34 @@ export default function AssignmentProblemPanel({
         {/* Allowed Languages */}
         <div className="space-y-1.5">
           <h3 className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Code2 className="w-3.5 h-3.5 text-amber-400" />
-            <span>Permitted Languages</span>
+            <Code2 className="w-3.5 h-3.5 text-[#E8C97A]" />
+            <span>Required / Permitted Language</span>
           </h3>
-          <div className="p-2.5 rounded-xl bg-[#0d0d10] border border-white/10 text-[11.5px] text-zinc-300">
-            {isRestricted ? (
+          <div className="p-2.5 rounded-xl bg-[#0d0d10] border border-[#D4AF37]/30 text-[11.5px] text-zinc-300 space-y-1.5">
+            {assignment.preferredLanguage ? (
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="px-2.5 py-0.5 rounded bg-[#D4AF37]/20 text-[#E8C97A] border border-[#D4AF37]/40 text-xs font-bold uppercase">
+                    {assignment.preferredLanguage === "cpp" ? "C++ (Strictly Required)" : `${assignment.preferredLanguage.toUpperCase()} (Strictly Required)`}
+                  </span>
+                </div>
+                <p className="text-[10px] text-zinc-400 mt-1">
+                  Submissions in other languages will be automatically rejected.
+                </p>
+              </div>
+            ) : isRestricted ? (
               <div className="flex items-center gap-1.5 flex-wrap">
                 {assignment.allowedLanguages?.map((lang) => (
                   <span
                     key={lang}
-                    className="px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10.5px] font-bold uppercase"
+                    className="px-2 py-0.5 rounded bg-[#D4AF37]/15 text-[#E8C97A] border border-[#D4AF37]/30 text-[10.5px] font-bold uppercase"
                   >
                     {lang === "cpp" ? "C++" : lang.toUpperCase()}
                   </span>
                 ))}
               </div>
             ) : (
-              <span className="text-amber-300 font-medium">Any Supported Language (Python, Java, C, C++, etc.)</span>
+              <span className="text-[#E8C97A] font-medium">Any Supported Language (C, C++, Java, Python)</span>
             )}
           </div>
         </div>

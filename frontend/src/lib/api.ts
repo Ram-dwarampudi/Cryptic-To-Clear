@@ -974,6 +974,7 @@ export interface AssignmentItem {
   instructions?: string;
   assignmentType?: string;
   languageMode: "ANY" | "RESTRICTED";
+  preferredLanguage?: string;
   allowedLanguages: string[];
   testCases?: TestCase[];
   points?: number;
@@ -1150,6 +1151,7 @@ export async function createFacultyAssignment(
     deadline: string;
     classId: string;
     languageMode: "ANY" | "RESTRICTED";
+    preferredLanguage?: string;
     allowedLanguages?: string[];
     testCases?: Array<{ id?: string; input: string; expectedOutput: string; isHidden?: boolean; explanation?: string }>;
     points?: number;
@@ -1183,6 +1185,7 @@ export async function updateFacultyAssignment(
     deadline?: string;
     classId?: string;
     languageMode?: "ANY" | "RESTRICTED";
+    preferredLanguage?: string;
     allowedLanguages?: string[];
     testCases?: Array<{ id?: string; input: string; expectedOutput: string; isHidden?: boolean; explanation?: string }>;
     points?: number;

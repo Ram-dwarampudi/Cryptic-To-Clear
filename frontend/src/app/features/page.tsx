@@ -274,41 +274,127 @@ nums = [1, 2, 3]`,
 
       {/* Security & Reliability Banner */}
       <section className="py-16 mx-auto max-w-7xl px-5 sm:px-8 w-full">
-        <div className="glass rounded-2xl p-8 sm:p-12 border border-emerald-500/20 bg-gradient-to-br from-emerald-500/5 via-transparent to-cyan-500/5">
+        <div className="glass rounded-2xl p-8 sm:p-12 border border-[#D4AF37]/30 bg-gradient-to-br from-[#D4AF37]/5 via-transparent to-black/40">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex items-start gap-4 p-4 rounded-xl glass border border-white/5 hover:border-emerald-500/40 hover:scale-[1.03] hover:brightness-125 hover:shadow-[0_12px_30px_rgba(16,185,129,0.2)] transition-all duration-300 cursor-pointer">
-              <span className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+            <div className="flex items-start gap-4 p-5 rounded-xl glass border border-white/5 hover:border-[#D4AF37]/40 hover:scale-[1.02] transition-all duration-300">
+              <span className="p-3 rounded-xl bg-[#D4AF37]/10 text-[#E8C97A] border border-[#D4AF37]/25">
                 <ShieldCheck className="h-6 w-6" />
               </span>
               <div>
-                <h3 className="font-display font-semibold text-base">Isolated Execution</h3>
-                <p className="text-xs text-[var(--ink-dim)] mt-1">
+                <h3 className="font-display font-semibold text-base text-white">Isolated Execution</h3>
+                <p className="text-xs text-[var(--ink-dim)] mt-1 leading-relaxed">
                   Processes run in isolated temporary workspaces with hard time limiters and memory bounds.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4 p-4 rounded-xl glass border border-white/5 hover:border-cyan-500/40 hover:scale-[1.03] hover:brightness-125 hover:shadow-[0_12px_30px_rgba(6,182,212,0.2)] transition-all duration-300 cursor-pointer">
-              <span className="p-3 rounded-xl bg-cyan-500/10 text-cyan-400">
+            <div className="flex items-start gap-4 p-5 rounded-xl glass border border-white/5 hover:border-[#D4AF37]/40 hover:scale-[1.02] transition-all duration-300">
+              <span className="p-3 rounded-xl bg-[#D4AF37]/10 text-[#E8C97A] border border-[#D4AF37]/25">
                 <Zap className="h-6 w-6" />
               </span>
               <div>
-                <h3 className="font-display font-semibold text-base">Instant AI Fallback</h3>
-                <p className="text-xs text-[var(--ink-dim)] mt-1">
-                  When local compilers aren't installed, execution falls back seamlessly to multi-provider AI APIs.
+                <h3 className="font-display font-semibold text-base text-white">Instant AI Fallback</h3>
+                <p className="text-xs text-[var(--ink-dim)] mt-1 leading-relaxed">
+                  When local compilers aren&apos;t installed, execution falls back seamlessly to multi-provider AI APIs.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-4 p-4 rounded-xl glass border border-white/5 hover:border-purple-500/40 hover:scale-[1.03] hover:brightness-125 hover:shadow-[0_12px_30px_rgba(168,85,247,0.2)] transition-all duration-300 cursor-pointer">
-              <span className="p-3 rounded-xl bg-purple-500/10 text-purple-400">
+            <div className="flex items-start gap-4 p-5 rounded-xl glass border border-white/5 hover:border-[#D4AF37]/40 hover:scale-[1.02] transition-all duration-300">
+              <span className="p-3 rounded-xl bg-[#D4AF37]/10 text-[#E8C97A] border border-[#D4AF37]/25">
                 <Bot className="h-6 w-6" />
               </span>
               <div>
-                <h3 className="font-display font-semibold text-base">Structured Output Schemas</h3>
-                <p className="text-xs text-[var(--ink-dim)] mt-1">
+                <h3 className="font-display font-semibold text-base text-white">Structured Output Schemas</h3>
+                <p className="text-xs text-[var(--ink-dim)] mt-1 leading-relaxed">
                   Strict JSON schema constraints ensure reproducible, accurate AI explanations without hallucinations.
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* About Section Combined into Features */}
+      <section id="about" className="py-20 border-t border-[rgba(212,175,55,0.2)] bg-black/40 scroll-mt-20">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <span className="font-mono text-xs text-[#E8C97A] uppercase tracking-widest px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30">
+              // Our Mission &amp; Architecture
+            </span>
+            <h2 className="font-display text-3xl sm:text-5xl font-extrabold mt-4 text-white">
+              About <span className="text-gradient">Cryptic to Clear</span>
+            </h2>
+            <p className="mt-4 text-base text-zinc-300 leading-relaxed">
+              Traditional coding platforms present cryptic compiler stack traces and leave students stranded. Cryptic to Clear was architected from the ground up to turn compiler errors into intuitive learning moments, bridging classroom theory with real-world engineering standards.
+            </p>
+          </div>
+
+          {/* Three Pillars */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+            <div className="glass rounded-2xl p-8 border border-white/10 hover:border-[#D4AF37]/50 hover:shadow-[0_10px_30px_rgba(212,175,55,0.15)] transition-all">
+              <div className="p-3.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#E8C97A] inline-block mb-4">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h3 className="font-display text-xl font-bold text-white mb-2 font-serif">Pedagogical Design</h3>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Every error diagnosis is systematically deconstructed into root cause, exact line numbers, step-by-step resolution, and verified runnable fix code so learners progress with total confidence.
+              </p>
+            </div>
+
+            <div className="glass rounded-2xl p-8 border border-white/10 hover:border-[#D4AF37]/50 hover:shadow-[0_10px_30px_rgba(212,175,55,0.15)] transition-all">
+              <div className="p-3.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#E8C97A] inline-block mb-4">
+                <Cpu className="h-6 w-6" />
+              </div>
+              <h3 className="font-display text-xl font-bold text-white mb-2 font-serif">Hybrid Compilation</h3>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Combines local native toolchains (GCC, G++, JDK, Python) with remote execution APIs and deterministic AI simulation fallbacks for 100% execution uptime and sub-second feedback.
+              </p>
+            </div>
+
+            <div className="glass rounded-2xl p-8 border border-white/10 hover:border-[#D4AF37]/50 hover:shadow-[0_10px_30px_rgba(212,175,55,0.15)] transition-all">
+              <div className="p-3.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#E8C97A] inline-block mb-4">
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <h3 className="font-display text-xl font-bold text-white mb-2 font-serif">Zero Hallucinations</h3>
+              <p className="text-xs text-zinc-300 leading-relaxed">
+                Guaranteed by strict JSON output schemas that force LLM execution engines to adhere to typed contracts, preventing fabricated syntax advice and ensuring code correctness.
+              </p>
+            </div>
+          </div>
+
+          {/* Architecture & Tech Stack Box */}
+          <div className="glass-strong rounded-3xl p-8 sm:p-12 border border-[rgba(212,175,55,0.3)] shadow-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <Code2 className="h-6 w-6 text-[#E8C97A]" />
+              <h3 className="font-display text-2xl font-bold text-white font-serif">System Architecture &amp; Tech Stack</h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-xs text-zinc-300">
+              <div className="space-y-3">
+                <h4 className="font-mono text-xs uppercase tracking-wider text-[#E8C97A] font-bold">
+                  Frontend Architecture
+                </h4>
+                <ul className="space-y-2 list-disc list-inside">
+                  <li>Next.js 15 App Router with server and client components</li>
+                  <li>Monaco Editor supporting C, C++, Java, and Python</li>
+                  <li>Framer Motion micro-animations &amp; Black, Gold, White design system</li>
+                  <li>Interactive Mermaid.js execution flowcharts &amp; logic diagrams</li>
+                  <li>Comprehensive campus direct messaging &amp; peer peer Q&amp;A</li>
+                </ul>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-mono text-xs uppercase tracking-wider text-[#E8C97A] font-bold">
+                  Backend Infrastructure
+                </h4>
+                <ul className="space-y-2 list-disc list-inside">
+                  <li>Express.js API with security middleware and JWT authentication</li>
+                  <li>Prisma ORM connected to campus relational database</li>
+                  <li>Native toolchain process spawner (GCC, G++, OpenJDK, Python 3)</li>
+                  <li>Multi-tier AI fallback engine (Groq, NVIDIA NIM, Google Gemini)</li>
+                  <li>Faculty assignment management with automated test case evaluation</li>
+                </ul>
               </div>
             </div>
           </div>

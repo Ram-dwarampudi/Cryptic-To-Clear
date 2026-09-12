@@ -19,6 +19,8 @@ const API_BASE_URL = RAW_BASE_URL.replace(/\/$/, "").replace(/\/api$/, "") + "/a
 function getCommunityHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
   };
   const token = typeof window !== "undefined" ? localStorage.getItem("c2c_token") : null;
   if (token) {
@@ -250,6 +252,7 @@ export async function fetchDoubts(params: {
 }): Promise<{ success: boolean; data: DoubtItem[]; total?: number }> {
   try {
     const query = new URLSearchParams();
+    query.append("_t", Date.now().toString());
     if (params.search) query.append("search", params.search);
     if (params.status) query.append("status", params.status);
     if (params.tag) query.append("tag", params.tag);
@@ -260,6 +263,7 @@ export async function fetchDoubts(params: {
 
     const res = await fetch(`${API_BASE_URL}/doubts?${query.toString()}`, {
       headers: getCommunityHeaders(),
+      cache: "no-store",
       credentials: "include",
     });
     const data = await res.json();
@@ -275,8 +279,9 @@ export async function fetchDoubtById(
   currentUserId = "usr_demo_001"
 ): Promise<{ success: boolean; data?: DoubtItem }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/doubts/${id}?userRole=${userRole}&currentUserId=${currentUserId}`, {
+    const res = await fetch(`${API_BASE_URL}/doubts/${id}?userRole=${userRole}&currentUserId=${currentUserId}&_t=${Date.now()}`, {
       headers: getCommunityHeaders(),
+      cache: "no-store",
       credentials: "include",
     });
     const data = await res.json();

@@ -17,7 +17,7 @@ const NAV_LINKS = [
   { label: "Interviews", href: "/interviews" },
   { label: "Doubt Forum", href: "/doubts" },
   { label: "Features", href: "/features" },
-  { label: "About", href: "/about" },
+  { label: "Contact", href: "/contact" },
 ];
 
 interface NavbarProps {

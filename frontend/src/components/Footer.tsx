@@ -18,8 +18,8 @@ const FOOTER_COLUMNS = [
     links: [
       { label: "Error Glossary", href: "/#docs" },
       { label: "Language Specs", href: "/features#languages" },
-      { label: "AI Diagnostic Engine", href: "/about" },
-      { label: "Architecture Overview", href: "/about#architecture" },
+      { label: "AI Diagnostic Engine", href: "/features#about" },
+      { label: "Architecture Overview", href: "/features#about" },
     ],
   },
   {

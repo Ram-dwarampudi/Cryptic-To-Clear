@@ -295,11 +295,14 @@ export default function CompilerPage() {
         setTestCases([]);
       }
 
-      if (asg.languageMode === "RESTRICTED" && asg.allowedLanguages && asg.allowedLanguages.length > 0) {
-        const allowedNorm = asg.allowedLanguages.map((l) => l.toLowerCase());
-        if (!allowedNorm.includes(language.toLowerCase())) {
-          setLanguage(allowedNorm[0]);
-        }
+      const targetLang = asg.preferredLanguage
+        ? asg.preferredLanguage.toLowerCase()
+        : asg.allowedLanguages && asg.allowedLanguages.length > 0
+        ? asg.allowedLanguages[0].toLowerCase()
+        : null;
+
+      if (targetLang && targetLang !== language) {
+        setLanguage(targetLang);
       }
       setBottomTab("testcase");
     } else {
@@ -313,6 +316,44 @@ export default function CompilerPage() {
     setIsSubmittingAssignment(true);
 
     const code = codeMap[language] || "";
+
+    // Strict Assignment Language & Code Validation
+    const requiredLangs = (
+      activeAssignment.preferredLanguage
+        ? [activeAssignment.preferredLanguage]
+        : activeAssignment.allowedLanguages && activeAssignment.allowedLanguages.length > 0
+        ? activeAssignment.allowedLanguages
+        : activeAssignment.languageMode === "RESTRICTED" && activeAssignment.allowedLanguages
+        ? activeAssignment.allowedLanguages
+        : []
+    ).map((l) => l.toLowerCase());
+
+    if (requiredLangs.length > 0) {
+      const reqReadable = requiredLangs.map((l) => (l === "cpp" ? "C++" : l.toUpperCase())).join(" or ");
+
+      // Check 1: Compiler dropdown language selection
+      if (!requiredLangs.includes(language.toLowerCase())) {
+        setSubmissionResultModal({
+          success: false,
+          message: `Submission Rejected: This assignment strictly requires ${reqReadable}. Your current compiler language is ${language.toUpperCase()}. Please switch to ${reqReadable} and write your solution.`,
+        });
+        setIsSubmittingAssignment(false);
+        return;
+      }
+
+      // Check 2: Actual source code language detection
+      const detectedCode = detectLanguageFromCode(code);
+      if (detectedCode && !requiredLangs.includes(detectedCode.toLowerCase())) {
+        const detReadable = detectedCode === "cpp" ? "C++" : detectedCode.toUpperCase();
+        setSubmissionResultModal({
+          success: false,
+          message: `Submission Rejected: Detected code language appears to be ${detReadable}, but this assignment strictly requires ${reqReadable}. Please write your solution in ${reqReadable}.`,
+        });
+        setIsSubmittingAssignment(false);
+        return;
+      }
+    }
+
     const casesToEvaluate =
       testCases.length > 0 ? testCases : activeAssignment.testCases || [];
 
@@ -556,13 +597,11 @@ export default function CompilerPage() {
     }
   };
 
-  // Detect language from code content using scoring heuristics
+  // Detect language from code content using comprehensive scoring heuristics
   const detectLanguageFromCode = useCallback((code: string): LanguageId | null => {
     const c = code.trim();
     if (!c || c.length < 6) return null;
 
-    // Has C/C++ preprocessor directives (#include, #define, etc.)
-    // Java and Python NEVER use #include or #define.
     const hasInclude = /#\s*include\b/i.test(c);
     const hasDefine = /#\s*define\b/i.test(c);
     const hasPreprocessor = hasInclude || hasDefine;
@@ -572,50 +611,53 @@ export default function CompilerPage() {
     let cppScore = 0;
     let cScore = 0;
 
-    // --- C++ Heuristics ---
-    if (/#\s*include\s*[<"]\s*(iostream|vector|string|algorithm|map|set|queue|stack|deque|numeric|utility|cmath|bits\/stdc\+\+|fstream|sstream|iomanip|list|tuple|unordered_map|unordered_set)\s*[>"]/i.test(c)) cppScore += 15;
-    if (/\busing\s+namespace\s+std\s*;/i.test(c)) cppScore += 12;
-    if (/\bstd\s*::\s*(cout|cin|cerr|endl|vector|string|map|set|pair|sort|make_pair)/.test(c)) cppScore += 12;
-    if (/\bcout\s*<<|\bcin\s*>>/.test(c)) cppScore += 10;
-    if (/\btemplate\s*<\s*(typename|class)\b/.test(c)) cppScore += 8;
-    if (/\bclass\s+\w+\s*\{[\s\S]*?(public|private|protected)\s*:/i.test(c)) cppScore += 10;
-    if (/\b(vector|map|set|unordered_map)\s*<[\w\s,<>]+>\s*\w+/.test(c)) cppScore += 8;
+    // --- Decisive C++ Indicators ---
+    const hasCppHeader = /#\s*include\s*[<"]\s*(iostream|vector|string|algorithm|map|set|queue|stack|deque|numeric|utility|cmath|bits\/stdc\+\+(\.h)?|fstream|sstream|iomanip|list|tuple|unordered_map|unordered_set|memory|functional|chrono)\s*[>"]/i.test(c);
+    const hasCppKeywords = /\b(using\s+namespace\s+std|std\s*::|cout\s*<<|cin\s*>>|cerr\s*<<|nullptr|template\s*<)\b/.test(c);
 
-    // --- C Heuristics ---
-    // Standard C library headers with <> or "" (e.g. #include<stdio.h>, #include "stdio.h", conio.h, etc.)
-    if (/#\s*include\s*[<"]\s*(stdio|stdlib|string|math|ctype|stdbool|limits|time|conio|assert|float|stddef|stdint)\.h\s*[>"]/i.test(c)) cScore += 15;
-    // Any generic #include without C++ specific indicators is a strong C indicator
-    if (hasInclude && cppScore === 0) cScore += 10;
-    if (/\b(printf|scanf)\s*\(/i.test(c) && !/\bstd\s*::/.test(c) && !/\bcout\b/.test(c) && !/\bSystem\./.test(c)) cScore += 8;
-    if (/\b(int|void)\s+main\s*\([^)]*\)/.test(c) && cppScore === 0) cScore += 6;
-    if (/\b(malloc|calloc|realloc|free)\s*\(/i.test(c) && cppScore === 0) cScore += 6;
-    if (/\b(getch|clrscr)\s*\(\s*\)/i.test(c) && cppScore === 0) cScore += 6;
+    if (hasCppHeader) cppScore += 25;
+    if (hasCppKeywords) cppScore += 20;
+    if (/\bclass\s+\w+\s*\{[\s\S]*?(public|private|protected)\s*:/i.test(c)) cppScore += 15;
+    if (/\b(vector|map|set|unordered_map|pair|tuple)\s*<[\w\s,<>]+>\s*\w+/.test(c)) cppScore += 10;
+    if (/\b(new\s+\w+(\[|\()|delete\s+(\[\]|\w+))/.test(c) && !/java/i.test(c)) cppScore += 8;
 
-    // --- Java Heuristics (STRICTLY DISQUALIFIED IF #include OR #define PRESENT) ---
+    // --- C Indicators (Only if NO exclusive C++ header / keywords) ---
+    const hasCHeader = /#\s*include\s*[<"]\s*(stdio|stdlib|string|math|ctype|stdbool|limits|time|conio|assert|float|stddef|stdint)\.h\s*[>"]/i.test(c);
+    if (hasCHeader && !hasCppHeader && !hasCppKeywords) cScore += 25;
+    if (hasInclude && !hasCppHeader && !hasCppKeywords && cppScore === 0) cScore += 10;
+    if (/\b(printf|scanf)\s*\(/i.test(c) && !hasCppKeywords && !/\bSystem\./.test(c)) cScore += 8;
+    if (/\b(int|void)\s+main\s*\([^)]*\)/.test(c) && !hasCppHeader && !hasCppKeywords) cScore += 6;
+    if (/\b(malloc|calloc|realloc|free)\s*\(/i.test(c) && !hasCppKeywords) cScore += 6;
+    if (/\b(getch|clrscr)\s*\(\s*\)/i.test(c)) cScore += 6;
+    if (/\b(struct|typedef\s+struct)\s+\w+/.test(c) && !hasCppKeywords) cScore += 5;
+
+    // --- Java Heuristics (Strictly disqualified if #include or #define present) ---
     if (!hasPreprocessor) {
-      if (/\bimport\s+(java|javax)\./i.test(c)) javaScore += 12;
-      if (/\bpackage\s+[\w.]+;/i.test(c)) javaScore += 10;
-      if (/\bpublic\s+(final\s+|abstract\s+)?class\s+\w+/i.test(c)) javaScore += 10;
-      if (/\bclass\s+\w+/.test(c) && /;\s*$/m.test(c)) javaScore += 3;
-      if (/\bpublic\s+static\s+void\s+main\s*\(\s*String\s*(\[\s*\]\s*\w+|\w+\s*\[\s*\])/.test(c)) javaScore += 12;
-      if (/\bSystem\.(out|err)\.(println|print|printf)\s*\(/i.test(c)) javaScore += 12;
-      if (/\bnew\s+Scanner\s*\(\s*System\.in\s*\)/i.test(c)) javaScore += 12;
-      if (/\b(Scanner|BufferedReader|StringBuilder|ArrayList|HashMap)\b/.test(c)) javaScore += 6;
-      if (/\bboolean\b/.test(c) && !/\bdef\b/.test(c)) javaScore += 3;
+      if (/\bimport\s+(java|javax)\./i.test(c)) javaScore += 25;
+      if (/\bpackage\s+[\w.]+;/i.test(c)) javaScore += 15;
+      if (/\bpublic\s+(final\s+|abstract\s+)?class\s+\w+/i.test(c)) javaScore += 20;
+      if (/\b(public\s+)?static\s+void\s+main\s*\(\s*String\s*(\[\s*\]\s*\w+|\w+\s*\[\s*\])/.test(c)) javaScore += 25;
+      if (/\bSystem\.(out|err)\.(println|print|printf)\s*\(/i.test(c)) javaScore += 20;
+      if (/\bnew\s+Scanner\s*\(\s*System\.in\s*\)/i.test(c)) javaScore += 20;
+      if (/\b(Scanner|BufferedReader|StringBuilder|ArrayList|HashMap|Integer|Double|Boolean)\b/.test(c) && /;\s*$/m.test(c)) javaScore += 8;
+      if (/\bclass\s+\w+\s*\{/i.test(c) && /;\s*$/m.test(c)) javaScore += 10;
+      if (/\b(public|private|protected)\s+(static\s+)?(int|void|String|boolean|double|float|long|char)\s+\w+\s*\(/i.test(c)) javaScore += 10;
     }
 
-    // --- Python Heuristics (STRICTLY DISQUALIFIED IF #include OR #define PRESENT) ---
+    // --- Python Heuristics (Strictly disqualified if #include or #define present) ---
     if (!hasPreprocessor) {
-      if (/^\s*def\s+\w+\s*\([^)]*\)\s*:/m.test(c)) pythonScore += 10;
-      if (/^\s*class\s+\w+(\([^)]*\))?\s*:/m.test(c)) pythonScore += 8;
-      if (/\bif\s+__name__\s*==\s*['"]__main__['"]\s*:/m.test(c)) pythonScore += 12;
-      if (/^\s*(from\s+[\w.]+\s+import|import\s+(sys|os|math|random|json|re|datetime|collections|typing|numpy|pandas))\b/m.test(c)) pythonScore += 10;
-      if (/^\s*elif\s+.*:/m.test(c)) pythonScore += 8;
-      if (/\bfor\s+\w+\s+in\s+(range|enumerate|zip)\s*\(/m.test(c)) pythonScore += 8;
-      if (/\bprint\s*\(/.test(c) && !/;\s*$/m.test(c) && !/\bSystem\./.test(c)) pythonScore += 6;
-      if (/\binput\s*\(/.test(c) && !/\bScanner\b/.test(c)) pythonScore += 6;
-      if (/^\s*#\s+[^\n]*/m.test(c)) pythonScore += 3;
-      if (!/[{};]/.test(c) && (pythonScore > 0 || /:\s*$/.test(c))) pythonScore += 4;
+      if (/^\s*def\s+\w+\s*\([^)]*\)\s*:/m.test(c)) pythonScore += 20;
+      if (/^\s*class\s+\w+(\([^)]*\))?\s*:/m.test(c)) pythonScore += 15;
+      if (/\bif\s+__name__\s*==\s*['"]__main__['"]\s*:/m.test(c)) pythonScore += 25;
+      if (/^\s*(from\s+[\w.]+\s+import|import\s+(sys|os|math|random|json|re|datetime|collections|typing|numpy|pandas))\b/m.test(c)) pythonScore += 15;
+      if (/^\s*elif\s+.*:/m.test(c) || /^\s*else\s*:/m.test(c)) pythonScore += 8;
+      if (/\bfor\s+\w+\s+in\s+[^:]+:/m.test(c)) pythonScore += 12;
+      if (/\bwhile\s+[^:]+:/m.test(c)) pythonScore += 10;
+      if (/\bprint\s*\(/.test(c) && !/;\s*$/m.test(c) && !/\bSystem\./.test(c)) pythonScore += 10;
+      if (/\binput\s*\(/.test(c) && !/\bScanner\b/.test(c)) pythonScore += 10;
+      if (/\b(True|False|None)\b/.test(c) && !/;\s*$/m.test(c)) pythonScore += 6;
+      if (/^\s*#\s+[^\n]*/m.test(c) && !hasInclude) pythonScore += 4;
+      if (!/[{};]/.test(c) && (pythonScore > 0 || /:\s*$/.test(c))) pythonScore += 6;
     }
 
     const scores = [
@@ -627,7 +669,6 @@ export default function CompilerPage() {
 
     scores.sort((a, b) => b.score - a.score);
 
-    // Require at least 4 score points and strictly higher than 2nd place
     if (scores[0].score >= 4 && scores[0].score > scores[1].score) {
       return scores[0].lang;
     }
@@ -637,26 +678,38 @@ export default function CompilerPage() {
 
   const handleCodeChange = useCallback(
     (value: string) => {
-      // A manual edit moves the file past any applied fix — clear the
-      // highlight rather than show a stale diff.
+      // Clear AI fix highlight lines when user makes manual edit
       setHighlightLines([]);
 
-      // Auto-detect language if it changed and user is not in a restricted assignment
+      // Auto-detect language according to the written code
       const detected = detectLanguageFromCode(value);
-      const isRestricted =
-        activeAssignment?.languageMode === "RESTRICTED" &&
-        activeAssignment.allowedLanguages &&
-        activeAssignment.allowedLanguages.length > 0;
-      const isAllowed =
-        !isRestricted ||
-        (activeAssignment!.allowedLanguages!.map((l) => l.toLowerCase()).includes(detected?.toLowerCase() || ""));
+      
+      const requiredLangs = (
+        activeAssignment?.preferredLanguage
+          ? [activeAssignment.preferredLanguage]
+          : activeAssignment?.allowedLanguages && activeAssignment.allowedLanguages.length > 0
+          ? activeAssignment.allowedLanguages
+          : activeAssignment?.languageMode === "RESTRICTED" && activeAssignment.allowedLanguages
+          ? activeAssignment.allowedLanguages
+          : []
+      ).map((l) => l.toLowerCase());
 
-      if (detected && detected !== language && isAllowed) {
-        setLanguage(detected);
-        // Move the code to the detected language slot
-        setCodeMap((m) => ({ ...m, [detected]: value }));
-        const matched = LANGUAGES.find((l) => l.id === detected);
-        showExportNote(`Language detected: ${matched?.label ?? detected.toUpperCase()}`);
+      const isRestricted = requiredLangs.length > 0;
+      const isAllowed = !isRestricted || (detected ? requiredLangs.includes(detected.toLowerCase()) : true);
+
+      if (detected && detected !== language) {
+        if (isAllowed) {
+          setLanguage(detected);
+          setCodeMap((m) => ({ ...m, [detected]: value }));
+          const matched = LANGUAGES.find((l) => l.id === detected);
+          showExportNote(`Language detected: ${matched?.label ?? detected.toUpperCase()}`);
+        } else {
+          // Keep in current language slot and warn user
+          setCodeMap((m) => ({ ...m, [language]: value }));
+          const detReadable = detected === "cpp" ? "C++" : detected.toUpperCase();
+          const reqReadable = requiredLangs.map((l) => (l === "cpp" ? "C++" : l.toUpperCase())).join(" or ");
+          showExportNote(`Notice: Code appears to be ${detReadable}, but this assignment requires ${reqReadable}`);
+        }
       } else {
         setCodeMap((m) => ({ ...m, [language]: value }));
       }
@@ -984,6 +1037,23 @@ export default function CompilerPage() {
       const revealed = targetCases.filter((tc) => !tc.isHidden);
       if (revealed.length === 0) return;
 
+      const requiredLangs = (
+        activeAssignment?.preferredLanguage
+          ? [activeAssignment.preferredLanguage]
+          : activeAssignment?.allowedLanguages && activeAssignment.allowedLanguages.length > 0
+          ? activeAssignment.allowedLanguages
+          : activeAssignment?.languageMode === "RESTRICTED" && activeAssignment.allowedLanguages
+          ? activeAssignment.allowedLanguages
+          : []
+      ).map((l) => l.toLowerCase());
+
+      if (requiredLangs.length > 0) {
+        const reqReadable = requiredLangs.map((l) => (l === "cpp" ? "C++" : l.toUpperCase())).join(" or ");
+        if (!requiredLangs.includes(language.toLowerCase())) {
+          showExportNote(`Notice: This assignment requires ${reqReadable}. Current: ${language.toUpperCase()}`);
+        }
+      }
+
       setBottomTab("result");
       setIsRunning(true);
       setStatus("running");
@@ -1028,7 +1098,7 @@ export default function CompilerPage() {
       setIsRunning(false);
       setStatus("success");
     },
-    [testCases, language, codeMap]
+    [testCases, language, codeMap, activeAssignment]
   );
 
   // Track active execution session inputs so previous run data is never saved or leaked across runs

@@ -41,13 +41,25 @@ import {
   UserDoubtStats,
 } from "@/lib/community-api";
 import { useAuth } from "@/context/AuthContext";
+import DirectMessageDrawer from "@/components/social/DirectMessageDrawer";
 
 export default function DoubtsPage() {
-  const { user, openAuthModal } = useAuth();
+  const { user, token, openAuthModal } = useAuth();
 
   const [doubts, setDoubts] = useState<DoubtItem[]>([]);
   const [stats, setStats] = useState<UserDoubtStats | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Direct messaging state
+  const [activeDmPeer, setActiveDmPeer] = useState<{
+    id: string;
+    name: string;
+    avatar?: string;
+    email?: string;
+    stream?: string;
+    collegeName?: string;
+  } | null>(null);
+  const [isDmOpen, setIsDmOpen] = useState(false);
 
   // Filters
   const [activeTab, setActiveTab] = useState<"all" | "open" | "faculty" | "my">("all");
@@ -91,6 +103,15 @@ export default function DoubtsPage() {
         filtered = filtered.filter((d) => d.hasFacultyEndorsement);
       }
       setDoubts(filtered);
+
+      // Auto-expand the doubt that has answers by default so answers are immediately visible
+      if (filtered.length > 0) {
+        setExpandedDoubtId((prev) => {
+          if (prev && filtered.some((d) => d.id === prev)) return prev;
+          const withAnswers = filtered.find((d) => (d.answers && d.answers.length > 0) || (d.answersCount && d.answersCount > 0));
+          return withAnswers ? withAnswers.id : filtered[0].id;
+        });
+      }
     }
 
     if (statsRes.success && statsRes.data) {
@@ -333,6 +354,60 @@ export default function DoubtsPage() {
                           </div>
                         </div>
 
+                        {/* Author Profile Row */}
+                        <div className="flex items-center justify-between gap-3 pt-1 border-t border-white/5 flex-wrap">
+                          <div className="flex items-center gap-2.5">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={doubt.author?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${doubt.author?.name || "Student"}`}
+                              alt={doubt.author?.name || "Author"}
+                              className="w-6 h-6 rounded-full border border-[#D4AF37]/40 object-cover"
+                            />
+                            <div className="flex items-center gap-2 flex-wrap text-xs">
+                              <span className="font-semibold text-white">
+                                {doubt.author?.name || (isAnonymous ? "Anonymous Student" : "Student")}
+                              </span>
+                              {doubt.author?.role === "FACULTY" && (
+                                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#D4AF37]/20 text-[#E8C97A] font-bold border border-[#D4AF37]/40">
+                                  FACULTY
+                                </span>
+                              )}
+                              {doubt.author?.department?.code && (
+                                <span className="text-[11px] text-zinc-400 font-mono">
+                                  • {doubt.author.department.code} {doubt.author.batchYear ? `'${String(doubt.author.batchYear).slice(-2)}` : ""}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Message Doubt Author Button (if not me) */}
+                          {!isAnonymous && doubt.author?.id && doubt.author.id !== user?.id && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!user) {
+                                  openAuthModal("login");
+                                  return;
+                                }
+                                setActiveDmPeer({
+                                  id: doubt.author.id,
+                                  name: doubt.author.name,
+                                  avatar: doubt.author.avatar,
+                                  email: (doubt.author as any).email,
+                                  stream: (doubt.author as any).stream,
+                                  collegeName: (doubt.author as any).collegeName,
+                                });
+                                setIsDmOpen(true);
+                              }}
+                              className="flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded-lg bg-white/5 hover:bg-[#D4AF37] text-zinc-300 hover:text-black border border-white/10 hover:border-[#D4AF37] transition-all cursor-pointer font-medium"
+                              title={`Message ${doubt.author.name}`}
+                            >
+                              <MessageSquare className="w-3 h-3 text-[#E8C97A]" />
+                              <span>Message</span>
+                            </button>
+                          )}
+                        </div>
+
                         {/* Title & Description */}
                         <div>
                           <h3 className="font-display text-base sm:text-lg font-bold hover:text-[#E8C97A] transition-colors">
@@ -372,16 +447,22 @@ export default function DoubtsPage() {
                             ))}
                           </div>
 
-                          <div className="flex items-center gap-4 text-xs font-mono">
-                            <div className="flex items-center gap-1 text-[var(--ink-dim)]">
-                              <MessageSquare className="w-3.5 h-3.5 text-[#E8C97A]" />
-                              <span>{doubt.answersCount || 0} answers</span>
+                          <div className="flex items-center gap-3 text-xs font-mono">
+                            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[#E8C97A]">
+                              <MessageSquare className="w-3.5 h-3.5 text-[#D4AF37]" />
+                              <span className="font-semibold">{doubt.answersCount || doubt.answers?.length || 0} answers</span>
                             </div>
 
-                            <div className="flex items-center gap-1 text-[#E8C97A]">
-                              <span>{isExpanded ? "Hide Thread" : "View Answers"}</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedDoubtId(isExpanded ? null : doubt.id);
+                              }}
+                              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#D4AF37]/20 hover:bg-[#D4AF37] text-[#E8C97A] hover:text-black border border-[#D4AF37]/40 font-bold transition-all cursor-pointer shadow-[0_0_12px_rgba(212,175,55,0.15)]"
+                            >
+                              <span>{isExpanded ? "Hide Solutions" : "View Solutions & Answers"}</span>
                               {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                            </div>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -435,35 +516,62 @@ export default function DoubtsPage() {
                                         key={ans.id}
                                         className={`glass-strong rounded-xl p-4 border transition-all ${
                                           ans.isAccepted
-                                            ? "border-emerald-500/50 bg-emerald-950/15 shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+                                            ? "border-[#D4AF37]/60 bg-[#D4AF37]/5 shadow-[0_0_25px_rgba(212,175,55,0.15)]"
                                             : "border-white/10"
                                         }`}
                                       >
-                                        <div className="flex items-center justify-between gap-2 mb-2">
-                                          <div className="flex items-center gap-2">
+                                        <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                                          <div className="flex items-center gap-2.5">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
-                                              src={ans.author?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=User"}
-                                              alt={ans.author?.name}
-                                              className="w-5 h-5 rounded-full border border-white/20"
+                                              src={ans.author?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ans.author?.name || "Peer"}`}
+                                              alt={ans.author?.name || "Answerer"}
+                                              className="w-6 h-6 rounded-full border border-white/20 object-cover"
                                             />
-                                            <span className="text-xs font-semibold">{ans.author?.name}</span>
+                                            <span className="text-xs font-bold text-white">{ans.author?.name || "Campus Peer"}</span>
                                             {ans.author?.role === "FACULTY" && (
-                                              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 font-bold border border-purple-500/30">
+                                              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#D4AF37]/20 text-[#E8C97A] font-bold border border-[#D4AF37]/40">
                                                 FACULTY
                                               </span>
+                                            )}
+
+                                            {/* Message Answerer Button */}
+                                            {ans.author?.id && ans.author.id !== user?.id && (
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  if (!user) {
+                                                    openAuthModal("login");
+                                                    return;
+                                                  }
+                                                  setActiveDmPeer({
+                                                    id: ans.author.id,
+                                                    name: ans.author.name,
+                                                    avatar: ans.author.avatar,
+                                                    email: (ans.author as any).email,
+                                                    stream: (ans.author as any).stream,
+                                                    collegeName: (ans.author as any).collegeName,
+                                                  });
+                                                  setIsDmOpen(true);
+                                                }}
+                                                className="flex items-center gap-1.5 text-[10.5px] font-mono px-2.5 py-0.5 rounded-lg bg-[#D4AF37]/15 hover:bg-[#D4AF37] text-[#E8C97A] hover:text-black border border-[#D4AF37]/35 transition-all font-semibold cursor-pointer shadow-[0_0_10px_rgba(212,175,55,0.12)] ml-1"
+                                                title={`Direct message ${ans.author.name}`}
+                                              >
+                                                <MessageSquare className="w-3 h-3" />
+                                                <span>Message</span>
+                                              </button>
                                             )}
                                           </div>
 
                                           <div className="flex items-center gap-2">
                                             {ans.isFacultyEndorsed && (
-                                              <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
-                                                <ShieldCheck className="w-3 h-3" /> Endorsed by {ans.endorsedByFacultyName || "Faculty"}
+                                              <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#D4AF37]/25 text-[#F3E5AB] border border-[#D4AF37]/40 font-bold">
+                                                <ShieldCheck className="w-3 h-3 text-[#E8C97A]" /> Endorsed by {ans.endorsedByFacultyName || "Faculty"}
                                               </span>
                                             )}
 
                                             {ans.isAccepted && (
-                                              <span className="flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                                              <span className="flex items-center gap-1 text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-[#D4AF37]/20 text-[#E8C97A] border border-[#D4AF37]/50 font-bold shadow-[0_0_10px_rgba(212,175,55,0.2)]">
                                                 <Check className="w-3 h-3" /> Accepted Solution
                                               </span>
                                             )}
@@ -472,7 +580,7 @@ export default function DoubtsPage() {
                                             {isAuthor && !ans.isAccepted && (
                                               <button
                                                 onClick={() => handleAcceptAnswer(doubt.id, ans.id)}
-                                                className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#D4AF37]/20 text-[#E8C97A] border border-[#D4AF37]/30 hover:bg-[#D4AF37] hover:text-black font-bold transition-all cursor-pointer"
+                                                className="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-[#D4AF37]/20 text-[#E8C97A] border border-[#D4AF37]/40 hover:bg-[#D4AF37] hover:text-black font-bold transition-all cursor-pointer shadow-[0_0_10px_rgba(212,175,55,0.2)]"
                                               >
                                                 Accept as Solution
                                               </button>
@@ -480,13 +588,26 @@ export default function DoubtsPage() {
                                           </div>
                                         </div>
 
-                                        <p className="text-xs text-[var(--ink)] leading-relaxed whitespace-pre-wrap">
-                                          {ans.content}
-                                        </p>
+                                        <div className="mt-1">
+                                          <p className="text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap font-sans">
+                                            {ans.content || (
+                                              <span className="text-zinc-400 italic">No explanation text provided.</span>
+                                            )}
+                                          </p>
+                                        </div>
 
                                         {ans.codeSnippet && (
-                                          <div className="mt-3 rounded-lg bg-black/40 p-3 font-mono text-[11px] text-[var(--syn-function)] overflow-x-auto border border-white/5">
-                                            <pre>{ans.codeSnippet}</pre>
+                                          <div className="mt-3 rounded-xl bg-black/60 p-3.5 font-mono text-[11px] text-zinc-100 overflow-x-auto border border-white/10">
+                                            <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10 text-[10px] text-zinc-400">
+                                              <span>Working Solution Snippet</span>
+                                              <button
+                                                onClick={() => void navigator.clipboard.writeText(ans.codeSnippet!)}
+                                                className="text-[#E8C97A] hover:underline font-mono text-[10px] cursor-pointer"
+                                              >
+                                                Copy Snippet
+                                              </button>
+                                            </div>
+                                            <pre className="whitespace-pre leading-relaxed">{ans.codeSnippet}</pre>
                                           </div>
                                         )}
                                       </div>
@@ -670,6 +791,15 @@ export default function DoubtsPage() {
         )}
       </AnimatePresence>
 
+      {/* Direct Message Drawer */}
+      <DirectMessageDrawer
+        isOpen={isDmOpen}
+        onClose={() => setIsDmOpen(false)}
+        peer={activeDmPeer}
+        token={token}
+        currentUserId={user?.id}
+      />
+
       <Footer />
     </div>
   );
@@ -849,7 +979,7 @@ function AskDoubtModal({
                     onChange={() => setPrivacy("PUBLIC")}
                     className="accent-[#D4AF37]"
                   />
-                  <Globe className="w-4 h-4 text-cyan-400" />
+                  <Globe className="w-4 h-4 text-[#E8C97A]" />
                   <span className="font-semibold">Public</span>
                 </div>
                 <span className="text-[11px] text-[var(--ink-dim)]">
@@ -897,7 +1027,7 @@ function AskDoubtModal({
                     onChange={() => setPrivacy("FACULTY_ONLY")}
                     className="accent-[#D4AF37]"
                   />
-                  <Lock className="w-4 h-4 text-rose-400" />
+                  <Lock className="w-4 h-4 text-[#E8C97A]" />
                   <span className="font-semibold">Faculty Only</span>
                 </div>
                 <span className="text-[11px] text-[var(--ink-dim)]">

@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Copy, Check } from "lucide-react";
+import MermaidDiagram from "./MermaidDiagram";
 
 function CodeBlock({
   language,
@@ -75,6 +76,10 @@ export default function MarkdownMessage({ content }: { content: string }) {
 
             if (!isBlock) {
               return <code className={className}>{children}</code>;
+            }
+
+            if (match && match[1].toLowerCase() === "mermaid") {
+              return <MermaidDiagram definition={text} />;
             }
 
             return <CodeBlock language={match ? match[1] : ""} code={text} />;
