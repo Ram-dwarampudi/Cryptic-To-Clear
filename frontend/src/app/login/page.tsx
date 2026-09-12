@@ -66,7 +66,7 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen relative flex flex-col justify-between overflow-x-hidden pt-20 pb-12 px-4 sm:px-6 lg:px-8 bg-[#060911]">
+    <div className="min-h-screen relative flex flex-col justify-between overflow-x-hidden pt-20 pb-12 px-4 sm:px-6 lg:px-8 bg-[var(--bg)] text-[var(--ink)]">
       {/* Background ambient lighting effects */}
       <div className="blob h-[450px] w-[450px] bg-[rgba(212,175,55,0.12)] top-12 -left-40 pointer-events-none opacity-40 blur-3xl" />
       <div className="blob h-[450px] w-[450px] bg-[rgba(126,182,255,0.08)] bottom-12 -right-40 pointer-events-none opacity-30 blur-3xl" />

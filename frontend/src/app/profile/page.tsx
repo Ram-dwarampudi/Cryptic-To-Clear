@@ -411,7 +411,7 @@ export default function StudentProfileDashboard() {
 
   if (authLoading || (loading && !dashboard)) {
     return (
-      <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center font-mono text-[#E8C97A]">
+      <div className="min-h-screen bg-[var(--bg)] flex flex-col items-center justify-center font-mono text-[#E8C97A]">
         <Loader2 className="w-8 h-8 animate-spin mb-3 text-[#D4AF37]" />
         <p className="text-xs tracking-wider uppercase">Loading Student Profile...</p>
       </div>
@@ -420,7 +420,7 @@ export default function StudentProfileDashboard() {
 
   if (error && !dashboard) {
     return (
-      <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-screen bg-[var(--bg)] flex flex-col items-center justify-center p-6 text-center">
         <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
         <h2 className="text-lg font-bold text-white mb-1">Could Not Load Dashboard</h2>
         <p className="text-xs text-[var(--ink-dim)] font-mono mb-4">{error}</p>
@@ -511,7 +511,7 @@ export default function StudentProfileDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-[var(--ink)] flex flex-col selection:bg-[#D4AF37]/20 selection:text-[#E8C97A]">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--ink)] flex flex-col selection:bg-[#D4AF37]/20 selection:text-[#E8C97A]">
       <Navbar />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-24 pb-20 space-y-10">

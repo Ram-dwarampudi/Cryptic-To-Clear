@@ -14,6 +14,7 @@ export function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.classList.toggle("light", theme === "light");
   root.classList.toggle("dark", theme === "dark");
+  root.setAttribute("data-theme", theme);
   try {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {
@@ -33,7 +34,7 @@ export const THEME_INIT_SCRIPT = `
 try {
   var t = localStorage.getItem('${THEME_STORAGE_KEY}');
   var root = document.documentElement;
-  if (t === 'light') { root.classList.add('light'); root.classList.remove('dark'); }
-  else { root.classList.add('dark'); root.classList.remove('light'); }
+  if (t === 'light') { root.classList.add('light'); root.classList.remove('dark'); root.setAttribute('data-theme', 'light'); }
+  else { root.classList.add('dark'); root.classList.remove('light'); root.setAttribute('data-theme', 'dark'); }
 } catch (e) {}
 `;

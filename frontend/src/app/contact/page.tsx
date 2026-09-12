@@ -44,7 +44,7 @@ export default function ContactPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#07090e] text-white flex flex-col selection:bg-[#D4AF37] selection:text-black">
+    <main className="min-h-screen bg-[var(--bg)] text-[var(--ink)] flex flex-col selection:bg-[#D4AF37] selection:text-black">
       <Navbar />
 
       {/* Hero Section */}
@@ -162,19 +162,19 @@ export default function ContactPage() {
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     className="w-full bg-[#0d1117] border border-[rgba(212,175,55,0.25)] rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
                   >
-                    <option value="feedback" className="bg-[#0d1117] text-white">
+                    <option value="feedback">
                       Platform Feedback &amp; Feature Recommendations
                     </option>
-                    <option value="bug" className="bg-[#0d1117] text-white">
+                    <option value="bug">
                       Report Compiler Error or Execution Issue
                     </option>
-                    <option value="assignment" className="bg-[#0d1117] text-white">
+                    <option value="assignment">
                       Faculty Assignment &amp; Test Case Support
                     </option>
-                    <option value="doubts" className="bg-[#0d1117] text-white">
+                    <option value="doubts">
                       Doubt Forum &amp; Direct Messaging Questions
                     </option>
-                    <option value="general" className="bg-[#0d1117] text-white">
+                    <option value="general">
                       General Academic Inquiry
                     </option>
                   </select>

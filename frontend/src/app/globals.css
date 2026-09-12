@@ -37,63 +37,297 @@ html.dark {
   --font-mono: var(--font-jetbrains-mono), monospace;
 }
 
-/* Light theme — Classic Warm Parchment / Linen Beige with Rich Navy & Gold */
-:root.light {
-  --bg: #fcfaf6;
+/* ==========================================================================
+   Light Mode Palette (Strictly Black, Gold, and White)
+   ========================================================================== */
+html.light,
+:root.light,
+[data-theme="light"] {
+  /* Surfaces: Crisp Pure White & Refined Off-White */
+  --bg: #fcfcfb;
   --bg-elevated: #ffffff;
-  --panel: #f7f2ea;
-  --panel-glass: rgba(252, 250, 246, 0.85);
-  --panel-glass-strong: rgba(255, 255, 255, 0.95);
+  --panel: #ffffff;
+  --panel-glass: rgba(255, 255, 255, 0.88);
+  --panel-glass-strong: rgba(255, 255, 255, 0.98);
   --border: rgba(184, 134, 11, 0.22);
-  --border-strong: rgba(184, 134, 11, 0.40);
+  --border-strong: rgba(184, 134, 11, 0.45);
 
-  --ink: #0b1329;
-  --ink-dim: #434c60;
-  --ink-faint: #7a8296;
+  /* Typography: Crisp Jet Black & Charcoal Hierarchy */
+  --ink: #09090b;
+  --ink-dim: #27272a;
+  --ink-faint: #52525b;
 
-  --syn-keyword: #996f00;
-  --syn-function: #0f58bd;
-  --syn-string: #1a7536;
-  --syn-const: #b8860b;
-  --syn-cursor: #b8860b;
+  /* Rich Gold Palette Accents - tuned for high contrast on white */
+  --gold-deep: #785404;
+  --gold-primary: #a17409;
+  --gold-soft: #b8860b;
+  --gold-gradient: linear-gradient(135deg, #785404 0%, #a17409 50%, #d4af37 100%);
+  --gold-glow: 0 0 20px rgba(184, 134, 11, 0.22);
+
+  /* Syntax accents strictly aligned with Black & Gold */
+  --syn-keyword: #8a6405;
+  --syn-function: #a17409;
+  --syn-string: #634b05;
+  --syn-const: #8a6405;
+  --syn-cursor: #8a6405;
 }
 
-:root.light ::selection {
-  background: rgba(212, 175, 55, 0.25);
-  color: #0b1329;
+html.light ::selection {
+  background: rgba(212, 175, 55, 0.28);
+  color: #09090b;
 }
 
-:root.light ::-webkit-scrollbar-thumb {
-  background: #d8cfc4;
+html.light ::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 9999px;
 }
 
-:root.light ::-webkit-scrollbar-thumb:hover {
-  background: #b8a994;
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #a1a1aa;
+}
+
+/* Light theme cards, glassmorphism, and panels */
+html.light .glass {
+  background: rgba(255, 255, 255, 0.90) !important;
+  border: 1px solid rgba(184, 134, 11, 0.22) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+  color: #09090b;
+}
+
+html.light .glass-strong {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 1px solid rgba(184, 134, 11, 0.35) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+  color: #09090b;
+}
+
+html.light .panel-gold-active {
+  border: 1px solid rgba(184, 134, 11, 0.45) !important;
+  box-shadow: 0 0 25px rgba(184, 134, 11, 0.15), 0 15px 35px rgba(0, 0, 0, 0.06) !important;
+}
+
+html.light .gold-vignette {
+  background: radial-gradient(
+    ellipse 90% 65% at 50% -5%,
+    rgba(212, 175, 55, 0.12) 0%,
+    rgba(232, 201, 122, 0.05) 38%,
+    rgba(252, 252, 251, 0.85) 72%,
+    #fcfcfb 100%
+  ) !important;
 }
 
 /* Light theme button & input adjustments */
-:root.light input[type="text"],
-:root.light input[type="email"],
-:root.light input[type="password"],
-:root.light input[type="number"],
-:root.light input[type="search"],
-:root.light textarea,
-:root.light select {
+html.light input[type="text"]:not(.bg-transparent),
+html.light input[type="email"]:not(.bg-transparent),
+html.light input[type="password"]:not(.bg-transparent),
+html.light input[type="number"]:not(.bg-transparent),
+html.light input[type="search"]:not(.bg-transparent),
+html.light textarea,
+html.light select {
   border: 1.5px solid rgba(184, 134, 11, 0.3) !important;
   background-color: #ffffff !important;
-  color: #0b1329 !important;
+  color: #09090b !important;
 }
 
-:root.light .glass {
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(184, 134, 11, 0.22) !important;
-  box-shadow: 0 4px 20px rgba(11, 19, 41, 0.05);
+html.light input.bg-transparent {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  color: #09090b !important;
 }
 
-:root.light .glass-strong {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid rgba(184, 134, 11, 0.32) !important;
-  box-shadow: 0 10px 30px rgba(11, 19, 41, 0.08);
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #71717a !important;
+}
+
+html.light select option {
+  background-color: #ffffff !important;
+  color: #09090b !important;
+}
+
+/* Light theme button adjustments */
+html.light .btn-gold {
+  background: linear-gradient(135deg, #B8860B 0%, #D4AF37 50%, #E8C97A 100%) !important;
+  color: #000000 !important;
+  font-weight: 800 !important;
+  border: 1px solid rgba(184, 134, 11, 0.4) !important;
+}
+
+html.light .btn-gold * {
+  color: #000000 !important;
+}
+
+/* Prevent white text from disappearing on light mode backgrounds */
+html.light .text-white:not(.btn-gold):not(.btn-gold *):not([data-keep-white]):not([data-keep-white] *) {
+  color: #09090b !important;
+}
+
+html.light .text-zinc-100,
+html.light .text-zinc-200 {
+  color: #18181b !important;
+}
+
+html.light .text-zinc-300 {
+  color: #27272a !important;
+}
+
+html.light .text-zinc-400 {
+  color: #52525b !important;
+}
+
+html.light .text-gray-100,
+html.light .text-gray-200 {
+  color: #18181b !important;
+}
+
+html.light .text-gray-300 {
+  color: #27272a !important;
+}
+
+html.light .text-gray-400,
+html.light .text-zinc-500 {
+  color: #52525b !important;
+}
+
+html.light .text-gray-500 {
+  color: #71717a !important;
+}
+
+html.light .text-\[\#f7f3eb\],
+html.light [class*="text-[#f7f3eb]"],
+html.light .text-\[\#fefefe\],
+html.light [class*="text-[#fefefe]"] {
+  color: #09090b !important;
+}
+
+/* Convert light yellow-golds into high-contrast readable deep golds */
+html.light .text-\[\#E8C97A\],
+html.light .text-\[\#e8c97a\],
+html.light .text-\[\#fcd34d\],
+html.light .text-\[\#fef08a\],
+html.light .text-amber-300 {
+  color: #8a6405 !important;
+}
+
+html.light .text-amber-400 {
+  color: #785404 !important;
+}
+
+/* White borders become subtle gold/neutral borders on white */
+html.light .border-white\/5,
+html.light .border-white\/10,
+html.light .border-white\/15,
+html.light .border-white\/20,
+html.light .border-white\/25,
+html.light .border-white\/30,
+html.light .border-white\/40 {
+  border-color: rgba(184, 134, 11, 0.20) !important;
+}
+
+html.light .border-white {
+  border-color: rgba(184, 134, 11, 0.30) !important;
+}
+
+/* Subtle white background fills become subtle light gold tints */
+html.light .bg-white\/5,
+html.light .bg-white\/10 {
+  background-color: rgba(184, 134, 11, 0.05) !important;
+}
+
+html.light .bg-white\/15,
+html.light .bg-white\/20 {
+  background-color: rgba(184, 134, 11, 0.09) !important;
+}
+
+/* Recessed dark containers become clean light containers */
+html.light .bg-black,
+html.light .bg-black\/90,
+html.light .bg-black\/80,
+html.light .bg-black\/60,
+html.light .bg-black\/50,
+html.light .bg-black\/40,
+html.light .bg-black\/30,
+html.light .bg-black\/25,
+html.light .bg-black\/20 {
+  background-color: #f7f7f4 !important;
+  border-color: rgba(184, 134, 11, 0.22) !important;
+  color: #09090b !important;
+}
+
+html.light .bg-\[\#0d1117\],
+html.light .bg-\[\#0d1117\]\/40,
+html.light .bg-\[\#0d1117\]\/65,
+html.light .bg-\[\#0d1117\]\/80,
+html.light .bg-\[\#0a0d13\],
+html.light .bg-\[\#050507\],
+html.light .bg-\[\#0d0d10\],
+html.light .bg-\[\#111114\],
+html.light .bg-\[\#0a101e\],
+html.light .bg-\[\#070b14\],
+html.light .bg-\[\#07090e\],
+html.light .bg-\[\#060911\],
+html.light .bg-\[\#0a1628\],
+html.light .bg-\[\#0a0d14\],
+html.light .bg-\[\#0a0e18\],
+html.light .bg-\[\#0b101c\],
+html.light .bg-\[\#0d1119\],
+html.light .bg-\[\#0d1119\]\/80,
+html.light .bg-\[rgba\(10\,16\,30\,0\.8\)\],
+html.light .bg-\[rgba\(10\,16\,30\,0\.85\)\],
+html.light .bg-\[rgba\(7\,11\,20\,0\.6\)\] {
+  background-color: #fafaf7 !important;
+  color: #09090b !important;
+}
+
+/* Modals, drawers, and floating panels in light mode */
+html.light .bg-\[\#0b1120\],
+html.light .bg-\[\#0d121f\],
+html.light .bg-\[\#0c101d\],
+html.light .bg-\[\#0b0f19\],
+html.light .bg-\[\#0e1626\] {
+  background-color: #ffffff !important;
+  border-color: rgba(184, 134, 11, 0.3) !important;
+  color: #09090b !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Header & Navbar adjustments */
+html.light header.glass-strong {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-bottom: 1px solid rgba(184, 134, 11, 0.22) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+}
+
+html.light header nav a,
+html.light header a {
+  color: #27272a !important;
+}
+
+html.light header nav a:hover,
+html.light header a:hover {
+  color: #8a6405 !important;
+}
+
+/* Footer adjustments */
+html.light footer {
+  background-color: #fafaf7 !important;
+  border-color: rgba(184, 134, 11, 0.22) !important;
+  color: #09090b !important;
+}
+
+html.light footer.bg-\[rgba\(7\,11\,20\,0\.85\)\] {
+  background-color: #fafaf7 !important;
+}
+
+/* Text contrast enhancements for light mode */
+html.light .text-\[\#c5bba8\] {
+  color: #52525b !important;
+}
+
+/* Code & pre element readability in light mode */
+html.light pre,
+html.light code {
+  color: #09090b !important;
 }
 
 * {
