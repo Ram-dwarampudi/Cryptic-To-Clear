@@ -5,6 +5,7 @@ const facultyModel = require("../models/faculty.model");
  */
 exports.getOverview = async (req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const data = await facultyModel.getOverview();
     return res.status(200).json({
       success: true,
@@ -20,6 +21,7 @@ exports.getOverview = async (req, res, next) => {
  */
 exports.getStudents = async (req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const {
       search,
       branch,
@@ -58,6 +60,7 @@ exports.getStudents = async (req, res, next) => {
  */
 exports.getStudentDetail = async (req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const { studentId } = req.params;
     const data = await facultyModel.getStudentDetail(studentId);
 
@@ -112,6 +115,7 @@ exports.getLanguageAnalytics = async (req, res, next) => {
  */
 exports.getClasses = async (req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const data = await facultyModel.getClasses();
     return res.status(200).json({
       success: true,
@@ -151,6 +155,7 @@ exports.addClass = async (req, res, next) => {
  */
 exports.getAssignments = async (req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const data = facultyModel.getAssignments();
     return res.status(200).json({
       success: true,

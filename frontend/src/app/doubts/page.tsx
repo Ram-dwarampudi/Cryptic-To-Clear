@@ -71,7 +71,7 @@ export default function DoubtsPage() {
 
   // Modal and Expansion
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
-  const [expandedDoubtId, setExpandedDoubtId] = useState<string | null>("doubt_quicksort_2025");
+  const [expandedDoubtId, setExpandedDoubtId] = useState<string | null>("8eab10b6-cba3-41db-b930-d6da91e65f2a");
 
   // Answering
   const [answerContent, setAnswerContent] = useState("");

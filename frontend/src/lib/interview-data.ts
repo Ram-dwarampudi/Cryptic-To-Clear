@@ -2,7 +2,7 @@ import { InterviewExperience, CompanyStat } from "./community-api";
 
 export const CURATED_INTERVIEWS: InterviewExperience[] = [
   {
-    id: "exp_google_2025",
+    id: "d5836425-61d7-49c0-bf26-acd800fd980b",
     companyName: "Google",
     companyLogo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg",
     roleTitle: "Software Development Engineer - I",
@@ -20,16 +20,16 @@ export const CURATED_INTERVIEWS: InterviewExperience[] = [
     upvotes: 38,
     createdAt: "2025-10-12T10:00:00.000Z",
     student: {
-      id: "usr_senior_alex",
-      name: "Alex Johnson",
-      role: "ALUMNI",
-      batchYear: 2025,
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=AlexJohnson",
+      id: "77127a83-4add-435a-90f7-bf73471c23d2",
+      name: "Ram Dwarampudi",
+      role: "STUDENT",
+      batchYear: 2028,
+      avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=RoboForge",
       department: { code: "CSE", name: "Computer Science & Engineering" },
     },
     university: {
-      name: "Apex University of Technology",
-      code: "AUT",
+      name: "Vishnu Educational Society",
+      code: "VES",
     },
     rounds: [
       {
@@ -79,7 +79,7 @@ export const CURATED_INTERVIEWS: InterviewExperience[] = [
     ],
   },
   {
-    id: "exp_amazon_2025",
+    id: "8f36594b-1304-454f-884a-f92b74868a49",
     companyName: "Amazon",
     companyLogo: "https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg",
     roleTitle: "Software Development Engineer - I",
@@ -97,16 +97,16 @@ export const CURATED_INTERVIEWS: InterviewExperience[] = [
     upvotes: 29,
     createdAt: "2025-10-18T14:30:00.000Z",
     student: {
-      id: "usr_senior_priya",
-      name: "Priya Sharma",
-      role: "ALUMNI",
-      batchYear: 2025,
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PriyaSharma",
-      department: { code: "CSE", name: "Computer Science & Engineering" },
+      id: "99a7bcf2-7c11-4924-b9e3-5e959ffa5ce3",
+      name: "Samrudh",
+      role: "STUDENT",
+      batchYear: 2028,
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=24pa1a5713%40vishnu.edu.in",
+      department: { code: "CSBS", name: "Computer Science & Business Systems" },
     },
     university: {
-      name: "Apex University of Technology",
-      code: "AUT",
+      name: "Vishnu Educational Society",
+      code: "VES",
     },
     rounds: [
       {
@@ -146,7 +146,7 @@ export const CURATED_INTERVIEWS: InterviewExperience[] = [
     ],
   },
   {
-    id: "exp_msft_2025",
+    id: "a6309b45-1d55-42e5-b8c9-57dee5f7e51d",
     companyName: "Microsoft",
     companyLogo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
     roleTitle: "Software Engineer",
@@ -164,16 +164,16 @@ export const CURATED_INTERVIEWS: InterviewExperience[] = [
     upvotes: 22,
     createdAt: "2025-11-01T09:15:00.000Z",
     student: {
-      id: "usr_senior_rahul",
-      name: "Rahul Verma",
-      role: "ALUMNI",
-      batchYear: 2025,
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=RahulVerma",
-      department: { code: "CSE", name: "Computer Science & Engineering" },
+      id: "30743284-a08d-4236-b592-6d36213fadf5",
+      name: "Sai Katreddy",
+      role: "STUDENT",
+      batchYear: 2028,
+      avatar: "https://media.licdn.com/dms/image/v2/D5603AQE2SqPqvBSR-Q/profile-displayphoto-scale_200_200/B56ZwDPTSXK0AY-/0/1769580885033?e=2147483647&v=beta&t=49xdigAB6zIKnmrmLs3Mhze0n0hy39taFjPj_rACgCU",
+      department: { code: "CSBS", name: "Computer Science & Business Systems" },
     },
     university: {
-      name: "Apex University of Technology",
-      code: "AUT",
+      name: "Vishnu Educational Society",
+      code: "VES",
     },
     rounds: [
       {
@@ -212,7 +212,7 @@ export const CURATED_INTERVIEWS: InterviewExperience[] = [
     ],
   },
   {
-    id: "exp_tcs_2025",
+    id: "c2a20e54-4830-4e0f-8fd6-61713b4b0dd0",
     companyName: "TCS",
     companyLogo: "https://upload.wikimedia.org/wikipedia/commons/b/b1/Tata_Consultancy_Services_Logo.svg",
     roleTitle: "Digital Cadre - Systems Engineer",
@@ -230,16 +230,16 @@ export const CURATED_INTERVIEWS: InterviewExperience[] = [
     upvotes: 18,
     createdAt: "2025-11-15T16:45:00.000Z",
     student: {
-      id: "usr_senior_anonymous",
-      name: "Senior Scholar",
+      id: "b8fc6314-a8a3-4544-b73e-811c3e90f289",
+      name: "Praneetha",
       role: "STUDENT",
-      batchYear: 2025,
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=SeniorScholar",
-      department: { code: "ECE", name: "Electronics & Communication Engineering" },
+      batchYear: 2028,
+      avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=LinusDev-8",
+      department: { code: "CSBS", name: "Computer Science & Business Systems" },
     },
     university: {
-      name: "Apex University of Technology",
-      code: "AUT",
+      name: "Vishnu Educational Society",
+      code: "VES",
     },
     rounds: [
       {

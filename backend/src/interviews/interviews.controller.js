@@ -6,6 +6,7 @@ const logger = require("../utils/logger");
  */
 exports.getInterviews = async (req, res) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const { search, company, difficulty, driveType, year, limit = 20, page = 1 } = req.query;
 
     const where = {};
@@ -114,6 +115,7 @@ exports.getInterviews = async (req, res) => {
  */
 exports.getCompanyStats = async (req, res) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const all = await prisma.interviewExperience.findMany({
       select: {
         companyName: true,
@@ -155,6 +157,7 @@ exports.getCompanyStats = async (req, res) => {
  */
 exports.getInterviewById = async (req, res) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const { id } = req.params;
     const item = await prisma.interviewExperience.findUnique({
       where: { id },

@@ -8,6 +8,8 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_BASE_U
 export function getAuthHeaders(token?: string | null): Record<string, string> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
   };
   const authToken =
     token || (typeof window !== "undefined" ? localStorage.getItem("c2c_token") : null);
@@ -1258,8 +1260,9 @@ export async function fetchStudentAssignments(
   token?: string | null
 ): Promise<{ success: boolean; data?: AssignmentItem[]; message?: string }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/faculty/student-assignments`, {
+    const res = await fetch(`${API_BASE_URL}/api/faculty/student-assignments?_t=${Date.now()}`, {
       headers: getAuthHeaders(token),
+      cache: "no-store",
       credentials: "include",
     });
     const json = await res.json().catch(() => null);
@@ -1397,8 +1400,9 @@ export async function fetchStudentDashboard(
   token?: string | null
 ): Promise<{ success: boolean; data?: StudentDashboardData; message?: string } & Partial<StudentDashboardData>> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/users/dashboard`, {
+    const res = await fetch(`${API_BASE_URL}/api/users/dashboard?_t=${Date.now()}`, {
       headers: getAuthHeaders(token),
+      cache: "no-store",
       credentials: "include",
     });
     const json = await res.json().catch(() => null);
@@ -1497,9 +1501,10 @@ export async function fetchStudentLeaderboard(
   token?: string | null
 ): Promise<{ success: boolean; data: LeaderboardStudent[]; count?: number; message?: string }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/users/leaderboard`, {
+    const res = await fetch(`${API_BASE_URL}/api/users/leaderboard?_t=${Date.now()}`, {
       method: "GET",
       headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      cache: "no-store",
       credentials: "include",
     });
     const json = await res.json().catch(() => null);
@@ -1626,9 +1631,10 @@ export async function fetchPublicStudentProfile(
   token?: string | null
 ): Promise<{ success: boolean; profile?: PublicStudentProfile; message?: string }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/users/${studentId}/public-profile`, {
+    const res = await fetch(`${API_BASE_URL}/api/users/${studentId}/public-profile?_t=${Date.now()}`, {
       method: "GET",
       headers: { ...getAuthHeaders(token), "Content-Type": "application/json" },
+      cache: "no-store",
       credentials: "include",
     });
     const json = await res.json().catch(() => null);

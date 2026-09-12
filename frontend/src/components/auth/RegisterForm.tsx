@@ -62,7 +62,7 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
   // Faculty specific
   const [facultyId, setFacultyId] = useState("");
   const [department, setDepartment] = useState("Computer Science & Engineering");
-  const [collegeName, setCollegeName] = useState("Apex University of Technology");
+  const [collegeName, setCollegeName] = useState("Vishnu Educational Society");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -418,7 +418,7 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
                 type="text"
                 value={collegeName}
                 onChange={(e) => setCollegeName(e.target.value)}
-                placeholder="e.g. Apex University of Technology"
+                placeholder="e.g. Vishnu Educational Society"
                 className="w-full bg-[rgba(10,14,24,0.7)] border border-purple-500/30 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none"
                 required
               />

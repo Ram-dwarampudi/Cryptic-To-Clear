@@ -151,6 +151,7 @@ export async function fetchInterviews(params: {
 }): Promise<{ success: boolean; data: InterviewExperience[]; total?: number }> {
   try {
     const query = new URLSearchParams();
+    query.append("_t", Date.now().toString());
     if (params.search) query.append("search", params.search);
     if (params.company) query.append("company", params.company);
     if (params.difficulty) query.append("difficulty", params.difficulty);
@@ -163,6 +164,7 @@ export async function fetchInterviews(params: {
 
     const res = await fetch(`${API_BASE_URL}/interviews?${query.toString()}`, {
       headers: getCommunityHeaders(),
+      cache: "no-store",
       credentials: "include",
       signal: controller.signal,
     });
@@ -179,8 +181,9 @@ export async function fetchCompanyStats(): Promise<{ success: boolean; data: Com
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-    const res = await fetch(`${API_BASE_URL}/interviews/companies`, {
+    const res = await fetch(`${API_BASE_URL}/interviews/companies?_t=${Date.now()}`, {
       headers: getCommunityHeaders(),
+      cache: "no-store",
       credentials: "include",
       signal: controller.signal,
     });
@@ -194,8 +197,9 @@ export async function fetchCompanyStats(): Promise<{ success: boolean; data: Com
 
 export async function fetchInterviewById(id: string): Promise<{ success: boolean; data?: InterviewExperience }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/interviews/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/interviews/${id}?_t=${Date.now()}`, {
       headers: getCommunityHeaders(),
+      cache: "no-store",
       credentials: "include",
     });
     const data = await res.json();
@@ -362,8 +366,9 @@ export async function acceptDoubtAnswer(
 
 export async function fetchUserDoubtStats(userId = "usr_demo_001"): Promise<{ success: boolean; data?: UserDoubtStats }> {
   try {
-    const res = await fetch(`${API_BASE_URL}/doubts/stats/me?userId=${userId}`, {
+    const res = await fetch(`${API_BASE_URL}/doubts/stats/me?userId=${userId}&_t=${Date.now()}`, {
       headers: getCommunityHeaders(),
+      cache: "no-store",
       credentials: "include",
     });
     const data = await res.json();

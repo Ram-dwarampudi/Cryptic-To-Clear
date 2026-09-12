@@ -16,7 +16,7 @@ export const CURATED_DOUBT_STATS: UserDoubtStats = {
 
 export const CURATED_DOUBTS: DoubtItem[] = [
   {
-    id: "doubt_quicksort_2025",
+    id: "8eab10b6-cba3-41db-b930-d6da91e65f2a",
     title: "Why does recursive quicksort cause RecursionError on already sorted arrays in Python?",
     description:
       "I implemented standard quicksort picking the first element as pivot. It passes random test cases, but when I input a sorted array of 5,000 integers, Python crashes with RecursionError: maximum recursion depth exceeded. How can I make it robust against sorted inputs?",
@@ -86,7 +86,7 @@ print(len(quicksort_safe(list(range(5000))))) # Works instantly!`,
     ],
   },
   {
-    id: "doubt_segfault_tree",
+    id: "4f934e56-4c63-4268-986b-23dafb881203",
     title: "Segmentation fault when freeing a binary tree in C - what am I doing wrong?",
     description:
       "My post-order free function works for small trees but throws a segmentation fault on skewed trees. Is my pointer traversal invalid?",
@@ -146,8 +146,8 @@ void freeTree(Node* root) {
     ],
   },
   {
-    id: "doubt_java_threadpool",
-    title: "Java ExecutorService tasks hanging indefinitely on RejectedExecutionException",
+    id: "5bf4d1a2-e181-4e9b-95ea-3c79620e5c1a",
+    title: "Why does Java ConcurrentHashMap not allow null keys or values unlike standard HashMap?",
     description:
       "When submitting 10,000 tasks to an ArrayBlockingQueue backed ThreadPoolExecutor with CallerRunsPolicy, why does my main thread block instead of processing downstream tasks?",
     codeSnippet: `ExecutorService executor = new ThreadPoolExecutor(

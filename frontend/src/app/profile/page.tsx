@@ -186,9 +186,13 @@ export default function StudentProfileDashboard() {
       rollNo: "24PA1A5720",
       collegeName: "Vishnu Educational Society",
       stream: "Computer Science & Engineering",
-      overallScore: 1000,
-      karmaPoints: 0,
+      overallScore: 1150,
+      karmaPoints: 120,
+      leetcodeHandle: "Ram_Dwarampudi",
       codechefHandle: "ram_dwarampudi",
+      codeforcesHandle: "ramdwarampudi",
+      hackerrankHandle: "ramdwarampudi19",
+      githubHandle: "Ram-dwarampudi",
       createdAt: "2026-09-06T14:18:02.405Z",
     },
     {
@@ -201,7 +205,7 @@ export default function StudentProfileDashboard() {
       collegeName: "Vishnu Educational Society",
       stream: "Computer Science & Business Systems",
       overallScore: 162,
-      karmaPoints: 0,
+      karmaPoints: 40,
       leetcodeHandle: "rupasamrudh",
       createdAt: "2026-09-10T10:47:58.481Z",
     },
@@ -215,7 +219,7 @@ export default function StudentProfileDashboard() {
       collegeName: "Vishnu Educational Society",
       stream: "Computer Science & Business Systems",
       overallScore: 68,
-      karmaPoints: 10,
+      karmaPoints: 35,
       leetcodeHandle: "vYeuVxyec7",
       codechefHandle: "svkatreddy",
       hackerrankHandle: "24pa1a5730",
@@ -231,8 +235,8 @@ export default function StudentProfileDashboard() {
       rollNo: "24PA1A5757",
       collegeName: "Vishnu Educational Society",
       stream: "Computer Science & Business Systems",
-      overallScore: 0,
-      karmaPoints: 0,
+      overallScore: 50,
+      karmaPoints: 25,
       createdAt: "2026-09-10T10:04:47.497Z",
     },
   ];
@@ -254,6 +258,10 @@ export default function StudentProfileDashboard() {
       setLeaderboardLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadLeaderboard();
+  }, [token]);
 
   // Load Dashboard
   const loadDashboard = async () => {

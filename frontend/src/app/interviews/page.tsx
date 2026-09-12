@@ -80,16 +80,12 @@ export default function InterviewsPage() {
       if (interviewsRes.success && Array.isArray(interviewsRes.data)) {
         if (interviewsRes.data.length > 0 || hasActiveFilters) {
           setInterviews(interviewsRes.data);
-        } else if (!hasLoadedOnce) {
-          setInterviews(CURATED_INTERVIEWS);
+        } else {
+          setInterviews(interviewsRes.data);
         }
       }
       if (statsRes.success && Array.isArray(statsRes.data)) {
-        if (statsRes.data.length > 0) {
-          setCompanies(statsRes.data);
-        } else if (!hasLoadedOnce) {
-          setCompanies(CURATED_COMPANIES);
-        }
+        setCompanies(statsRes.data);
       }
     } catch (err) {
       console.warn("Could not load interviews from API, retaining benchmark data:", err);

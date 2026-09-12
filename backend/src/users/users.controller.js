@@ -14,6 +14,7 @@ try {
  */
 exports.getProfile = async (req, res) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const user = await userModel.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found." });
@@ -604,6 +605,7 @@ exports.syncExternal = async (req, res, next) => {
  */
 exports.getDashboard = async (req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const user = await userModel.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: "User not found." });
@@ -829,6 +831,7 @@ exports.getDashboard = async (req, res, next) => {
  */
 exports.getLeaderboard = async (req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const students = await userModel.getLeaderboard();
     return res.status(200).json({
       success: true,
@@ -846,6 +849,7 @@ exports.getLeaderboard = async (req, res, next) => {
  */
 exports.searchStudents = async (req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const q = req.query.q || "";
     if (!q.trim()) {
       return res.status(200).json({ success: true, data: [] });
@@ -867,6 +871,7 @@ exports.searchStudents = async (req, res, next) => {
  */
 exports.getPublicProfile = async (req, res, next) => {
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     const targetUserId = req.params.id;
     const currentUserId = req.user?.id || req.query?.currentUserId || null;
 
