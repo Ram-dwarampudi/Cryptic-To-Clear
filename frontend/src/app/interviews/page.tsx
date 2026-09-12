@@ -38,14 +38,17 @@ import {
   CompanyStat,
   InterviewRound,
 } from "@/lib/community-api";
+import { CURATED_INTERVIEWS, CURATED_COMPANIES } from "@/lib/interview-data";
 import { useAuth } from "@/context/AuthContext";
 
 export default function InterviewsPage() {
   const { user, openAuthModal } = useAuth();
 
-  const [interviews, setInterviews] = useState<InterviewExperience[]>([]);
-  const [companies, setCompanies] = useState<CompanyStat[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Initialize with curated campus experiences so SSR and initial render are never zeroed/empty
+  const [interviews, setInterviews] = useState<InterviewExperience[]>(CURATED_INTERVIEWS);
+  const [companies, setCompanies] = useState<CompanyStat[]>(CURATED_COMPANIES);
+  const [loading, setLoading] = useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,25 +60,43 @@ export default function InterviewsPage() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const loadData = async () => {
-    setLoading(true);
-    const [interviewsRes, statsRes] = await Promise.all([
-      fetchInterviews({
-        search: searchQuery,
-        company: selectedCompany,
-        difficulty: selectedDifficulty,
-        driveType: selectedDriveType,
-      }),
-      fetchCompanyStats(),
-    ]);
+  const hasActiveFilters = Boolean(
+    searchQuery.trim() || selectedCompany || selectedDifficulty || selectedDriveType
+  );
 
-    if (interviewsRes.success) {
-      setInterviews(interviewsRes.data);
+  const loadData = async (isManual = false) => {
+    if (isManual) setLoading(true);
+    try {
+      const [interviewsRes, statsRes] = await Promise.all([
+        fetchInterviews({
+          search: searchQuery,
+          company: selectedCompany,
+          difficulty: selectedDifficulty,
+          driveType: selectedDriveType,
+        }),
+        fetchCompanyStats(),
+      ]);
+
+      if (interviewsRes.success && Array.isArray(interviewsRes.data)) {
+        if (interviewsRes.data.length > 0 || hasActiveFilters) {
+          setInterviews(interviewsRes.data);
+        } else if (!hasLoadedOnce) {
+          setInterviews(CURATED_INTERVIEWS);
+        }
+      }
+      if (statsRes.success && Array.isArray(statsRes.data)) {
+        if (statsRes.data.length > 0) {
+          setCompanies(statsRes.data);
+        } else if (!hasLoadedOnce) {
+          setCompanies(CURATED_COMPANIES);
+        }
+      }
+    } catch (err) {
+      console.warn("Could not load interviews from API, retaining benchmark data:", err);
+    } finally {
+      setLoading(false);
+      setHasLoadedOnce(true);
     }
-    if (statsRes.success) {
-      setCompanies(statsRes.data);
-    }
-    setLoading(false);
   };
 
   useEffect(() => {
@@ -147,42 +168,73 @@ export default function InterviewsPage() {
 
           {/* Quick Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-10">
-            <div className="glass rounded-xl p-4 border border-white/5">
+            <div className="glass rounded-xl p-4 border border-white/5 hover:border-[rgba(212,175,55,0.2)] transition-colors">
               <div className="flex items-center gap-2 text-[#E8C97A] mb-1">
                 <Briefcase className="h-4 w-4" />
                 <span className="font-mono text-xs font-semibold">Total Experiences</span>
               </div>
-              <p className="font-display text-2xl font-bold">{interviews.length}</p>
+              <p className="font-display text-2xl font-bold">
+                {interviews.length > 0 ? (
+                  interviews.length
+                ) : loading ? (
+                  <span className="text-sm font-mono text-[var(--ink-dim)] animate-pulse">Syncing...</span>
+                ) : (
+                  <span className="text-lg font-semibold text-[var(--ink-dim)]">0 shared</span>
+                )}
+              </p>
             </div>
 
-            <div className="glass rounded-xl p-4 border border-white/5">
+            <div className="glass rounded-xl p-4 border border-white/5 hover:border-[rgba(212,175,55,0.2)] transition-colors">
               <div className="flex items-center gap-2 text-emerald-400 mb-1">
                 <Building2 className="h-4 w-4" />
                 <span className="font-mono text-xs font-semibold">Hiring Companies</span>
               </div>
-              <p className="font-display text-2xl font-bold">{companies.length}</p>
+              <p className="font-display text-2xl font-bold">
+                {companies.length > 0 ? (
+                  companies.length
+                ) : loading ? (
+                  <span className="text-sm font-mono text-[var(--ink-dim)] animate-pulse">Syncing...</span>
+                ) : (
+                  <span className="text-sm font-semibold text-[var(--ink-dim)]">Awaiting drives</span>
+                )}
+              </p>
             </div>
 
-            <div className="glass rounded-xl p-4 border border-white/5">
+            <div className="glass rounded-xl p-4 border border-white/5 hover:border-[rgba(212,175,55,0.2)] transition-colors">
               <div className="flex items-center gap-2 text-amber-400 mb-1">
                 <TrendingUp className="h-4 w-4" />
                 <span className="font-mono text-xs font-semibold">Highest Package</span>
               </div>
-              <p className="font-display text-2xl font-bold">
-                {interviews.length > 0
-                  ? (interviews.find((i) => i.packageCTC)?.packageCTC || "Competitive")
-                  : "—"}
+              <p className="font-display text-2xl font-bold text-amber-300">
+                {interviews.length > 0 ? (
+                  (interviews.find((i) => Boolean(i.packageCTC))?.packageCTC || "Competitive")
+                ) : loading ? (
+                  <span className="text-sm font-mono text-[var(--ink-dim)] animate-pulse">Syncing...</span>
+                ) : (
+                  <span className="text-sm font-semibold text-[var(--ink-dim)]">Open to share</span>
+                )}
               </p>
             </div>
 
-            <div className="glass rounded-xl p-4 border border-white/5">
+            <div className="glass rounded-xl p-4 border border-white/5 hover:border-[rgba(212,175,55,0.2)] transition-colors">
               <div className="flex items-center gap-2 text-purple-400 mb-1">
                 <Award className="h-4 w-4" />
                 <span className="font-mono text-xs font-semibold">Status</span>
               </div>
-              <p className="font-display text-2xl font-bold">
-                {interviews.length > 0 ? "Verified" : "Ready"}
-              </p>
+              <div className="font-display text-2xl font-bold">
+                {interviews.length > 0 ? (
+                  <span className="text-emerald-400 flex items-center gap-1.5 text-xl font-bold">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Verified
+                  </span>
+                ) : loading ? (
+                  <span className="text-sm font-mono text-purple-300 animate-pulse">Syncing...</span>
+                ) : (
+                  <span className="text-xs font-bold text-[#E8C97A]">
+                    Open for Contributions
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -277,24 +329,61 @@ export default function InterviewsPage() {
             <p className="text-sm font-mono text-[var(--ink-dim)]">Loading verified interview experiences...</p>
           </div>
         ) : interviews.length === 0 ? (
-          <div className="text-center py-20 glass rounded-2xl border border-white/5 p-8 max-w-lg mx-auto">
-            <HelpCircle className="h-10 w-10 text-[var(--ink-dim)] mx-auto mb-3" />
-            <h3 className="font-display text-lg font-bold mb-1">No Experiences Found</h3>
-            <p className="text-xs text-[var(--ink-dim)] mb-6">
-              No interview experiences matched your current filter. Be the first to share one!
+          <div className="text-center py-16 sm:py-20 glass-strong rounded-2xl border border-[rgba(212,175,55,0.25)] p-8 max-w-lg mx-auto shadow-[0_4px_30px_rgba(0,0,0,0.35)]">
+            <div className="h-16 w-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-400/20 to-yellow-600/10 border border-amber-400/30 flex items-center justify-center shadow-[0_0_20px_rgba(212,175,55,0.2)]">
+              {hasActiveFilters ? (
+                <Filter className="h-8 w-8 text-[#E8C97A]" />
+              ) : (
+                <GraduationCap className="h-8 w-8 text-[#E8C97A]" />
+              )}
+            </div>
+
+            <h3 className="font-display text-xl font-bold mb-2 text-[var(--ink)]">
+              {hasActiveFilters
+                ? "No Matching Interview Experiences"
+                : "No experiences yet — be the first to share"}
+            </h3>
+
+            <p className="text-sm text-[var(--ink-dim)] mb-6 max-w-md mx-auto leading-relaxed">
+              {hasActiveFilters
+                ? "No interview experiences match your current filter settings. Try adjusting your search keywords or clearing your filters."
+                : "Campus placement season has begun! Help your fellow classmates and juniors crack their dream tech interviews by documenting your rounds, coding questions, and strategic tips."}
             </p>
-            <button
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedCompany("");
-                setSelectedDifficulty("");
-                setSelectedDriveType("");
-                loadData();
-              }}
-              className="btn-gold px-4 py-2 rounded-lg text-xs font-bold text-black cursor-pointer"
-            >
-              Reset Filters
-            </button>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedCompany("");
+                    setSelectedDifficulty("");
+                    setSelectedDriveType("");
+                    loadData(true);
+                  }}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl glass border border-white/10 hover:border-amber-400/40 text-xs font-mono font-medium text-[var(--ink)] transition-all cursor-pointer"
+                >
+                  Reset Filters
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!user) {
+                    openAuthModal("login");
+                  } else {
+                    setIsShareModalOpen(true);
+                  }
+                }}
+                className="w-full sm:w-auto btn-gold flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-black shadow-[0_0_20px_rgba(212,175,55,0.35)] hover:shadow-[0_0_28px_rgba(212,175,55,0.5)] transition-all cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Share Your Experience</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/20 text-black font-mono">
+                  +25 Karma
+                </span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">

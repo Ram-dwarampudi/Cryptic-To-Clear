@@ -158,10 +158,15 @@ export async function fetchInterviews(params: {
     if (params.year) query.append("year", params.year);
     if (params.page) query.append("page", String(params.page));
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
     const res = await fetch(`${API_BASE_URL}/interviews?${query.toString()}`, {
       headers: getCommunityHeaders(),
       credentials: "include",
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
     const data = await res.json();
     return { success: data.success, data: data.data || [], total: data.pagination?.total };
   } catch {
@@ -171,10 +176,15 @@ export async function fetchInterviews(params: {
 
 export async function fetchCompanyStats(): Promise<{ success: boolean; data: CompanyStat[] }> {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+
     const res = await fetch(`${API_BASE_URL}/interviews/companies`, {
       headers: getCommunityHeaders(),
       credentials: "include",
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
     const data = await res.json();
     return { success: data.success, data: data.data || [] };
   } catch {
