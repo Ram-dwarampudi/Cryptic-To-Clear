@@ -1540,20 +1540,20 @@ export default function CompilerPage() {
 
         {/* Active Assignment Header */}
         {activeAssignment && (
-          <div className="px-4 py-2 bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-purple-900/40 border-b border-purple-500/25 flex flex-wrap items-center justify-between gap-3 text-xs font-mono shrink-0">
+          <div className="px-4 py-2 bg-[#0d0d10] border-b border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs font-mono shrink-0">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-sm">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-black text-amber-300 border border-amber-500/40 shadow-[0_0_10px_rgba(212,175,55,0.2)]">
                 Assignment Mode
               </span>
-              <h3 className="font-bold text-zinc-100">{activeAssignment.title}</h3>
+              <h3 className="font-bold text-white">{activeAssignment.title}</h3>
               <span className="text-zinc-600">|</span>
-              <span className="text-zinc-400">Class: <strong className="text-purple-300 font-semibold">{activeAssignment.className || "Class Section"}</strong></span>
+              <span className="text-zinc-400">Class: <strong className="text-white font-semibold">{activeAssignment.className || "Class Section"}</strong></span>
               <span className="text-zinc-600">|</span>
               <span className="text-zinc-400">Points: <strong className="text-amber-300 font-semibold">{activeAssignment.points || 100} pts</strong></span>
               <span className="text-zinc-600">|</span>
               <div className="flex items-center gap-1">
                 <span className="text-zinc-400">Allowed Languages:</span>
-                <strong className={activeAssignment.languageMode === "RESTRICTED" ? "text-amber-300" : "text-emerald-300"}>
+                <strong className="text-amber-300">
                   {activeAssignment.languageMode === "RESTRICTED" && activeAssignment.allowedLanguages?.length > 0
                     ? activeAssignment.allowedLanguages.map((l) => (l === "cpp" ? "C++" : l.toUpperCase())).join(", ")
                     : "Any Supported Language"}
@@ -1564,13 +1564,13 @@ export default function CompilerPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsProblemSpecsOpen((v) => !v)}
-                className="flex items-center gap-1 text-[11px] text-purple-300 hover:text-purple-200 cursor-pointer font-bold"
+                className="flex items-center gap-1 text-[11px] text-amber-300 hover:text-amber-200 cursor-pointer font-bold"
               >
                 <span>{isProblemSpecsOpen ? "Hide Problem" : "Show Problem"}</span>
               </button>
               <button
                 onClick={() => setShowAssignmentModal(true)}
-                className="text-[11px] text-[var(--syn-keyword)] hover:underline cursor-pointer"
+                className="text-[11px] text-zinc-300 hover:text-amber-300 hover:underline cursor-pointer"
               >
                 Change Assignment
               </button>
@@ -1580,7 +1580,7 @@ export default function CompilerPage() {
                   setTestCases([]);
                   setBottomTab("terminal");
                 }}
-                className="text-[11px] text-rose-400 hover:underline cursor-pointer"
+                className="text-[11px] text-zinc-400 hover:text-white hover:underline cursor-pointer"
               >
                 Exit
               </button>
@@ -1904,23 +1904,23 @@ export default function CompilerPage() {
 
       {/* Submission Result Modal */}
       {submissionResultModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="glass-strong border border-[var(--border-strong)] rounded-2xl p-6 max-w-md w-full space-y-4 relative editor-grid">
-            <h3 className={`text-lg font-display font-bold ${submissionResultModal.success ? "text-emerald-400" : "text-rose-400"}`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-[#0d0d10] border border-white/20 rounded-2xl p-6 max-w-md w-full space-y-4 relative shadow-2xl">
+            <h3 className={`text-lg font-display font-bold ${submissionResultModal.success ? "text-amber-400" : "text-white"}`}>
               {submissionResultModal.success ? "Assignment Submitted!" : "Submission Rejected"}
             </h3>
 
-            <p className="text-xs font-mono text-[var(--ink-dim)] leading-relaxed">{submissionResultModal.message}</p>
+            <p className="text-xs font-mono text-zinc-300 leading-relaxed whitespace-pre-wrap">{submissionResultModal.message}</p>
 
             {submissionResultModal.score !== undefined && submissionResultModal.success && (
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-mono text-emerald-300">
-                Score Awarded: <strong>{submissionResultModal.score}%</strong>
+              <div className="p-3 rounded-xl bg-black border border-amber-500/30 text-xs font-mono text-amber-300">
+                Score Awarded: <strong className="text-white font-bold">{submissionResultModal.score}%</strong>
               </div>
             )}
 
             <button
               onClick={() => setSubmissionResultModal(null)}
-              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[var(--syn-keyword)] to-[var(--syn-function)] text-[#0a0d13] font-bold text-xs font-mono cursor-pointer"
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-500 text-black font-bold text-xs font-mono cursor-pointer shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:brightness-110"
             >
               Continue
             </button>

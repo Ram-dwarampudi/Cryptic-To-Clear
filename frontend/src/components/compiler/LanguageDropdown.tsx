@@ -144,7 +144,7 @@ export default function LanguageDropdown({
                     />
                     <span className="flex-1 font-mono">{lang.label}</span>
                     {lang.id === value && (
-                      <Check className="h-3.5 w-3.5 text-[var(--syn-string)]" />
+                      <Check className="h-3.5 w-3.5 text-amber-400" />
                     )}
                   </button>
                 ))}

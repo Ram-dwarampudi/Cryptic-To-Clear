@@ -3,19 +3,19 @@
 :root,
 :root.dark,
 html.dark {
-  /* Core surfaces — Deep luxury midnight navy */
-  --bg: #070b14;
-  --bg-elevated: #0d1527;
-  --panel: #10192e;
-  --panel-glass: rgba(13, 21, 39, 0.68);
-  --panel-glass-strong: rgba(13, 21, 39, 0.90);
-  --border: rgba(212, 175, 55, 0.16);
-  --border-strong: rgba(212, 175, 55, 0.32);
+  /* Core surfaces — Pure luxury black & rich obsidian */
+  --bg: #050507;
+  --bg-elevated: #0d0d10;
+  --panel: #111114;
+  --panel-glass: rgba(10, 10, 14, 0.78);
+  --panel-glass-strong: rgba(13, 13, 17, 0.94);
+  --border: rgba(212, 175, 55, 0.20);
+  --border-strong: rgba(212, 175, 55, 0.45);
 
-  /* Warm Beige / Ivory Text Hierarchy */
-  --ink: #f7f3eb;
-  --ink-dim: #c5bba8;
-  --ink-faint: #7d7566;
+  /* Crisp White & Light Silver Hierarchy */
+  --ink: #ffffff;
+  --ink-dim: #e4e4e7;
+  --ink-faint: #8a8a93;
 
   /* Rich Gold Palette Accents */
   --gold-deep: #B8860B;
@@ -24,10 +24,10 @@ html.dark {
   --gold-gradient: linear-gradient(135deg, #B8860B 0%, #D4AF37 50%, #E8C97A 100%);
   --gold-glow: 0 0 25px rgba(212, 175, 55, 0.38);
 
-  /* Syntax accents tuned for navy & gold aesthetic */
+  /* Syntax accents tuned for pure black & gold aesthetic */
   --syn-keyword: #e8c97a;
-  --syn-function: #7eb6ff;
-  --syn-string: #9ee6a8;
+  --syn-function: #fcd34d;
+  --syn-string: #fef08a;
   --syn-const: #d4af37;
   --syn-cursor: #ffd866;
 

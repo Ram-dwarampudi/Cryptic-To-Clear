@@ -30,14 +30,14 @@ export default function StudentAssignmentsModal({
               onClick={onRefresh}
               disabled={isRefreshing}
               title="Refresh Assignments"
-              className="p-1.5 rounded-lg text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5 cursor-pointer disabled:opacity-50 transition-colors"
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 cursor-pointer disabled:opacity-50 transition-colors"
             >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-purple-400" : ""}`} />
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-amber-400" : ""}`} />
             </button>
           )}
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5 cursor-pointer transition-colors"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 cursor-pointer transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -45,18 +45,18 @@ export default function StudentAssignmentsModal({
 
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-[var(--syn-keyword)]" />
-            <h2 className="text-lg font-display font-bold text-[var(--ink)]">Course Assignments</h2>
+            <BookOpen className="w-5 h-5 text-amber-400" />
+            <h2 className="text-lg font-display font-bold text-white">Course Assignments</h2>
           </div>
-          <p className="text-xs font-mono text-[var(--ink-dim)]">
+          <p className="text-xs font-mono text-zinc-400">
             Select an assignment to load problem specifications and submit code solution
           </p>
         </div>
 
         {/* Clear Active Assignment Button */}
         {activeAssignment && (
-          <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-between font-mono text-xs text-purple-300">
-            <span>Active: <strong>{activeAssignment.title}</strong></span>
+          <div className="p-3 rounded-xl bg-black/80 border border-amber-500/40 flex items-center justify-between font-mono text-xs text-amber-300 shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+            <span>Active: <strong className="text-white">{activeAssignment.title}</strong></span>
             <button
               onClick={() => onSelectAssignment(null)}
               className="px-2.5 py-1 rounded bg-white/10 text-white hover:bg-white/20 font-sans cursor-pointer text-[11px]"
@@ -69,12 +69,12 @@ export default function StudentAssignmentsModal({
         <div className="space-y-3 font-mono text-xs">
           {assignments.length === 0 ? (
             <div className="py-8 text-center space-y-3">
-              <p className="text-xs text-[var(--ink-dim)] italic">No assignments currently published.</p>
+              <p className="text-xs text-zinc-400 italic">No assignments currently published.</p>
               {onRefresh && (
                 <button
                   onClick={onRefresh}
                   disabled={isRefreshing}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 text-xs font-mono cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 text-xs font-mono cursor-pointer"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
                   <span>Check for New Assignments</span>
@@ -98,40 +98,34 @@ export default function StudentAssignmentsModal({
                   }}
                   className={`p-4 rounded-xl border transition-all cursor-pointer space-y-2 ${
                     isSelected
-                      ? "bg-purple-500/10 border-purple-500/40 text-[var(--ink)] shadow-[0_0_15px_rgba(184,146,255,0.15)]"
-                      : "glass border-white/10 hover:border-[var(--syn-keyword)]/40 hover:bg-white/[0.04]"
+                      ? "bg-black border-amber-400/60 text-white shadow-[0_0_20px_rgba(212,175,55,0.2)]"
+                      : "bg-[#0d0d10] border-white/10 hover:border-amber-400/40 hover:bg-white/[0.04]"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-black/60 text-white border border-white/20">
                         {asg.className}
                       </span>
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          isRestricted
-                            ? "bg-amber-500/10 text-amber-300 border border-amber-500/20"
-                            : "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
-                        }`}
-                      >
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-500/10 text-amber-300 border border-amber-500/30">
                         Allowed: {allowedText}
                       </span>
                     </div>
 
-                    <ChevronRight className="w-4 h-4 text-[var(--ink-dim)] shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-zinc-500 shrink-0" />
                   </div>
 
-                  <h3 className="font-display font-semibold text-sm text-[var(--ink)]">{asg.title}</h3>
-                  <p className="text-[11px] text-[var(--ink-dim)] line-clamp-2 font-sans">{asg.description}</p>
+                  <h3 className="font-display font-semibold text-sm text-white">{asg.title}</h3>
+                  <p className="text-[11px] text-zinc-400 line-clamp-2 font-sans">{asg.description}</p>
 
-                  <div className="flex items-center justify-between pt-2 border-t border-[var(--border)] text-[10px] text-[var(--ink-dim)]">
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10 text-[10px] text-zinc-400">
                     <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-[var(--syn-keyword)]" />
+                      <Calendar className="w-3 h-3 text-amber-400" />
                       <span>Due: {new Date(asg.deadline).toLocaleDateString()}</span>
                     </div>
                     {asg.submitted && (
-                      <span className="flex items-center gap-1 text-emerald-400 font-bold">
-                        <CheckCircle2 className="w-3 h-3" />
+                      <span className="flex items-center gap-1 text-amber-400 font-bold">
+                        <CheckCircle2 className="w-3 h-3 text-amber-400" />
                         <span>Submitted</span>
                       </span>
                     )}

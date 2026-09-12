@@ -195,27 +195,27 @@ export default function BottomPanel({
   const allRevealedPassed = revealedCases.length > 0 && passedRevealed === revealedCases.length;
 
   return (
-    <div className="flex h-full flex-col border-t border-[var(--border)] bg-[#070b14] text-[var(--ink)] font-mono select-none overflow-hidden">
+    <div className="flex h-full flex-col border-t border-[var(--border)] bg-[#050507] text-[var(--ink)] font-mono select-none overflow-hidden">
       {/* Resizing Drag Handle */}
       <div
         onMouseDown={onResizeStart}
         className="h-2 w-full flex items-center justify-center cursor-row-resize group shrink-0 hover:bg-[var(--border)] transition-colors"
       >
-        <GripHorizontal className="h-2 w-8 text-[var(--ink-faint)] group-hover:text-[var(--ink-dim)] transition-colors" />
+        <GripHorizontal className="h-2 w-8 text-[var(--ink-faint)] group-hover:text-amber-400 transition-colors" />
       </div>
 
       {/* Top Header & Tabs */}
-      <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-zinc-800/80 shrink-0 bg-[#0c1220] select-none">
+      <div className="flex items-center justify-between px-3.5 py-1.5 border-b border-white/10 shrink-0 bg-[#0d0d10] select-none">
         {/* Left: Window Dots & Navigation Tabs */}
         <div className="flex items-center gap-2">
           {/* macOS window dots */}
           <div className="hidden sm:flex items-center gap-1.5 mr-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f56] opacity-80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e] opacity-80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f] opacity-80" />
+            <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400/40" />
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
           </div>
 
-          <div className="hidden sm:block h-3.5 w-px bg-zinc-800 mr-1" />
+          <div className="hidden sm:block h-3.5 w-px bg-white/10 mr-1" />
 
           {/* If in Assignment Mode: Show Tabs for Test Cases, Test Results, and Terminal */}
           {isAssignmentMode ? (
@@ -225,13 +225,13 @@ export default function BottomPanel({
                 onClick={() => setTab("testcase")}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   currentTab === "testcase"
-                    ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-400/50 shadow-[0_0_12px_rgba(212,175,55,0.2)]"
+                    : "text-zinc-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <SlidersHorizontal className="h-3.5 w-3.5 text-purple-400" />
+                <SlidersHorizontal className="h-3.5 w-3.5 text-amber-400" />
                 <span>Test Cases</span>
-                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-500/20 text-purple-300">
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300">
                   {revealedCases.length}
                 </span>
               </button>
@@ -241,18 +241,18 @@ export default function BottomPanel({
                 onClick={() => setTab("result")}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   currentTab === "result"
-                    ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-400/50 shadow-[0_0_12px_rgba(212,175,55,0.2)]"
+                    : "text-zinc-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <FileCheck className="h-3.5 w-3.5 text-cyan-400" />
+                <FileCheck className="h-3.5 w-3.5 text-amber-400" />
                 <span>Test Results</span>
                 {testCasesRan && (
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                       allRevealedPassed
-                        ? "bg-emerald-500/20 text-emerald-300"
-                        : "bg-rose-500/20 text-rose-300"
+                        ? "bg-amber-500/20 text-amber-300"
+                        : "bg-white/10 text-zinc-300"
                     }`}
                   >
                     {passedRevealed}/{revealedCases.length}
@@ -265,17 +265,17 @@ export default function BottomPanel({
                 onClick={() => setTab("terminal")}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                   currentTab === "terminal"
-                    ? "bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-400/50 shadow-[0_0_12px_rgba(212,175,55,0.2)]"
+                    : "text-zinc-400 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <Terminal className="h-3.5 w-3.5 text-emerald-400" />
+                <Terminal className="h-3.5 w-3.5 text-amber-400" />
                 <span>Terminal</span>
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-200">
-              <Terminal className="h-3.5 w-3.5 text-emerald-400" />
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
+              <Terminal className="h-3.5 w-3.5 text-amber-400" />
               <span>Interactive Terminal</span>
             </div>
           )}
@@ -297,12 +297,12 @@ export default function BottomPanel({
               type="button"
               onClick={onRunTestCases}
               disabled={isRunning || isRunningTestCases}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-zinc-950 font-bold text-xs shadow-sm hover:shadow transition-all disabled:opacity-50 cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-500 hover:brightness-110 text-black font-bold text-xs shadow-[0_0_15px_rgba(212,175,55,0.35)] transition-all disabled:opacity-50 cursor-pointer"
             >
               {isRunningTestCases ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-black" />
               ) : (
-                <Play className="h-3.5 w-3.5 fill-current" />
+                <Play className="h-3.5 w-3.5 fill-black text-black" />
               )}
               <span>Run Tests</span>
             </button>
@@ -310,12 +310,12 @@ export default function BottomPanel({
 
           {isExecutionActive && !isRunning && (
             <div className="hidden sm:flex items-center gap-2 mr-1">
-              <div className="flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-850 px-2 py-0.5 rounded border border-zinc-800">
-                <Clock className="h-3 w-3 text-emerald-400" />
+              <div className="flex items-center gap-1 text-[11px] text-zinc-300 bg-black/60 px-2 py-0.5 rounded border border-white/10">
+                <Clock className="h-3 w-3 text-amber-400" />
                 <span>{executionTime !== "—" ? executionTime : "0.05s"}</span>
               </div>
-              <div className="flex items-center gap-1 text-[11px] text-zinc-400 bg-zinc-850 px-2 py-0.5 rounded border border-zinc-800">
-                <HardDrive className="h-3 w-3 text-sky-400" />
+              <div className="flex items-center gap-1 text-[11px] text-zinc-300 bg-black/60 px-2 py-0.5 rounded border border-white/10">
+                <HardDrive className="h-3 w-3 text-amber-400" />
                 <span>{memoryUsage !== "—" ? memoryUsage : "8 MB"}</span>
               </div>
             </div>
@@ -326,9 +326,9 @@ export default function BottomPanel({
             <button
               type="button"
               onClick={onTriggerAiExplain}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-[11.5px] shadow-sm transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-black/60 border border-amber-500/40 hover:bg-amber-500/20 text-amber-300 font-bold text-[11.5px] shadow-[0_0_12px_rgba(212,175,55,0.2)] transition-all cursor-pointer"
             >
-              <Sparkles className="h-3 w-3" />
+              <Sparkles className="h-3 w-3 text-amber-400" />
               <span>Ask AI</span>
             </button>
           )}
@@ -339,10 +339,10 @@ export default function BottomPanel({
               type="button"
               onClick={handleCopyTerminal}
               title="Copy terminal output"
-              className="p-1 rounded text-zinc-400 hover:text-zinc-200 hover:bg-white/5 transition-colors cursor-pointer"
+              className="p-1 rounded text-zinc-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
             >
               {copiedOutput ? (
-                <Check className="h-3.5 w-3.5 text-emerald-400" />
+                <Check className="h-3.5 w-3.5 text-amber-400" />
               ) : (
                 <Copy className="h-3.5 w-3.5" />
               )}
@@ -357,14 +357,14 @@ export default function BottomPanel({
               title="Configure pre-set standard input (STDIN)"
               className={`flex items-center gap-1 px-2 py-1 rounded text-[11.5px] transition-colors cursor-pointer border ${
                 showStdinDrawer || (input && input.trim().length > 0)
-                  ? "bg-sky-500/15 text-sky-300 border-sky-500/30"
-                  : "bg-white/5 text-zinc-400 hover:text-zinc-200 border-zinc-800 hover:bg-white/10"
+                  ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+                  : "bg-white/5 text-zinc-400 hover:text-white border-white/10 hover:bg-white/10"
               }`}
             >
-              <SlidersHorizontal className="h-3 w-3" />
+              <SlidersHorizontal className="h-3 w-3 text-amber-400" />
               <span className="hidden sm:inline">STDIN</span>
               {input && input.trim().length > 0 && (
-                <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
               )}
             </button>
           )}
@@ -374,7 +374,7 @@ export default function BottomPanel({
             type="button"
             onClick={onClearOutput}
             title="Clear terminal"
-            className="flex items-center gap-1 px-2 py-1 rounded text-[11.5px] text-zinc-400 hover:text-zinc-200 bg-white/5 hover:bg-white/10 border border-zinc-800 transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2 py-1 rounded text-[11.5px] text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition-colors cursor-pointer"
           >
             <Trash2 className="h-3 w-3" />
             <span className="hidden sm:inline">Clear</span>
@@ -384,9 +384,9 @@ export default function BottomPanel({
 
       {/* ─── TAB 1: TEST CASES VIEW ─── */}
       {isAssignmentMode && currentTab === "testcase" && (
-        <div className="flex-1 flex flex-col min-h-0 bg-[#070b14] overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 bg-[#050507] overflow-hidden">
           {/* Test Case Subtabs */}
-          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-zinc-800/80 bg-[#090f1e] overflow-x-auto shrink-0">
+          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-white/10 bg-[#0d0d10] overflow-x-auto shrink-0">
             {revealedCases.map((tc, idx) => (
               <button
                 key={tc.id || idx}
@@ -394,19 +394,19 @@ export default function BottomPanel({
                 onClick={() => setSelectedCaseIdx(idx)}
                 className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
                   selectedCaseIdx === idx
-                    ? "bg-zinc-800 text-zinc-100 border border-zinc-700 shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                    ? "bg-black text-amber-300 border border-amber-400/50 shadow-sm"
+                    : "text-zinc-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 <span>Case {idx + 1}</span>
-                {tc.status === "pass" && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
+                {tc.status === "pass" && <CheckCircle2 className="w-3 h-3 text-amber-400" />}
                 {tc.status === "fail" && <XCircle className="w-3 h-3 text-rose-400" />}
               </button>
             ))}
 
             {hiddenCases.length > 0 && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300/80 text-xs font-mono">
-                <Lock className="w-3 h-3 text-purple-400" />
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-black/60 border border-amber-500/30 text-amber-300 text-xs font-mono">
+                <Lock className="w-3 h-3 text-amber-400" />
                 <span>{hiddenCases.length} Hidden {hiddenCases.length === 1 ? "Test" : "Tests"}</span>
               </div>
             )}
@@ -424,40 +424,40 @@ export default function BottomPanel({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-zinc-400 text-[11px]">
-                    <span className="font-bold">Input (STDIN)</span>
+                    <span className="font-bold text-white">Input (STDIN)</span>
                     <button
                       type="button"
                       onClick={() => navigator.clipboard.writeText(revealedCases[selectedCaseIdx].input)}
-                      className="hover:text-zinc-200 cursor-pointer text-[10px] text-zinc-500"
+                      className="hover:text-amber-300 cursor-pointer text-[10px] text-zinc-500 transition-colors"
                     >
                       Copy
                     </button>
                   </div>
-                  <pre className="p-3 rounded-xl bg-[#050810] border border-zinc-800 text-emerald-300 font-mono text-[12px] min-h-[70px] whitespace-pre-wrap overflow-x-auto">
+                  <pre className="p-3 rounded-xl bg-black border border-white/10 text-white font-mono text-[12px] min-h-[70px] whitespace-pre-wrap overflow-x-auto">
                     {revealedCases[selectedCaseIdx].input || "<empty input>"}
                   </pre>
                 </div>
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-zinc-400 text-[11px]">
-                    <span className="font-bold">Expected Output</span>
+                    <span className="font-bold text-amber-300">Expected Output</span>
                     <button
                       type="button"
                       onClick={() => navigator.clipboard.writeText(revealedCases[selectedCaseIdx].expectedOutput)}
-                      className="hover:text-zinc-200 cursor-pointer text-[10px] text-zinc-500"
+                      className="hover:text-amber-300 cursor-pointer text-[10px] text-zinc-500 transition-colors"
                     >
                       Copy
                     </button>
                   </div>
-                  <pre className="p-3 rounded-xl bg-[#050810] border border-zinc-800 text-cyan-300 font-mono text-[12px] min-h-[70px] whitespace-pre-wrap overflow-x-auto">
+                  <pre className="p-3 rounded-xl bg-black border border-amber-500/30 text-amber-300 font-mono text-[12px] min-h-[70px] whitespace-pre-wrap overflow-x-auto">
                     {revealedCases[selectedCaseIdx].expectedOutput || "<empty output>"}
                   </pre>
                 </div>
               </div>
 
               {hiddenCases.length > 0 && (
-                <div className="p-2.5 rounded-xl bg-purple-500/5 border border-purple-500/20 text-purple-300/80 text-[11px] flex items-center gap-2">
-                  <Lock className="w-3.5 h-3.5 shrink-0 text-purple-400" />
+                <div className="p-2.5 rounded-xl bg-black/60 border border-amber-500/20 text-zinc-300 text-[11px] flex items-center gap-2">
+                  <Lock className="w-3.5 h-3.5 shrink-0 text-amber-400" />
                   <span>
                     The assignment also contains <strong>{hiddenCases.length} hidden test cases</strong> to evaluate edge cases. Hidden test results are evaluated automatically upon submission.
                   </span>
@@ -474,13 +474,13 @@ export default function BottomPanel({
 
       {/* ─── TAB 2: TEST RESULTS VIEW ─── */}
       {isAssignmentMode && currentTab === "result" && (
-        <div className="flex-1 flex flex-col min-h-0 bg-[#070b14] overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 bg-[#050507] overflow-hidden">
           {!testCasesRan ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-3">
-              <FileCheck className="w-10 h-10 text-zinc-600" />
+              <FileCheck className="w-10 h-10 text-amber-400/60" />
               <div className="space-y-1">
-                <h4 className="text-zinc-300 font-semibold text-sm">No Test Results Yet</h4>
-                <p className="text-zinc-500 text-xs max-w-sm">
+                <h4 className="text-white font-semibold text-sm">No Test Results Yet</h4>
+                <p className="text-zinc-400 text-xs max-w-sm">
                   Click &quot;Run Tests&quot; above to execute your solution against the assignment test cases and verify output correctness.
                 </p>
               </div>
@@ -489,9 +489,9 @@ export default function BottomPanel({
                   type="button"
                   onClick={onRunTestCases}
                   disabled={isRunning || isRunningTestCases}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-zinc-950 font-bold text-xs shadow-md hover:brightness-110 cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-500 hover:brightness-110 text-black font-bold text-xs shadow-[0_0_15px_rgba(212,175,55,0.35)] cursor-pointer"
                 >
-                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <Play className="w-3.5 h-3.5 fill-black text-black" />
                   <span>Run Test Cases</span>
                 </button>
               )}
@@ -499,37 +499,37 @@ export default function BottomPanel({
           ) : (
             <div className="flex-1 flex flex-col min-h-0">
               {/* Results Summary Header */}
-              <div className="px-4 py-2.5 border-b border-zinc-800/80 bg-[#090f1e] flex items-center justify-between shrink-0">
+              <div className="px-4 py-2.5 border-b border-white/10 bg-[#0d0d10] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">
                   <div
                     className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
                       allRevealedPassed
-                        ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                        : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
+                        ? "bg-amber-500/15 text-amber-400 border border-amber-500/30"
+                        : "bg-white/10 text-zinc-300 border border-white/15"
                     }`}
                   >
                     {allRevealedPassed ? (
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />
                     ) : (
-                      <XCircle className="w-3.5 h-3.5" />
+                      <XCircle className="w-3.5 h-3.5 text-zinc-400" />
                     )}
                     <span>{allRevealedPassed ? "Accepted" : "Wrong Answer"}</span>
                   </div>
 
-                  <span className="text-xs font-mono text-zinc-300">
-                    <strong>{passedRevealed}</strong> of <strong>{revealedCases.length}</strong> revealed test cases passed
+                  <span className="text-xs font-mono text-white">
+                    <strong className="text-amber-300">{passedRevealed}</strong> of <strong>{revealedCases.length}</strong> revealed test cases passed
                   </span>
                 </div>
 
                 {hiddenCases.length > 0 && (
-                  <span className="text-[11px] text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
-                    +{hiddenCases.length} Hidden Cases will be checked on submit
+                  <span className="text-[11px] text-amber-300 bg-black/60 px-2 py-0.5 rounded border border-amber-500/20">
+                    +{hiddenCases.length} Hidden Cases will be evaluated on submit
                   </span>
                 )}
               </div>
 
               {/* Case Tabs for Results */}
-              <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-zinc-800/80 bg-[#080d1a] overflow-x-auto shrink-0">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/10 bg-[#0d0d10] overflow-x-auto shrink-0">
                 {revealedCases.map((tc, idx) => (
                   <button
                     key={tc.id || idx}
@@ -537,15 +537,15 @@ export default function BottomPanel({
                     onClick={() => setSelectedResultIdx(idx)}
                     className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-mono font-medium transition-all cursor-pointer ${
                       selectedResultIdx === idx
-                        ? "bg-zinc-800 text-zinc-100 border border-zinc-700"
-                        : "text-zinc-400 hover:text-zinc-200"
+                        ? "bg-black text-amber-300 border border-amber-400/50"
+                        : "text-zinc-400 hover:text-white"
                     }`}
                   >
                     <span>Case {idx + 1}</span>
                     {tc.status === "pass" ? (
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      <CheckCircle2 className="w-3 h-3 text-amber-400" />
                     ) : (
-                      <XCircle className="w-3 h-3 text-rose-400" />
+                      <XCircle className="w-3 h-3 text-zinc-400" />
                     )}
                   </button>
                 ))}
@@ -557,14 +557,14 @@ export default function BottomPanel({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="space-y-1">
                       <span className="text-zinc-400 text-[11px] font-bold">Input (STDIN)</span>
-                      <pre className="p-2.5 rounded-xl bg-[#050810] border border-zinc-800 text-emerald-300 font-mono text-[11.5px] min-h-[60px] whitespace-pre-wrap overflow-x-auto">
+                      <pre className="p-2.5 rounded-xl bg-black border border-white/10 text-white font-mono text-[11.5px] min-h-[60px] whitespace-pre-wrap overflow-x-auto">
                         {revealedCases[selectedResultIdx].input || "<empty input>"}
                       </pre>
                     </div>
 
                     <div className="space-y-1">
                       <span className="text-zinc-400 text-[11px] font-bold">Expected Output</span>
-                      <pre className="p-2.5 rounded-xl bg-[#050810] border border-zinc-800 text-cyan-300 font-mono text-[11.5px] min-h-[60px] whitespace-pre-wrap overflow-x-auto">
+                      <pre className="p-2.5 rounded-xl bg-black border border-amber-500/20 text-amber-300 font-mono text-[11.5px] min-h-[60px] whitespace-pre-wrap overflow-x-auto">
                         {revealedCases[selectedResultIdx].expectedOutput || "<empty output>"}
                       </pre>
                     </div>
@@ -575,8 +575,8 @@ export default function BottomPanel({
                         <span
                           className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
                             revealedCases[selectedResultIdx].status === "pass"
-                              ? "bg-emerald-500/20 text-emerald-300"
-                              : "bg-rose-500/20 text-rose-300"
+                              ? "bg-amber-500/20 text-amber-300"
+                              : "bg-white/10 text-zinc-300"
                           }`}
                         >
                           {revealedCases[selectedResultIdx].status === "pass" ? "MATCH" : "MISMATCH"}
@@ -585,8 +585,8 @@ export default function BottomPanel({
                       <pre
                         className={`p-2.5 rounded-xl font-mono text-[11.5px] min-h-[60px] whitespace-pre-wrap overflow-x-auto border ${
                           revealedCases[selectedResultIdx].status === "pass"
-                            ? "bg-emerald-950/20 border-emerald-500/30 text-emerald-200"
-                            : "bg-rose-950/20 border-rose-500/30 text-rose-200"
+                            ? "bg-black border-amber-500/40 text-amber-200"
+                            : "bg-black border-white/20 text-zinc-300"
                         }`}
                       >
                         {revealedCases[selectedResultIdx].actualOutput || "<no output>"}
@@ -595,8 +595,8 @@ export default function BottomPanel({
                   </div>
 
                   {revealedCases[selectedResultIdx].error && (
-                    <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-[11.5px]">
-                      <strong>Error details:</strong> {revealedCases[selectedResultIdx].error}
+                    <div className="p-2.5 rounded-xl bg-black/80 border border-white/20 text-zinc-200 text-[11.5px]">
+                      <strong className="text-amber-400">Error details:</strong> {revealedCases[selectedResultIdx].error}
                     </div>
                   )}
                 </div>
@@ -611,9 +611,9 @@ export default function BottomPanel({
         <>
           {/* Optional Top Drawer: Pre-configured Standard Input (STDIN) */}
           {showStdinDrawer && (
-            <div className="bg-[#0b101c] border-b border-zinc-800/80 p-2.5 shrink-0 flex flex-col gap-1.5">
+            <div className="bg-[#0d0d10] border-b border-white/10 p-2.5 shrink-0 flex flex-col gap-1.5">
               <div className="flex items-center justify-between text-xs text-zinc-400">
-                <span className="font-semibold text-zinc-300 text-[11.5px]">
+                <span className="font-semibold text-white text-[11.5px]">
                   Pre-set Standard Input (Optional)
                 </span>
                 <span className="text-[10px] text-zinc-500">Provide input before pressing Run</span>
@@ -623,7 +623,7 @@ export default function BottomPanel({
                 onChange={(e) => onInputChange?.(e.target.value)}
                 placeholder="Type standard input values here (or leave empty to enter values interactively in the terminal)..."
                 rows={2}
-                className="w-full bg-[#050810] text-zinc-200 placeholder:text-zinc-600 border border-zinc-800 rounded p-2 text-[12px] font-mono outline-none focus:border-emerald-500/60 resize-y min-h-[44px] max-h-[100px]"
+                className="w-full bg-black text-white placeholder:text-zinc-600 border border-white/15 rounded p-2 text-[12px] font-mono outline-none focus:border-amber-400/60 resize-y min-h-[44px] max-h-[100px]"
               />
             </div>
           )}
@@ -632,18 +632,18 @@ export default function BottomPanel({
           <div
             ref={terminalContainerRef}
             onClick={focusTerminalInput}
-            className="flex-1 p-3.5 bg-[#070b14] overflow-y-auto cursor-text select-text flex flex-col font-mono text-[13px] leading-relaxed custom-scrollbar"
+            className="flex-1 p-3.5 bg-[#050507] overflow-y-auto cursor-text select-text flex flex-col font-mono text-[13px] leading-relaxed custom-scrollbar"
           >
             {/* Empty State Banner (Before first run) */}
             {!isExecutionActive && !isRunning && (
-              <div className="text-zinc-500 select-none pb-3 mb-3 border-b border-zinc-900 leading-relaxed">
-                <div className="text-emerald-400 font-bold mb-1">
+              <div className="text-zinc-400 select-none pb-3 mb-3 border-b border-white/10 leading-relaxed">
+                <div className="text-amber-400 font-bold mb-1">
                   Cryptic to Clear Interactive Terminal [v2.4]
                 </div>
-                <div className="text-zinc-400 text-xs mb-1">
+                <div className="text-zinc-300 text-xs mb-1">
                   Interactive terminal session ready.
                 </div>
-                <div className="text-zinc-500 text-xs">
+                <div className="text-zinc-400 text-xs">
                   Click &quot;Run&quot; above to execute your code. Input prompts will appear right here — type your answer and press Enter.
                 </div>
               </div>
@@ -655,17 +655,17 @@ export default function BottomPanel({
                 {terminalLines.map((line, idx) => {
                   if (line.type === "input") {
                     return (
-                      <div key={idx} className="flex items-center gap-1 text-emerald-400 font-bold leading-snug">
-                        <span className="text-emerald-500 select-none">❯</span>
-                        <span>{line.content}</span>
+                      <div key={idx} className="flex items-center gap-1 text-amber-400 font-bold leading-snug">
+                        <span className="text-amber-400 select-none">❯</span>
+                        <span className="text-white">{line.content}</span>
                       </div>
                     );
                   }
 
                   if (line.type === "error") {
                     return (
-                      <div key={idx} className="my-1 p-2 rounded bg-rose-500/10 border border-rose-500/20 text-rose-300 whitespace-pre-wrap text-[12.5px]">
-                        <div className="text-rose-400 font-bold mb-0.5 flex items-center gap-1 text-xs">
+                      <div key={idx} className="my-1 p-2 rounded bg-black/80 border border-white/20 text-zinc-200 whitespace-pre-wrap text-[12.5px]">
+                        <div className="text-amber-400 font-bold mb-0.5 flex items-center gap-1 text-xs">
                           <AlertCircle className="h-3 w-3" />
                           <span>Error</span>
                         </div>
@@ -675,7 +675,7 @@ export default function BottomPanel({
                   }
 
                   return (
-                    <span key={idx} className="text-zinc-200 whitespace-pre-wrap break-all leading-relaxed">
+                    <span key={idx} className="text-white whitespace-pre-wrap break-all leading-relaxed">
                       {line.content}
                     </span>
                   );
@@ -685,20 +685,20 @@ export default function BottomPanel({
 
             {/* Direct stdout/stderr if terminalLines is empty */}
             {terminalLines.length === 0 && output && (
-              <pre className="text-zinc-200 whitespace-pre-wrap break-all leading-relaxed mb-2 font-mono">
+              <pre className="text-white whitespace-pre-wrap break-all leading-relaxed mb-2 font-mono">
                 {output}
               </pre>
             )}
             {terminalLines.length === 0 && errors && (
-              <div className="my-1 p-2 rounded bg-rose-500/10 border border-rose-500/20 text-rose-300 whitespace-pre-wrap text-[12.5px]">
+              <div className="my-1 p-2 rounded bg-black/80 border border-white/20 text-zinc-200 whitespace-pre-wrap text-[12.5px]">
                 {errors}
               </div>
             )}
 
             {/* Active Interactive Prompt Input Line */}
             {isRunning && (
-              <form onSubmit={handleSendPrompt} className="flex items-center gap-1.5 mt-1 pt-1 border-t border-zinc-800/40">
-                <span className="text-emerald-400 font-bold text-sm select-none">❯</span>
+              <form onSubmit={handleSendPrompt} className="flex items-center gap-1.5 mt-1 pt-1 border-t border-white/10">
+                <span className="text-amber-400 font-bold text-sm select-none">❯</span>
                 <input
                   ref={promptInputRef}
                   type="text"
@@ -708,12 +708,12 @@ export default function BottomPanel({
                   placeholder="Type input and press Enter..."
                   autoComplete="off"
                   spellCheck={false}
-                  className="flex-1 bg-transparent text-emerald-300 placeholder:text-zinc-600 outline-none text-[13px] font-mono caret-emerald-400"
+                  className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-[13px] font-mono caret-amber-400"
                 />
                 <button
                   type="submit"
                   disabled={!terminalPrompt.trim()}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] hover:bg-emerald-500/30 disabled:opacity-30 cursor-pointer"
+                  className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] hover:bg-amber-500/30 disabled:opacity-30 cursor-pointer"
                 >
                   <span>Enter</span>
                   <CornerDownLeft className="h-2.5 w-2.5" />
@@ -723,7 +723,7 @@ export default function BottomPanel({
 
             {/* Idle Input Hint when program finished or waiting */}
             {!isRunning && isExecutionActive && (
-              <div className="text-zinc-600 text-xs mt-3 select-none flex items-center gap-1.5">
+              <div className="text-zinc-500 text-xs mt-3 select-none flex items-center gap-1.5">
                 <span>Program execution completed. Click &quot;Run&quot; above to start a new execution.</span>
               </div>
             )}
