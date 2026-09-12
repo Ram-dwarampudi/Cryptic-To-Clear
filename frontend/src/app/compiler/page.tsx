@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { GripVertical, Bot, X } from "lucide-react";
@@ -1101,8 +1101,15 @@ export default function CompilerPage() {
     [testCases, language, codeMap, activeAssignment]
   );
 
-  // Track active execution session inputs so previous run data is never saved or leaked across runs
-  const [sessionInput, setSessionInput] = useState("");
+  // Track active execution session inputs so previous run data is never saved or leaked across fresh runs
+  const [sessionInputs, setSessionInputs] = useState<string[]>([]);
+  const [previousOutput, setPreviousOutput] = useState("");
+  const [isWaitingForInput, setIsWaitingForInput] = useState(false);
+
+  // Helper to detect if source code expects interactive standard input
+  const hasInteractiveInput = useMemo(() => {
+    return /\b(input\s*\(|scanf\s*\(|cin\s*>>|getline\s*\(|getchar\s*\(|fgets\s*\(|Scanner\b|System\.in\b|BufferedReader\b|readline\b|process\.stdin\b)/.test(code);
+  }, [code]);
 
   const handleRun = useCallback(async () => {
     if (!currentLang.judge0Supported) {
@@ -1114,17 +1121,17 @@ export default function CompilerPage() {
       return;
     }
 
-    // Reset session input cleanly on new run
-    setSessionInput("");
+    // Reset session inputs cleanly on new fresh run
+    setSessionInputs([]);
+    setPreviousOutput("");
     setIsRunning(true);
     setStatus("running");
     setBottomTab("output");
     setOutput("");
     setErrors("");
-    // Clear terminal for fresh run
     setTerminalLines([]);
 
-    // Execute with initial preset input (if any)
+    // Execute with initial preset input from STDIN drawer (if any)
     const initialStdin = input || "";
 
     // Double-check if the source code unambiguously matches a specific language (e.g. #include<stdio.h> -> C)
@@ -1157,6 +1164,7 @@ export default function CompilerPage() {
       setExecutionTime("—");
       setMemoryUsage("—");
       setIsRunning(false);
+      setIsWaitingForInput(false);
       return;
     }
 
@@ -1168,20 +1176,20 @@ export default function CompilerPage() {
 
     const rawOutput = result.output || "";
     setOutput(rawOutput);
+    setPreviousOutput(rawOutput);
     setErrors(errorText);
     setExecutionTime(formatTime(result.time));
     setMemoryUsage(formatMemory(result.memory));
 
-    // Build terminal lines: interleave input echoes with output lines
+    // Build terminal lines: interleave input echoes with output lines if preset stdin was provided
     const newLines: { type: "output" | "input" | "error"; content: string }[] = [];
     if (rawOutput) {
       const outLines = rawOutput.split("\n");
-      // If there was pre-set stdin, interleave it inline
       const stdinLines = initialStdin ? initialStdin.split("\n").map((l) => l.trim()).filter(Boolean) : [];
       let stdinIdx = 0;
-      for (const line of outLines) {
+      for (let i = 0; i < outLines.length; i++) {
+        const line = outLines[i];
         newLines.push({ type: "output", content: line });
-        // If line looks like a prompt and we have stdin to echo, add it as input echo
         if (stdinLines[stdinIdx] !== undefined && /[:?]\s*$|^(enter|input|type|please)\b/i.test(line.trim())) {
           newLines.push({ type: "input", content: stdinLines[stdinIdx] });
           stdinIdx++;
@@ -1193,6 +1201,10 @@ export default function CompilerPage() {
     }
     setTerminalLines(newLines);
 
+    // Determine if the program is waiting for user input
+    const waiting = !errorText && (hasInteractiveInput || /[:?]\s*$/.test(rawOutput.trim())) && !initialStdin;
+    setIsWaitingForInput(waiting);
+
     if (errorText) {
       setBottomTab("errors");
       setStatus("error");
@@ -1203,17 +1215,18 @@ export default function CompilerPage() {
       setStatus("success");
     }
     setIsRunning(false);
-  }, [currentLang, language, code, input]);
+  }, [currentLang, language, code, input, hasInteractiveInput]);
 
   const handleSubmitTerminalInput = useCallback(
     async (inputValueLine: string) => {
-      // Accumulate input ONLY for the current active execution session
-      const baseInput = sessionInput || input || "";
-      const nextSessionInput = baseInput.trim()
-        ? `${baseInput.trim()}\n${inputValueLine}`
-        : inputValueLine;
+      // Accumulate input for the active execution session
+      const newInputs = [...sessionInputs, inputValueLine];
+      setSessionInputs(newInputs);
 
-      setSessionInput(nextSessionInput);
+      // Build full accumulated stdin string (including any preset drawer input)
+      const presetLines = input ? input.split("\n").map((l) => l.trim()).filter(Boolean) : [];
+      const combinedInputs = [...presetLines, ...newInputs];
+      const nextSessionInput = combinedInputs.join("\n") + "\n";
 
       if (!currentLang.judge0Supported) {
         setBottomTab("errors");
@@ -1234,9 +1247,6 @@ export default function CompilerPage() {
       setStatus("running");
       setBottomTab("output");
 
-      // Snapshot the current output line count so we can compute the delta
-      const prevOutputLineCount = terminalLines.filter((l) => l.type === "output").length;
-
       const result = await executeCode({
         language,
         sourceCode: code,
@@ -1254,6 +1264,7 @@ export default function CompilerPage() {
         setExecutionTime("—");
         setMemoryUsage("—");
         setIsRunning(false);
+        setIsWaitingForInput(false);
         return;
       }
 
@@ -1269,15 +1280,37 @@ export default function CompilerPage() {
       setExecutionTime(formatTime(result.time));
       setMemoryUsage(formatMemory(result.memory));
 
-      // Compute only the NEW output lines since last run (the delta)
-      const allOutputLines = rawOutput ? rawOutput.split("\n") : [];
-      const newOutputLines = allOutputLines.slice(prevOutputLineCount);
+      // Compute only the NEW output delta produced by this input step
+      let delta = "";
+      if (previousOutput && rawOutput.startsWith(previousOutput)) {
+        delta = rawOutput.slice(previousOutput.length);
+      } else if (previousOutput && rawOutput.trim().startsWith(previousOutput.trim())) {
+        const trimmedPrev = previousOutput.trim();
+        const idx = rawOutput.indexOf(trimmedPrev);
+        delta = idx !== -1 ? rawOutput.slice(idx + trimmedPrev.length) : rawOutput;
+      } else {
+        delta = rawOutput;
+      }
 
-      setTerminalLines((prev) => [
-        ...prev,
-        ...newOutputLines.map((l) => ({ type: "output" as const, content: l })),
-        ...(errorText ? [{ type: "error" as const, content: errorText }] : []),
-      ]);
+      setPreviousOutput(rawOutput);
+
+      if (delta.trim()) {
+        const deltaLines = delta.split("\n");
+        setTerminalLines((prev) => [
+          ...prev,
+          ...deltaLines.map((l) => ({ type: "output" as const, content: l })),
+          ...(errorText ? [{ type: "error" as const, content: errorText }] : []),
+        ]);
+      } else if (errorText) {
+        setTerminalLines((prev) => [
+          ...prev,
+          { type: "error" as const, content: errorText },
+        ]);
+      }
+
+      // Check if more input is requested
+      const waiting = !errorText && (hasInteractiveInput || /[:?]\s*$/.test(rawOutput.trim()));
+      setIsWaitingForInput(waiting);
 
       if (errorText) {
         setBottomTab("errors");
@@ -1288,7 +1321,7 @@ export default function CompilerPage() {
       }
       setIsRunning(false);
     },
-    [currentLang, language, code, sessionInput, input, terminalLines]
+    [currentLang, language, code, input, sessionInputs, previousOutput, hasInteractiveInput]
   );
 
   const handleCompile = useCallback(async () => {
@@ -1705,12 +1738,15 @@ export default function CompilerPage() {
                 errors={errors}
                 terminalLines={terminalLines}
                 status={status}
+                isWaitingForInput={isWaitingForInput}
                 onSubmitInput={handleSubmitTerminalInput}
                 onClearOutput={() => {
                   setOutput("");
                   setErrors("");
                   setStatus("idle");
-                  setSessionInput("");
+                  setSessionInputs([]);
+                  setPreviousOutput("");
+                  setIsWaitingForInput(false);
                   setTerminalLines([]);
                 }}
                 onStopExecution={handleStopExecution}

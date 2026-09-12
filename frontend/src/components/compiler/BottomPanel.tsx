@@ -62,6 +62,7 @@ interface BottomPanelProps {
   testCases?: TestCaseItem[];
   onRunTestCases?: () => void;
   isRunningTestCases?: boolean;
+  isWaitingForInput?: boolean;
 }
 
 export default function BottomPanel({
@@ -85,6 +86,7 @@ export default function BottomPanel({
   testCases = [],
   onRunTestCases,
   isRunningTestCases = false,
+  isWaitingForInput = false,
 }: BottomPanelProps) {
   const terminalContainerRef = useRef<HTMLDivElement>(null);
   const promptInputRef = useRef<HTMLInputElement>(null);
@@ -118,12 +120,12 @@ export default function BottomPanel({
     promptInputRef.current?.focus();
   }, []);
 
-  // Auto-focus on mount and when execution status updates
+  // Auto-focus on mount and when execution status updates or waiting for input
   useEffect(() => {
     if (currentTab === "terminal") {
       promptInputRef.current?.focus();
     }
-  }, [status, terminalLines, isRunning, currentTab]);
+  }, [status, terminalLines, isRunning, currentTab, isWaitingForInput]);
 
   // Auto-scroll to bottom whenever output updates in terminal
   useEffect(() => {
@@ -306,6 +308,13 @@ export default function BottomPanel({
               )}
               <span>Run Tests</span>
             </button>
+          )}
+
+          {isWaitingForInput && (
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold text-[11px] border border-amber-500/40 animate-pulse mr-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+              <span>Waiting for input</span>
+            </div>
           )}
 
           {isExecutionActive && !isRunning && (
@@ -695,38 +704,65 @@ export default function BottomPanel({
               </div>
             )}
 
-            {/* Active Interactive Prompt Input Line */}
-            {isRunning && (
-              <form onSubmit={handleSendPrompt} className="flex items-center gap-1.5 mt-1 pt-1 border-t border-white/10">
-                <span className="text-amber-400 font-bold text-sm select-none">❯</span>
-                <input
-                  ref={promptInputRef}
-                  type="text"
-                  value={terminalPrompt}
-                  onChange={(e) => setTerminalPrompt(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type input and press Enter..."
-                  autoComplete="off"
-                  spellCheck={false}
-                  className="flex-1 bg-transparent text-white placeholder:text-zinc-600 outline-none text-[13px] font-mono caret-amber-400"
-                />
-                <button
-                  type="submit"
-                  disabled={!terminalPrompt.trim()}
-                  className="flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] hover:bg-amber-500/30 disabled:opacity-30 cursor-pointer"
-                >
-                  <span>Enter</span>
-                  <CornerDownLeft className="h-2.5 w-2.5" />
-                </button>
-              </form>
-            )}
-
-            {/* Idle Input Hint when program finished or waiting */}
-            {!isRunning && isExecutionActive && (
-              <div className="text-zinc-500 text-xs mt-3 select-none flex items-center gap-1.5">
-                <span>Program execution completed. Click &quot;Run&quot; above to start a new execution.</span>
+            {/* Finished execution hint (without blocking the input prompt) */}
+            {!isRunning && isExecutionActive && !isWaitingForInput && (
+              <div className="text-zinc-500 text-[11.5px] mt-2 mb-1 select-none flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
+                <span>Program execution completed. Enter input or click &quot;Run&quot; to re-execute.</span>
               </div>
             )}
+
+            {/* Always-Active Interactive Terminal Prompt Line */}
+            <form
+              onSubmit={handleSendPrompt}
+              className={`flex items-center gap-2 mt-auto pt-2.5 border-t shrink-0 select-text transition-colors ${
+                isWaitingForInput
+                  ? "border-amber-500/50 bg-amber-500/[0.04] -mx-3.5 px-3.5 py-1.5 rounded-b"
+                  : "border-white/10"
+              }`}
+            >
+              <div className="flex items-center gap-1 select-none shrink-0">
+                <span className="text-amber-400 font-bold text-sm">❯</span>
+                {isWaitingForInput && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-ping" />
+                )}
+              </div>
+              <input
+                ref={promptInputRef}
+                type="text"
+                value={terminalPrompt}
+                onChange={(e) => setTerminalPrompt(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isRunning}
+                placeholder={
+                  isRunning
+                    ? "Running program..."
+                    : isWaitingForInput
+                    ? "Program waiting for input... type and press Enter"
+                    : "Type input and press Enter..."
+                }
+                autoComplete="off"
+                spellCheck={false}
+                className="flex-1 bg-transparent text-[var(--ink)] placeholder:text-zinc-500 outline-none text-[13px] font-mono caret-amber-400 disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                disabled={!terminalPrompt.trim() || isRunning}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-bold hover:bg-amber-500/30 disabled:opacity-30 transition-all cursor-pointer shadow-sm shrink-0"
+              >
+                {isRunning ? (
+                  <>
+                    <Loader2 className="h-3 w-3 animate-spin text-amber-300" />
+                    <span>Sending</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Send</span>
+                    <CornerDownLeft className="h-2.5 w-2.5" />
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </>
       )}
