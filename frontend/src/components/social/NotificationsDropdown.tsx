@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bell,
@@ -22,17 +23,32 @@ import {
   respondConnectionRequest,
 } from "@/lib/api";
 
+function getNotificationData(notif: NotificationItem): Record<string, any> {
+  let data = notif.data;
+  if (typeof data === "string") {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      data = {};
+    }
+  }
+  return data && typeof data === "object" ? data : {};
+}
+
 interface NotificationsDropdownProps {
   token?: string | null;
   onOpenMessage?: (peer: { id: string; name: string; avatar?: string; email: string }) => void;
+  onOpenConnections?: () => void;
   onConnectionAccepted?: () => void;
 }
 
 export default function NotificationsDropdown({
   token,
   onOpenMessage,
+  onOpenConnections,
   onConnectionAccepted,
 }: NotificationsDropdownProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -93,14 +109,73 @@ export default function NotificationsDropdown({
       setUnreadCount((c) => Math.max(0, c - 1));
     }
 
-    if (notif.type === "MESSAGE" && notif.data?.peerId) {
+    const data = getNotificationData(notif);
+    const notifType = (notif.type || "").toUpperCase();
+
+    // Determine if this is a chat-related notification
+    const isMessage =
+      notifType === "MESSAGE" ||
+      notifType === "DIRECT_MESSAGE" ||
+      notif.title?.toLowerCase().includes("message from");
+
+    const isAccepted = notifType === "CONNECTION_ACCEPTED";
+
+    const peerId = data.peerId || data.senderId || notif.actorId;
+
+    if ((isMessage || isAccepted) && peerId) {
       setIsOpen(false);
-      onOpenMessage?.({
-        id: notif.data.peerId,
-        name: notif.data.senderName || "Peer",
-        avatar: notif.data.senderAvatar,
+
+      // Clean sender name from data or title
+      let peerName = data.senderName || data.peerName;
+      if (!peerName && notif.title) {
+        peerName = notif.title
+          .replace(/^Message from\s+/i, "")
+          .replace(/ accepted your.*$/i, "")
+          .trim();
+      }
+      if (!peerName) peerName = "Classmate";
+
+      const peerAvatar = data.senderAvatar || data.peerAvatar || undefined;
+
+      const peerPayload = {
+        id: peerId,
+        name: peerName,
+        avatar: peerAvatar,
         email: "",
+      };
+
+      // 1. If parent provided onOpenMessage, invoke it directly
+      if (onOpenMessage) {
+        onOpenMessage(peerPayload);
+        return;
+      }
+
+      // 2. Dispatch global event in case a chat drawer listener is mounted on the page
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("c2c-open-direct-message", { detail: peerPayload })
+        );
+      }
+
+      // 3. Redirect to profile with query params so DirectMessageDrawer opens with this person
+      const params = new URLSearchParams({
+        openChat: peerId,
+        peerName: peerName,
       });
+      if (peerAvatar) params.set("peerAvatar", peerAvatar);
+      router.push(`/profile?${params.toString()}`);
+      return;
+    }
+
+    // Connection request notification
+    if (notifType === "CONNECTION_REQUEST") {
+      setIsOpen(false);
+      if (onOpenConnections) {
+        onOpenConnections();
+      } else {
+        router.push("/profile?tab=network");
+      }
+      return;
     }
   };
 
@@ -108,7 +183,8 @@ export default function NotificationsDropdown({
     notif: NotificationItem,
     action: "accept" | "decline"
   ) => {
-    const reqId = notif.data?.requestId;
+    const data = getNotificationData(notif);
+    const reqId = data.requestId;
     if (!reqId) return;
     setRespondingId(notif.id);
     try {
@@ -202,9 +278,14 @@ export default function NotificationsDropdown({
                 </div>
               ) : (
                 notifications.map((notif) => {
-                  const isConnRequest = notif.type === "CONNECTION_REQUEST";
-                  const isMessage = notif.type === "MESSAGE";
-                  const isAccepted = notif.type === "CONNECTION_ACCEPTED";
+                  const data = getNotificationData(notif);
+                  const notifType = (notif.type || "").toUpperCase();
+                  const isConnRequest = notifType === "CONNECTION_REQUEST";
+                  const isMessage =
+                    notifType === "MESSAGE" ||
+                    notifType === "DIRECT_MESSAGE" ||
+                    notif.title?.toLowerCase().includes("message from");
+                  const isAccepted = notifType === "CONNECTION_ACCEPTED";
 
                   return (
                     <div
@@ -256,8 +337,16 @@ export default function NotificationsDropdown({
                             {notif.message}
                           </p>
 
+                          {/* Message / Accepted Click Hint */}
+                          {(isMessage || isAccepted) && (
+                            <div className="mt-1.5 flex items-center gap-1.5 text-[10.5px] font-mono text-cyan-400 font-medium hover:underline">
+                              <MessageSquare className="w-3 h-3" />
+                              <span>Click to open conversation</span>
+                            </div>
+                          )}
+
                           {/* Action Buttons for Connection Requests */}
-                          {isConnRequest && notif.data?.requestId && !notif.isRead && (
+                          {isConnRequest && data.requestId && !notif.isRead && (
                             <div className="mt-2.5 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                               <button
                                 onClick={() => handleRespondRequest(notif, "accept")}

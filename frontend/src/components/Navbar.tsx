@@ -8,6 +8,7 @@ import { Menu, X, BookOpen } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
 import UserMenu from "./auth/UserMenu";
+import NotificationsDropdown from "./social/NotificationsDropdown";
 import { LogIn } from "lucide-react";
 import { AssignmentItem } from "@/lib/api";
 
@@ -27,7 +28,7 @@ interface NavbarProps {
 
 export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: NavbarProps = {}) {
   const router = useRouter();
-  const { user, openAuthModal } = useAuth();
+  const { user, token, openAuthModal } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
@@ -100,6 +101,7 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
             </button>
           )}
           <ThemeToggle />
+          {user && <NotificationsDropdown token={token} />}
           {user ? (
             <UserMenu />
           ) : (
@@ -115,6 +117,7 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
 
         {/* Mobile toggle */}
         <div className="flex items-center gap-1 md:hidden">
+          {user && <NotificationsDropdown token={token} />}
           <ThemeToggle />
           <button
             className="text-[var(--ink)] p-2"

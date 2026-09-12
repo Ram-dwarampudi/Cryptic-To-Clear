@@ -5,6 +5,22 @@ try {
   console.warn("Prisma not loaded in notifications.model");
 }
 
+function parseNotification(n) {
+  if (!n) return n;
+  let parsedData = n.data;
+  if (typeof n.data === "string") {
+    try {
+      parsedData = JSON.parse(n.data);
+    } catch {
+      parsedData = n.data;
+    }
+  }
+  return {
+    ...n,
+    data: parsedData,
+  };
+}
+
 class NotificationsModel {
   constructor() {
     this.notifications = new Map(); // id -> notification
@@ -51,6 +67,7 @@ class NotificationsModel {
     return newNotif;
   }
 
+
   async getNotifications(userId) {
     if (!userId) return [];
 
@@ -62,7 +79,7 @@ class NotificationsModel {
           take: 50,
         });
         if (dbNotifs && dbNotifs.length > 0) {
-          return dbNotifs;
+          return dbNotifs.map(parseNotification);
         }
       } catch (err) {
         console.warn("Prisma getNotifications fallback to memory:", err.message);
@@ -72,7 +89,7 @@ class NotificationsModel {
     const notifs = Array.from(this.notifications.values())
       .filter((n) => n.userId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return notifs;
+    return notifs.map(parseNotification);
   }
 
   async markRead(id, userId) {

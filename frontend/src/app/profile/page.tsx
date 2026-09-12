@@ -99,6 +99,42 @@ export default function StudentProfileDashboard() {
     setIsMessageDrawerOpen(true);
   };
 
+  // Handle openChat query param or custom direct message events
+  useEffect(() => {
+    // 1. Check URL parameters
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const openChatId = urlParams.get("openChat") || urlParams.get("chat");
+      const peerName = urlParams.get("peerName") || urlParams.get("name") || "Classmate";
+      const peerAvatar = urlParams.get("peerAvatar") || urlParams.get("avatar") || undefined;
+      const tabParam = urlParams.get("tab");
+
+      if (openChatId) {
+        setSelectedPeerForMessage({
+          id: openChatId,
+          name: peerName,
+          avatar: peerAvatar,
+          email: "",
+        });
+        setIsMessageDrawerOpen(true);
+        window.history.replaceState({}, "", window.location.pathname);
+      } else if (tabParam === "network" || tabParam === "connections") {
+        setIsConnectionsModalOpen(true);
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+
+    // 2. Listen to custom event for same-page notification clicks
+    const handleCustomOpen = (e: any) => {
+      if (e.detail?.id) {
+        setSelectedPeerForMessage(e.detail);
+        setIsMessageDrawerOpen(true);
+      }
+    };
+    window.addEventListener("c2c-open-direct-message", handleCustomOpen);
+    return () => window.removeEventListener("c2c-open-direct-message", handleCustomOpen);
+  }, []);
+
   const openPlatformModal = (platform: "leetcode" | "codeforces" | "codechef" | "hackerrank" | "github") => {
     setSelectedPlatform(platform);
     setIsSyncModalOpen(true);
@@ -544,6 +580,7 @@ export default function StudentProfileDashboard() {
             <NotificationsDropdown
               token={token}
               onOpenMessage={handleOpenMessage}
+              onOpenConnections={() => setIsConnectionsModalOpen(true)}
               onConnectionAccepted={loadLeaderboard}
             />
           </div>
