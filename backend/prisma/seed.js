@@ -18,13 +18,13 @@ async function main() {
   // 1. Create Universities
   const uni = await prisma.university.create({
     data: {
-      name: "Apex University of Technology",
-      code: "AUT",
-      domain: "apextech.edu",
-      city: "Hyderabad",
-      state: "Telangana",
+      name: "Vishnu Educational Society",
+      code: "VES",
+      domain: "vishnu.edu.in",
+      city: "Bhimavaram",
+      state: "Andhra Pradesh",
       country: "India",
-      logo: "https://api.dicebear.com/7.x/identicon/svg?seed=ApexUni",
+      logo: "https://api.dicebear.com/7.x/identicon/svg?seed=VESUni",
     },
   });
 
@@ -37,10 +37,10 @@ async function main() {
     },
   });
 
-  const itDept = await prisma.department.create({
+  const csbsDept = await prisma.department.create({
     data: {
-      name: "Information Technology",
-      code: "IT",
+      name: "Computer Science & Business Systems",
+      code: "CSBS",
       universityId: uni.id,
     },
   });
@@ -49,18 +49,28 @@ async function main() {
   const passwordHash = await bcrypt.hash("Password123!", 10);
   const facultyPasswordHash = await bcrypt.hash("Faculty123!", 10);
 
-  const demoStudent = await prisma.user.create({
+  const ramStudent = await prisma.user.create({
     data: {
-      id: "usr_demo_001",
-      email: "demo@cryptictoclear.io",
-      name: "Demo Student",
+      id: "77127a83-4add-435a-90f7-bf73471c23d2",
+      email: "24pa1a5720@vishnu.edu.in",
+      name: "Ram Dwarampudi",
       passwordHash,
       role: "STUDENT",
-      rollNo: "22CSE104",
-      batchYear: 2026,
-      karmaPoints: 45,
-      bio: "Pre-final year CSE student passionate about algorithms & cloud computing.",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=DemoStudent",
+      rollNo: "24PA1A5720",
+      batchYear: 2028,
+      karmaPoints: 120,
+      overallScore: 1000,
+      bio: "CSE undergraduate passionate about distributed systems and competitive programming.",
+      avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=RoboForge",
+      collegeName: "Vishnu Educational Society",
+      stream: "Computer Science & Engineering",
+      branch: "CSE",
+      section: "A",
+      codechefHandle: "ram_dwarampudi",
+      leetcodeHandle: "Ram_Dwarampudi",
+      codeforcesHandle: "ramdwarampudi",
+      hackerrankHandle: "ramdwarampudi19",
+      githubHandle: "Ram-dwarampudi",
       universityId: uni.id,
       departmentId: cseDept.id,
     },
@@ -77,59 +87,82 @@ async function main() {
       karmaPoints: 120,
       bio: "Professor of Computer Science, Specialization in Compiler Design and Systems.",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=DrRani",
+      collegeName: "Vishnu Educational Society",
+      stream: "Computer Science & Engineering",
+      branch: "CSE",
       universityId: uni.id,
       departmentId: cseDept.id,
     },
   });
 
-  const seniorAlex = await prisma.user.create({
+  const samrudhStudent = await prisma.user.create({
     data: {
-      id: "usr_senior_001",
-      email: "alex.sharma@apextech.edu",
-      name: "Alex Sharma",
+      id: "99a7bcf2-7c11-4924-b9e3-5e959ffa5ce3",
+      email: "24pa1a5713@vishnu.edu.in",
+      name: "Samrudh",
       passwordHash,
       role: "STUDENT",
-      rollNo: "21CSE042",
-      batchYear: 2025,
-      karmaPoints: 150,
-      bio: "Final year student. Upcoming SDE-1 @ Google.",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=AlexSharma",
+      rollNo: "24PA1A5713",
+      batchYear: 2028,
+      karmaPoints: 40,
+      overallScore: 162,
+      bio: "CSBS student interested in full-stack architecture and data algorithms.",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=24pa1a5713%40vishnu.edu.in",
+      collegeName: "Vishnu Educational Society",
+      stream: "Computer Science & Business Systems",
+      branch: "CSBS",
+      section: "A",
+      leetcodeHandle: "rupasamrudh",
       universityId: uni.id,
-      departmentId: cseDept.id,
+      departmentId: csbsDept.id,
     },
   });
 
-  const seniorPriya = await prisma.user.create({
+  const saiStudent = await prisma.user.create({
     data: {
-      id: "usr_senior_002",
-      email: "priya.nair@apextech.edu",
-      name: "Priya Nair",
+      id: "30743284-a08d-4236-b592-6d36213fadf5",
+      email: "24pa1a5730@vishnu.edu.in",
+      name: "Sai Katreddy",
       passwordHash,
       role: "STUDENT",
-      rollNo: "21IT019",
-      batchYear: 2025,
-      karmaPoints: 95,
-      bio: "Final year IT student. Placed @ Amazon SDE.",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=PriyaNair",
+      rollNo: "24PA1A5730",
+      batchYear: 2028,
+      karmaPoints: 35,
+      overallScore: 68,
+      bio: "CSBS student active in community doubt resolution and systems design.",
+      avatar: "https://media.licdn.com/dms/image/v2/D5603AQE2SqPqvBSR-Q/profile-displayphoto-scale_200_200/B56ZwDPTSXK0AY-/0/1769580885033?e=2147483647&v=beta&t=49xdigAB6zIKnmrmLs3Mhze0n0hy39taFjPj_rACgCU",
+      collegeName: "Vishnu Educational Society",
+      stream: "Computer Science & Business Systems",
+      branch: "CSBS",
+      section: "A",
+      leetcodeHandle: "vYeuVxyec7",
+      codechefHandle: "svkatreddy",
+      hackerrankHandle: "24pa1a5730",
+      githubHandle: "svkatreddy",
       universityId: uni.id,
-      departmentId: itDept.id,
+      departmentId: csbsDept.id,
     },
   });
 
-  const seniorRahul = await prisma.user.create({
+  const praneethaStudent = await prisma.user.create({
     data: {
-      id: "usr_senior_003",
-      email: "rahul.verma@apextech.edu",
-      name: "Rahul Verma",
+      id: "b8fc6314-a8a3-4544-b73e-811c3e90f289",
+      email: "24pa1a5757@vishnu.edu.in",
+      name: "Praneetha",
       passwordHash,
       role: "STUDENT",
-      rollNo: "21CSE088",
-      batchYear: 2025,
-      karmaPoints: 70,
-      bio: "Final year CSE student. Placed @ Microsoft.",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=RahulVerma",
+      rollNo: "24PA1A5757",
+      batchYear: 2028,
+      karmaPoints: 25,
+      overallScore: 50,
+      bio: "CSBS student learning data structures and algorithmic efficiency.",
+      avatar: "https://api.dicebear.com/7.x/pixel-art/svg?seed=LinusDev-8",
+      collegeName: "Vishnu Educational Society",
+      stream: "Computer Science & Business Systems",
+      branch: "CSBS",
+      section: "A",
       universityId: uni.id,
-      departmentId: cseDept.id,
+      departmentId: csbsDept.id,
     },
   });
 
@@ -146,7 +179,7 @@ async function main() {
       difficulty: "HARD",
       selectionStatus: "SELECTED",
       graduationYear: 2025,
-      studentId: seniorAlex.id,
+      studentId: ramStudent.id,
       universityId: uni.id,
       isAnonymous: false,
       summary: "Cracked Google On-Campus drive in Sept 2025. 1 OA round + 3 Technical interviews + 1 Googleyness fit round.",
@@ -214,7 +247,7 @@ async function main() {
       difficulty: "MEDIUM",
       selectionStatus: "SELECTED",
       graduationYear: 2025,
-      studentId: seniorPriya.id,
+      studentId: samrudhStudent.id,
       universityId: uni.id,
       isAnonymous: false,
       summary: "Amazon Campus Hiring 2025. 1 OA round + 2 Technical Interviews combining DSA and Leadership Principles.",
@@ -272,7 +305,7 @@ async function main() {
       difficulty: "MEDIUM",
       selectionStatus: "SELECTED",
       graduationYear: 2025,
-      studentId: seniorRahul.id,
+      studentId: saiStudent.id,
       universityId: uni.id,
       isAnonymous: false,
       summary: "Campus recruitment drive in August 2025. 1 Codility test + 3 rounds of technical and managerial interviews.",
@@ -329,7 +362,7 @@ async function main() {
       difficulty: "EASY",
       selectionStatus: "SELECTED",
       graduationYear: 2025,
-      studentId: demoStudent.id,
+      studentId: praneethaStudent.id,
       universityId: uni.id,
       isAnonymous: true, // Anonymous showcase
       summary: "National Qualifier Test (NQT) followed by Technical + HR Interview. Digital cutoff was cleared easily with good practice.",
@@ -384,7 +417,7 @@ print(quicksort(sorted_list))`,
       tags: JSON.stringify(["Algorithms", "QuickSort", "Recursion", "Python"]),
       privacy: "PUBLIC",
       status: "RESOLVED",
-      authorId: demoStudent.id,
+      authorId: ramStudent.id,
       universityId: uni.id,
       views: 64,
     },
@@ -413,7 +446,7 @@ print(len(quicksort_safe(list(range(5000))))) # Works instantly!`,
       isFacultyEndorsed: true,
       endorsedByFacultyName: "Dr. B.V. N. Rani",
       doubtId: doubt1.id,
-      authorId: seniorAlex.id,
+      authorId: saiStudent.id,
       upvotes: 14,
     },
   });
@@ -444,7 +477,7 @@ void freeTree(Node* root) {
       tags: JSON.stringify(["C", "Pointers", "MemoryManagement", "Trees"]),
       privacy: "ANONYMOUS_PEERS", // Posted anonymously to peers
       status: "RESOLVED",
-      authorId: seniorRahul.id,
+      authorId: samrudhStudent.id,
       universityId: uni.id,
       views: 42,
     },
@@ -483,7 +516,7 @@ map.put(null, "value"); // Throws NullPointerException! Why?`,
       tags: JSON.stringify(["Java", "Concurrency", "Collections", "Multithreading"]),
       privacy: "PUBLIC",
       status: "OPEN",
-      authorId: seniorPriya.id,
+      authorId: praneethaStudent.id,
       universityId: uni.id,
       views: 31,
     },
@@ -496,7 +529,7 @@ map.put(null, "value"); // Throws NullPointerException! Why?`,
       isAccepted: false,
       isFacultyEndorsed: false,
       doubtId: doubt3.id,
-      authorId: seniorAlex.id,
+      authorId: ramStudent.id,
       upvotes: 8,
     },
   });
@@ -504,7 +537,7 @@ map.put(null, "value"); // Throws NullPointerException! Why?`,
   console.log("✅ Seeding completed successfully!");
   console.log(`   - 1 University (${uni.name})`);
   console.log(`   - 2 Departments`);
-  console.log(`   - 5 Users (1 Demo Student, 1 Faculty, 3 Placed Seniors)`);
+  console.log(`   - 5 Users (1 Faculty, 4 Real Students)`);
   console.log(`   - 4 Rich Interview Experiences (Google, Amazon, Microsoft, TCS)`);
   console.log(`   - 3 Real Doubt Threads with Code & Faculty Endorsements`);
 }
