@@ -621,51 +621,95 @@ body {
 
 /* ─── Global Form Interaction Styles ─── */
 
-/* All text inputs, selects, textareas: consistent focus ring, hover, transition */
-input[type="text"],
-input[type="email"],
-input[type="password"],
-input[type="number"],
-input[type="search"],
-input[type="url"],
-input[type="tel"],
-input[type="date"],
-input[type="datetime-local"],
-input[type="time"],
-textarea,
+/* All standard text inputs, selects, textareas: consistent focus ring, hover, transition */
+input[type="text"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0),
+input[type="email"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0),
+input[type="password"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0),
+input[type="number"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0),
+input[type="search"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0),
+input[type="url"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0),
+input[type="tel"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0),
+input[type="date"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0),
+input[type="datetime-local"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0),
+input[type="time"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0),
+textarea:not(.bg-transparent):not(.ai-input):not(.border-none):not(.border-0),
 select {
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.15s ease;
   min-height: 40px;
   /* touch-friendly minimum */
 }
 
-input[type="text"]:hover,
-input[type="email"]:hover,
-input[type="password"]:hover,
-input[type="number"]:hover,
-input[type="search"]:hover,
-input[type="url"]:hover,
-input[type="tel"]:hover,
-input[type="date"]:hover,
-input[type="datetime-local"]:hover,
-input[type="time"]:hover,
-textarea:hover,
+input[type="text"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):hover,
+input[type="email"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):hover,
+input[type="password"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):hover,
+input[type="number"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):hover,
+input[type="search"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):hover,
+input[type="url"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):hover,
+input[type="tel"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):hover,
+input[type="date"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):hover,
+input[type="datetime-local"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):hover,
+input[type="time"]:not(.bg-transparent):not(.terminal-input):not(.ai-input):hover,
+textarea:not(.bg-transparent):not(.ai-input):hover,
 select:hover {
   border-color: var(--ink-faint);
 }
 
-input:focus-visible,
-textarea:focus-visible,
+input:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0):focus-visible,
+textarea:not(.bg-transparent):not(.ai-input):not(.border-none):not(.border-0):focus-visible,
 select:focus-visible {
   outline: none;
   border-color: var(--syn-keyword);
-  box-shadow: 0 0 0 2px rgba(184, 146, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.25);
 }
 
-:root.light input:focus-visible,
-:root.light textarea:focus-visible,
+:root.light input:not(.bg-transparent):not(.terminal-input):not(.ai-input):not(.border-none):not(.border-0):focus-visible,
+:root.light textarea:not(.bg-transparent):not(.ai-input):not(.border-none):not(.border-0):focus-visible,
 :root.light select:focus-visible {
-  box-shadow: 0 0 0 2px rgba(130, 80, 223, 0.12);
+  box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.22);
+}
+
+/* Completely seamless transparent inputs (Terminal prompt & Modern AI full-width chat) */
+input.bg-transparent,
+textarea.bg-transparent,
+input.border-none,
+input.border-0,
+textarea.border-none,
+textarea.border-0,
+.terminal-input,
+.ai-input {
+  min-height: unset !important;
+  border: none !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+input.bg-transparent:focus,
+input.bg-transparent:focus-visible,
+input.bg-transparent:hover,
+textarea.bg-transparent:focus,
+textarea.bg-transparent:focus-visible,
+textarea.bg-transparent:hover,
+input.border-none:focus,
+input.border-none:focus-visible,
+input.border-none:hover,
+input.border-0:focus,
+input.border-0:focus-visible,
+input.border-0:hover,
+.terminal-input:focus,
+.terminal-input:focus-visible,
+.terminal-input:hover,
+.ai-input:focus,
+.ai-input:focus-visible,
+.ai-input:hover {
+  min-height: unset !important;
+  border: none !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 /* Selects: always pointer cursor + custom arrow sizing */

@@ -743,7 +743,8 @@ export default function BottomPanel({
                 }
                 autoComplete="off"
                 spellCheck={false}
-                className="flex-1 bg-transparent text-[var(--ink)] placeholder:text-zinc-500 outline-none text-[13px] font-mono caret-amber-400 disabled:opacity-60"
+                className="terminal-input flex-1 bg-transparent border-0 border-none outline-none ring-0 shadow-none focus:ring-0 focus:outline-none focus:shadow-none focus:border-none focus-visible:ring-0 focus-visible:outline-none focus-visible:shadow-none focus-visible:border-none text-[var(--ink)] placeholder:text-zinc-500 text-[13px] font-mono caret-amber-400 disabled:opacity-60 px-1 py-0.5"
+                style={{ border: "none", outline: "none", boxShadow: "none" }}
               />
               <button
                 type="submit"

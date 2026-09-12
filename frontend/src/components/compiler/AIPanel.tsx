@@ -126,7 +126,7 @@ export default function AIPanel({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLInputElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (!busy && inputValue.trim()) onSend();
@@ -233,28 +233,36 @@ export default function AIPanel({
       {/* Quick actions */}
       <QuickActionsMenu onSelect={onQuickAction} disabled={busy} />
 
-      {/* Input */}
-      <div className="p-3 border-t border-[var(--border)]">
-        <div className="flex items-center gap-2 rounded-lg glass px-3 py-2 focus-within:border-[var(--border-strong)] transition-colors">
-          <input
+      {/* Modern Full-Width AI Chat Input Box */}
+      <div className="p-3 border-t border-[var(--border)] bg-black/20">
+        <div className="flex flex-col gap-2 rounded-2xl glass-strong border border-white/10 p-3 focus-within:border-[#D4AF37]/60 focus-within:ring-1 focus-within:ring-[#D4AF37]/30 transition-all shadow-lg shadow-black/30">
+          <textarea
             id={inputId}
             value={inputValue}
             onChange={(e) => onInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={busy}
-            placeholder="Ask Cryptic to Clear…"
+            rows={2}
+            placeholder="Ask Cryptic to Clear… (e.g. 'explain line 12', 'why did it fail?')"
             aria-label="Ask Cryptic to Clear"
-            className="flex-1 bg-transparent text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-faint)] outline-none disabled:cursor-not-allowed"
+            className="ai-input w-full bg-transparent text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-faint)] outline-none border-0 border-none shadow-none ring-0 focus:ring-0 focus:outline-none focus:shadow-none focus:border-none focus-visible:ring-0 focus-visible:outline-none focus-visible:shadow-none focus-visible:border-none resize-none leading-relaxed min-h-[44px] max-h-[160px] overflow-y-auto"
+            style={{ border: "none", outline: "none", boxShadow: "none" }}
           />
-          <button
-            type="button"
-            onClick={onSend}
-            disabled={busy || !inputValue.trim()}
-            aria-label="Send message"
-            className="h-7 w-7 flex items-center justify-center rounded-md bg-gradient-to-br from-[var(--syn-keyword)] via-[var(--syn-function)] to-[var(--syn-string)] text-[#0a0d13] disabled:opacity-30 disabled:cursor-not-allowed transition-opacity cursor-pointer shrink-0"
-          >
-            <Send className="h-3.5 w-3.5" />
-          </button>
+          <div className="flex items-center justify-between pt-1 text-[11px] text-[var(--ink-faint)] select-none">
+            <span className="font-mono text-[10.5px] opacity-70">
+              Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-zinc-300">Enter ↵</kbd> to send, <kbd className="px-1.5 py-0.5 rounded bg-white/10 font-mono text-[10px] text-zinc-300">Shift+Enter</kbd> for newline
+            </span>
+            <button
+              type="button"
+              onClick={onSend}
+              disabled={busy || !inputValue.trim()}
+              aria-label="Send message"
+              className="h-7 w-7 flex items-center justify-center rounded-lg bg-gradient-to-br from-[#D4AF37] to-[#E8C97A] text-[#0a0d13] font-bold disabled:opacity-20 disabled:cursor-not-allowed hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0 shadow-md shadow-[#D4AF37]/20"
+              title="Send to AI"
+            >
+              <Send className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
