@@ -9,25 +9,25 @@ const FOOTER_COLUMNS = [
     links: [
       { label: "Compiler", href: "/compiler" },
       { label: "Features", href: "/features" },
-      { label: "Interactive Debugger", href: "/compiler#debugger" },
-      { label: "Start Coding", href: "/compiler" },
+      { label: "Interactive Debugger", href: "/compiler" },
+      { label: "Doubt Resolution", href: "/doubts" },
     ],
   },
   {
     title: "Resources",
     links: [
-      { label: "Error Glossary", href: "/#docs" },
-      { label: "Language Specs", href: "/features#languages" },
-      { label: "AI Diagnostic Engine", href: "/features#about" },
-      { label: "Architecture Overview", href: "/features#about" },
+      { label: "Error Diagnostics", href: "/features" },
+      { label: "Language Specs", href: "/features" },
+      { label: "Senior Interview Hub", href: "/interviews" },
+      { label: "Campus Leaderboard", href: "/profile" },
     ],
   },
   {
     title: "Contact",
     links: [
       { label: "Contact Engineering", href: "/contact" },
-      { label: "Community Forum", href: "/contact#forum" },
-      { label: "Bug Bounty", href: "/contact#security" },
+      { label: "Doubt Forum", href: "/doubts" },
+      { label: "Bug Bounty & Security", href: "/contact" },
       { label: "Feedback & Suggestions", href: "/contact" },
     ],
   },
@@ -65,14 +65,16 @@ export default function Footer() {
 
             <div className="mt-6 flex items-center gap-3">
               {[
-                { icon: Code2, label: "Code Repository", href: "https://github.com" },
-                { icon: Globe, label: "Network Status", href: "#" },
-                { icon: Mail, label: "Direct Support", href: "/contact" },
+                { icon: Code2, label: "GitHub Repository", href: "https://github.com/svkatreddy/Cryptic-To-Clear", external: true },
+                { icon: Globe, label: "Platform Features", href: "/features", external: false },
+                { icon: Mail, label: "Direct Support", href: "/contact", external: false },
               ].map((item, i) => (
                 <a
                   key={i}
                   href={item.href}
                   aria-label={item.label}
+                  target={item.external ? "_blank" : undefined}
+                  rel={item.external ? "noopener noreferrer" : undefined}
                   className="h-9 w-9 flex items-center justify-center rounded-lg glass border border-[rgba(212,175,55,0.2)] text-[var(--ink-dim)] hover:text-[#E8C97A] hover:border-[rgba(212,175,55,0.5)] hover:shadow-[0_0_15px_rgba(212,175,55,0.25)] transition-all"
                 >
                   <item.icon className="h-4 w-4" />
@@ -123,11 +125,11 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} Cryptic to Clear. Timeless craftsmanship.
           </p>
           <div className="flex items-center gap-6 text-xs text-[var(--ink-faint)] font-mono">
-            <Link href="/#privacy" className="hover:text-[#E8C97A] transition-colors">
+            <Link href="/privacy" className="hover:text-[#E8C97A] transition-colors">
               Privacy Notice
             </Link>
             <span className="h-1 w-1 rounded-full bg-[rgba(212,175,55,0.4)]" />
-            <Link href="/#terms" className="hover:text-[#E8C97A] transition-colors">
+            <Link href="/terms" className="hover:text-[#E8C97A] transition-colors">
               Terms of Service
             </Link>
             <span className="h-1 w-1 rounded-full bg-[rgba(212,175,55,0.4)]" />

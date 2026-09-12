@@ -42,21 +42,19 @@ const DEMOS: Record<LanguageKey, LanguageDemo> = {
       <span key="2" className="text-[var(--ink-faint)] italic">
         &nbsp;&nbsp;# Greet developer with classic elegance
       </span>,
-      <span key="3">
+      <span key="3" className="relative inline-flex items-center flex-wrap">
         &nbsp;&nbsp;<span className="text-[#7EB6FF]">print</span>(
         <span className="text-[#9ee6a8]">&quot;Hello, Cryptic to Clear!&quot;</span>
         {isFixed ? (
-          <span className="text-[#27c93f] font-bold bg-[#27c93f]/25 px-1 rounded animate-pulse">)</span>
+          <span className="text-[#27c93f] font-bold bg-[#27c93f]/25 px-1.5 py-0.5 rounded animate-pulse ml-0.5">)</span>
         ) : (
-          <span className="text-amber-400 font-bold ml-0.5 px-1 bg-amber-500/20 rounded">
-            {"‹! missing ')'"}
+          <span className="inline-flex items-center gap-1.5 ml-4 px-2 py-0.5 text-[11px] font-mono text-amber-300 bg-amber-500/15 border border-amber-500/35 rounded-full shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span>missing &apos;)&apos;</span>
           </span>
         )}
       </span>,
-      <span key="4" className="text-transparent select-none">
-        .
-      </span>,
-      <span key="5">
+      <span key="4">
         <span className="text-[#7EB6FF]">main</span>()
       </span>,
     ],
@@ -66,11 +64,11 @@ const DEMOS: Record<LanguageKey, LanguageDemo> = {
     filename: "main.c",
     badge: "C",
     runtime: "GCC 14.2 (C17)",
-    errorLineNumber: 4,
-    errorConsole: "error: expected ';' before 'return' (line 4)",
+    errorLineNumber: 3,
+    errorConsole: "error: expected ';' before 'return' (line 3)",
     successConsole: "Build Success: Hello, Cryptic to Clear! (0.01s)",
     aiBreakdown: {
-      message: "In C, every statement must end with a semicolon ';'. The printf call on line 4 is missing ';'.",
+      message: "In C, every statement must end with a semicolon ';'. The printf call on line 3 is missing ';'.",
       suggestion: "Add ';' after printf statement",
     },
     renderLines: (isFixed: boolean, stage: number) => [
@@ -78,30 +76,28 @@ const DEMOS: Record<LanguageKey, LanguageDemo> = {
         <span className="text-[#E8C97A] font-semibold">#include</span>{" "}
         <span className="text-[#9ee6a8]">&lt;stdio.h&gt;</span>
       </span>,
-      <span key="2" className="text-transparent select-none">
-        .
-      </span>,
-      <span key="3">
+      <span key="2">
         <span className="text-[#E8C97A] font-semibold">int</span>{" "}
         <span className="text-[#7EB6FF]">main</span>(
         <span className="text-[#E8C97A] font-semibold">void</span>) {"{"}
       </span>,
-      <span key="4">
+      <span key="3" className="relative inline-flex items-center flex-wrap">
         &nbsp;&nbsp;<span className="text-[#7EB6FF]">printf</span>(
         <span className="text-[#9ee6a8]">&quot;Hello, Cryptic to Clear!\\n&quot;</span>)
         {isFixed ? (
-          <span className="text-[#27c93f] font-bold bg-[#27c93f]/25 px-1 rounded animate-pulse">;</span>
+          <span className="text-[#27c93f] font-bold bg-[#27c93f]/25 px-1.5 py-0.5 rounded animate-pulse ml-0.5">;</span>
         ) : (
-          <span className="text-amber-400 font-bold ml-0.5 px-1 bg-amber-500/20 rounded">
-            {"‹! missing ';'"}
+          <span className="inline-flex items-center gap-1.5 ml-4 px-2 py-0.5 text-[11px] font-mono text-amber-300 bg-amber-500/15 border border-amber-500/35 rounded-full shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span>missing &apos;;&apos;</span>
           </span>
         )}
       </span>,
-      <span key="5">
+      <span key="4">
         &nbsp;&nbsp;<span className="text-[#E8C97A] font-semibold">return</span>{" "}
         <span className="text-[#ffd866]">0</span>;
       </span>,
-      <span key="6">{"}"}</span>,
+      <span key="5">{"}"}</span>,
     ],
   },
   cpp: {
@@ -109,42 +105,40 @@ const DEMOS: Record<LanguageKey, LanguageDemo> = {
     filename: "main.cpp",
     badge: "C++",
     runtime: "Clang 18 (C++20)",
-    errorLineNumber: 4,
-    errorConsole: "error: expected ';' before 'return' (line 4)",
+    errorLineNumber: 3,
+    errorConsole: "error: expected ';' before 'return' (line 3)",
     successConsole: "Build Success: Hello, Cryptic to Clear! (0.01s)",
     aiBreakdown: {
-      message: "The std::cout stream statement on line 4 is missing its terminating semicolon ';'.",
-      suggestion: "Add ';' at end of line 4",
+      message: "The std::cout stream statement on line 3 is missing its terminating semicolon ';'.",
+      suggestion: "Add ';' at end of line 3",
     },
     renderLines: (isFixed: boolean, stage: number) => [
       <span key="1">
         <span className="text-[#E8C97A] font-semibold">#include</span>{" "}
         <span className="text-[#9ee6a8]">&lt;iostream&gt;</span>
       </span>,
-      <span key="2" className="text-transparent select-none">
-        .
-      </span>,
-      <span key="3">
+      <span key="2">
         <span className="text-[#E8C97A] font-semibold">int</span>{" "}
         <span className="text-[#7EB6FF]">main</span>() {"{"}
       </span>,
-      <span key="4">
+      <span key="3" className="relative inline-flex items-center flex-wrap">
         &nbsp;&nbsp;<span className="text-[#7EB6FF]">std::cout</span> &lt;&lt;{" "}
         <span className="text-[#9ee6a8]">&quot;Hello, Cryptic to Clear!&quot;</span> &lt;&lt;{" "}
         <span className="text-[#7EB6FF]">std::endl</span>
         {isFixed ? (
-          <span className="text-[#27c93f] font-bold bg-[#27c93f]/25 px-1 rounded animate-pulse">;</span>
+          <span className="text-[#27c93f] font-bold bg-[#27c93f]/25 px-1.5 py-0.5 rounded animate-pulse ml-0.5">;</span>
         ) : (
-          <span className="text-amber-400 font-bold ml-0.5 px-1 bg-amber-500/20 rounded">
-            {"‹! missing ';'"}
+          <span className="inline-flex items-center gap-1.5 ml-4 px-2 py-0.5 text-[11px] font-mono text-amber-300 bg-amber-500/15 border border-amber-500/35 rounded-full shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span>missing &apos;;&apos;</span>
           </span>
         )}
       </span>,
-      <span key="5">
+      <span key="4">
         &nbsp;&nbsp;<span className="text-[#E8C97A] font-semibold">return</span>{" "}
         <span className="text-[#ffd866]">0</span>;
       </span>,
-      <span key="6">{"}"}</span>,
+      <span key="5">{"}"}</span>,
     ],
   },
   java: {
@@ -168,14 +162,15 @@ const DEMOS: Record<LanguageKey, LanguageDemo> = {
         &nbsp;&nbsp;<span className="text-[#E8C97A] font-semibold">public static void</span>{" "}
         <span className="text-[#7EB6FF]">main</span>(String[] args) {"{"}
       </span>,
-      <span key="3">
+      <span key="3" className="relative inline-flex items-center flex-wrap">
         &nbsp;&nbsp;&nbsp;&nbsp;<span className="text-[#7EB6FF]">System.out.println</span>(
         <span className="text-[#9ee6a8]">&quot;Hello, Cryptic to Clear!&quot;</span>)
         {isFixed ? (
-          <span className="text-[#27c93f] font-bold bg-[#27c93f]/25 px-1 rounded animate-pulse">;</span>
+          <span className="text-[#27c93f] font-bold bg-[#27c93f]/25 px-1.5 py-0.5 rounded animate-pulse ml-0.5">;</span>
         ) : (
-          <span className="text-amber-400 font-bold ml-0.5 px-1 bg-amber-500/20 rounded">
-            {"‹! missing ';'"}
+          <span className="inline-flex items-center gap-1.5 ml-4 px-2 py-0.5 text-[11px] font-mono text-amber-300 bg-amber-500/15 border border-amber-500/35 rounded-full shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span>missing &apos;;&apos;</span>
           </span>
         )}
       </span>,
