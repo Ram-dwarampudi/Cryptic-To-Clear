@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import {
   fetchDoubts,
+  fetchDoubtById,
   createDoubt,
   createDoubtAnswer,
   acceptDoubtAnswer,
@@ -76,6 +77,24 @@ export default function DoubtsPage() {
   const [answerCode, setAnswerCode] = useState("");
   const [submittingAnswer, setSubmittingAnswer] = useState(false);
 
+  const ensureDoubtDetails = async (doubtId: string) => {
+    try {
+      const res = await fetchDoubtById(
+        doubtId,
+        user?.role === "faculty" ? "FACULTY" : "STUDENT",
+        user?.id || "usr_demo_001"
+      );
+      if (res.success && res.data) {
+        const fullDoubt = res.data;
+        setDoubts((prev) =>
+          prev.map((d) => (d.id === doubtId ? { ...d, ...fullDoubt } : d))
+        );
+      }
+    } catch (err) {
+      console.error("Failed to load doubt details:", err);
+    }
+  };
+
   const loadDoubts = async () => {
     setLoading(true);
     const params: any = {
@@ -107,9 +126,22 @@ export default function DoubtsPage() {
       // Auto-expand the doubt that has answers by default so answers are immediately visible
       if (filtered.length > 0) {
         setExpandedDoubtId((prev) => {
-          if (prev && filtered.some((d) => d.id === prev)) return prev;
-          const withAnswers = filtered.find((d) => (d.answers && d.answers.length > 0) || (d.answersCount && d.answersCount > 0));
-          return withAnswers ? withAnswers.id : filtered[0].id;
+          const targetId =
+            prev && filtered.some((d) => d.id === prev)
+              ? prev
+              : (() => {
+                  const withAnswers = filtered.find(
+                    (d) =>
+                      (d.answers && d.answers.length > 0) ||
+                      (d.answersCount && d.answersCount > 0)
+                  );
+                  return withAnswers ? withAnswers.id : filtered[0].id;
+                })();
+
+          if (targetId) {
+            ensureDoubtDetails(targetId);
+          }
+          return targetId;
         });
       }
     }
@@ -303,7 +335,13 @@ export default function DoubtsPage() {
                       className="glass rounded-2xl border border-white/10 hover:border-[#D4AF37]/40 transition-all overflow-hidden shadow-md"
                     >
                       <div
-                        onClick={() => setExpandedDoubtId(isExpanded ? null : doubt.id)}
+                        onClick={() => {
+                          const nextExpanded = isExpanded ? null : doubt.id;
+                          setExpandedDoubtId(nextExpanded);
+                          if (!isExpanded) {
+                            ensureDoubtDetails(doubt.id);
+                          }
+                        }}
                         className="p-5 sm:p-6 cursor-pointer space-y-3"
                       >
                         {/* Header Badges */}
@@ -510,6 +548,23 @@ export default function DoubtsPage() {
                                 <div className="space-y-3">
                                   {doubt.answers.map((ans) => {
                                     const isAuthor = user?.id === doubt.author?.id;
+                                    const ansAuthor = ans.author || (ans as any).user;
+                                    const authorName = ansAuthor?.name || (ans as any).authorName || (ans as any).userName || "Campus Peer";
+                                    const authorAvatar = ansAuthor?.avatar || (ans as any).avatar || (ans as any).authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(authorName)}`;
+                                    const authorRole = ansAuthor?.role || (ans as any).role;
+                                    const authorId = ansAuthor?.id || (ans as any).authorId;
+                                    const explanationText =
+                                      ans.content ||
+                                      (ans as any).explanation ||
+                                      (ans as any).solution ||
+                                      (ans as any).text ||
+                                      (ans as any).message ||
+                                      (ans as any).description;
+                                    const solutionSnippet =
+                                      ans.codeSnippet ||
+                                      (ans as any).code ||
+                                      (ans as any).snippet ||
+                                      (ans as any).solutionCode;
 
                                     return (
                                       <div
@@ -524,19 +579,19 @@ export default function DoubtsPage() {
                                           <div className="flex items-center gap-2.5">
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
-                                              src={ans.author?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ans.author?.name || "Peer"}`}
-                                              alt={ans.author?.name || "Answerer"}
+                                              src={authorAvatar}
+                                              alt={authorName}
                                               className="w-6 h-6 rounded-full border border-white/20 object-cover"
                                             />
-                                            <span className="text-xs font-bold text-white">{ans.author?.name || "Campus Peer"}</span>
-                                            {ans.author?.role === "FACULTY" && (
+                                            <span className="text-xs font-bold text-white">{authorName}</span>
+                                            {authorRole === "FACULTY" && (
                                               <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-[#D4AF37]/20 text-[#E8C97A] font-bold border border-[#D4AF37]/40">
                                                 FACULTY
                                               </span>
                                             )}
 
                                             {/* Message Answerer Button */}
-                                            {ans.author?.id && ans.author.id !== user?.id && (
+                                            {authorId && authorId !== user?.id && (
                                               <button
                                                 onClick={(e) => {
                                                   e.stopPropagation();
@@ -545,17 +600,17 @@ export default function DoubtsPage() {
                                                     return;
                                                   }
                                                   setActiveDmPeer({
-                                                    id: ans.author.id,
-                                                    name: ans.author.name,
-                                                    avatar: ans.author.avatar,
-                                                    email: (ans.author as any).email,
-                                                    stream: (ans.author as any).stream,
-                                                    collegeName: (ans.author as any).collegeName,
+                                                    id: authorId,
+                                                    name: authorName,
+                                                    avatar: authorAvatar,
+                                                    email: (ansAuthor as any)?.email || (ans as any).email,
+                                                    stream: (ansAuthor as any)?.stream || (ans as any).stream,
+                                                    collegeName: (ansAuthor as any)?.collegeName || (ans as any).collegeName,
                                                   });
                                                   setIsDmOpen(true);
                                                 }}
                                                 className="flex items-center gap-1.5 text-[10.5px] font-mono px-2.5 py-0.5 rounded-lg bg-[#D4AF37]/15 hover:bg-[#D4AF37] text-[#E8C97A] hover:text-black border border-[#D4AF37]/35 transition-all font-semibold cursor-pointer shadow-[0_0_10px_rgba(212,175,55,0.12)] ml-1"
-                                                title={`Direct message ${ans.author.name}`}
+                                                title={`Direct message ${authorName}`}
                                               >
                                                 <MessageSquare className="w-3 h-3" />
                                                 <span>Message</span>
@@ -590,24 +645,24 @@ export default function DoubtsPage() {
 
                                         <div className="mt-1">
                                           <p className="text-xs text-zinc-200 leading-relaxed whitespace-pre-wrap font-sans">
-                                            {ans.content || (
+                                            {explanationText || (
                                               <span className="text-zinc-400 italic">No explanation text provided.</span>
                                             )}
                                           </p>
                                         </div>
 
-                                        {ans.codeSnippet && (
+                                        {solutionSnippet && (
                                           <div className="mt-3 rounded-xl bg-black/60 p-3.5 font-mono text-[11px] text-zinc-100 overflow-x-auto border border-white/10">
                                             <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/10 text-[10px] text-zinc-400">
                                               <span>Working Solution Snippet</span>
                                               <button
-                                                onClick={() => void navigator.clipboard.writeText(ans.codeSnippet!)}
+                                                onClick={() => void navigator.clipboard.writeText(solutionSnippet)}
                                                 className="text-[#E8C97A] hover:underline font-mono text-[10px] cursor-pointer"
                                               >
                                                 Copy Snippet
                                               </button>
                                             </div>
-                                            <pre className="whitespace-pre leading-relaxed">{ans.codeSnippet}</pre>
+                                            <pre className="whitespace-pre leading-relaxed">{solutionSnippet}</pre>
                                           </div>
                                         )}
                                       </div>

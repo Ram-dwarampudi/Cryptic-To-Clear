@@ -868,7 +868,7 @@ exports.searchStudents = async (req, res, next) => {
 exports.getPublicProfile = async (req, res, next) => {
   try {
     const targetUserId = req.params.id;
-    const currentUserId = req.user?.id || null;
+    const currentUserId = req.user?.id || req.query?.currentUserId || null;
 
     const user = await userModel.findById(targetUserId);
     if (!user) {
@@ -891,9 +891,13 @@ exports.getPublicProfile = async (req, res, next) => {
     const overallScore = user.overallScore || stats?.summary?.overallScore || 0;
     const tierInfo = getTierInfo(overallScore);
 
-    let connectionStatus = "SELF";
-    if (currentUserId && currentUserId !== user.id) {
-      connectionStatus = await connectionsModel.getConnectionStatus(currentUserId, user.id);
+    let connectionStatus = "NONE";
+    if (currentUserId) {
+      if (currentUserId === user.id) {
+        connectionStatus = "SELF";
+      } else {
+        connectionStatus = await connectionsModel.getConnectionStatus(currentUserId, user.id);
+      }
     }
 
     let assignments = [];

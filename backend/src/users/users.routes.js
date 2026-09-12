@@ -1,13 +1,13 @@
 const express = require("express");
 const usersController = require("./users.controller");
-const { requireAuth } = require("../auth/middleware/auth.middleware");
+const { requireAuth, optionalAuth } = require("../auth/middleware/auth.middleware");
 
 const router = express.Router();
 
 // Public / student accessible leaderboard & search
 router.get("/leaderboard", usersController.getLeaderboard);
 router.get("/search", usersController.searchStudents);
-router.get("/:id/public-profile", usersController.getPublicProfile);
+router.get("/:id/public-profile", optionalAuth, usersController.getPublicProfile);
 
 router.use(requireAuth);
 router.get("/profile", usersController.getProfile);

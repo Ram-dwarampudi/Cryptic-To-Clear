@@ -23,6 +23,7 @@ import {
   Github,
   Loader2,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import {
   PublicStudentProfile,
   fetchPublicStudentProfile,
@@ -53,6 +54,7 @@ export default function StudentPublicProfileModal({
   onOpenMessage,
   onConnectionChange,
 }: StudentPublicProfileModalProps) {
+  const { openAuthModal } = useAuth();
   const [profile, setProfile] = useState<PublicStudentProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"about" | "coding" | "academics">("coding");
@@ -130,15 +132,22 @@ export default function StudentPublicProfileModal({
 
   if (!isOpen) return null;
 
-  const isSelf = currentUserId === studentId || profile?.id === currentUserId || connectionStatus === "SELF";
+  const effectiveTargetId = profile?.id || initialStudent?.id || studentId;
+  const isSelf = Boolean(
+    currentUserId &&
+      effectiveTargetId &&
+      (currentUserId === effectiveTargetId || currentUserId === studentId)
+  );
 
   const handleConnect = async () => {
     if (!studentId || connectLoading || isSelf) return;
+    if (!token) {
+      openAuthModal?.("login");
+      return;
+    }
     setConnectLoading(true);
     try {
       if (connectionStatus === "PENDING_RECEIVED") {
-        // Accept request
-        // In this case, we can trigger connection response if requestId exists, or re-send to auto-accept
         await sendConnectionRequest(studentId, token);
         setConnectionStatus("ACCEPTED");
       } else if (connectionStatus === "NONE") {
@@ -154,15 +163,20 @@ export default function StudentPublicProfileModal({
   };
 
   const handleMessageClick = () => {
-    if (!profile) return;
+    if (!token) {
+      openAuthModal?.("login");
+      return;
+    }
+    const target = profile || initialStudent;
+    if (!target) return;
     onClose();
     onOpenMessage?.({
-      id: profile.id,
-      name: profile.name,
-      avatar: profile.avatar,
-      email: profile.email,
-      stream: profile.stream,
-      collegeName: profile.collegeName,
+      id: target.id || studentId!,
+      name: target.name,
+      avatar: target.avatar,
+      email: (target as any).email || "",
+      stream: (target as any).stream,
+      collegeName: (target as any).collegeName,
     });
   };
 
