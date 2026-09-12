@@ -42,6 +42,7 @@ import {
   buildApiHistory,
   makeId,
 } from "@/lib/chat";
+import { useAuth } from "@/context/AuthContext";
 
 function EditorSkeleton() {
   return (
@@ -224,7 +225,9 @@ export default function CompilerPage() {
   const activeExecutionController = useRef<AbortController | null>(null);
 
   // Student Assignment State
+  const { user, token } = useAuth();
   const [studentAssignments, setStudentAssignments] = useState<AssignmentItem[]>([]);
+  const [isRefreshingAssignments, setIsRefreshingAssignments] = useState(false);
   const [activeAssignment, setActiveAssignment] = useState<AssignmentItem | null>(null);
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [isSubmittingAssignment, setIsSubmittingAssignment] = useState(false);
@@ -244,14 +247,29 @@ export default function CompilerPage() {
   const resizing = useRef(false);
   const aiResizing = useRef(false);
 
-  // Fetch course assignments on mount
-  useEffect(() => {
-    fetchStudentAssignments().then((res) => {
+  const refreshAssignments = useCallback(async () => {
+    setIsRefreshingAssignments(true);
+    try {
+      const res = await fetchStudentAssignments(token);
       if (res.success && res.data) {
         setStudentAssignments(res.data);
       }
-    });
-  }, []);
+    } finally {
+      setIsRefreshingAssignments(false);
+    }
+  }, [token]);
+
+  // Fetch course assignments on mount and whenever authentication state changes
+  useEffect(() => {
+    refreshAssignments();
+  }, [user, token, refreshAssignments]);
+
+  // Re-fetch latest assignments whenever student opens the selector modal
+  useEffect(() => {
+    if (showAssignmentModal) {
+      refreshAssignments();
+    }
+  }, [showAssignmentModal, refreshAssignments]);
 
   const handleSelectAssignment = useCallback((asg: AssignmentItem | null) => {
     setActiveAssignment(asg);
@@ -1879,6 +1897,8 @@ export default function CompilerPage() {
           activeAssignment={activeAssignment}
           onSelectAssignment={handleSelectAssignment}
           onClose={() => setShowAssignmentModal(false)}
+          onRefresh={refreshAssignments}
+          isRefreshing={isRefreshingAssignments}
         />
       )}
 

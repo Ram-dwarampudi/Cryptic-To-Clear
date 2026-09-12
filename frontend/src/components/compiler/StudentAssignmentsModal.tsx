@@ -1,14 +1,16 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { AssignmentItem } from "@/lib/api";
-import { X, BookOpen, Calendar, Code2, CheckCircle2, ChevronRight, AlertCircle } from "lucide-react";
+import { X, BookOpen, Calendar, Code2, CheckCircle2, ChevronRight, AlertCircle, RefreshCw } from "lucide-react";
 
 interface StudentAssignmentsModalProps {
   assignments: AssignmentItem[];
   activeAssignment: AssignmentItem | null;
   onSelectAssignment: (asg: AssignmentItem | null) => void;
   onClose: () => void;
+  onRefresh?: () => void | Promise<void>;
+  isRefreshing?: boolean;
 }
 
 export default function StudentAssignmentsModal({
@@ -16,16 +18,30 @@ export default function StudentAssignmentsModal({
   activeAssignment,
   onSelectAssignment,
   onClose,
+  onRefresh,
+  isRefreshing = false,
 }: StudentAssignmentsModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="glass-strong border border-[var(--border-strong)] rounded-2xl p-6 sm:p-8 max-w-xl w-full space-y-5 relative editor-grid max-h-[85vh] overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 text-[var(--ink-dim)] hover:text-[var(--ink)] cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              disabled={isRefreshing}
+              title="Refresh Assignments"
+              className="p-1.5 rounded-lg text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5 cursor-pointer disabled:opacity-50 transition-colors"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-purple-400" : ""}`} />
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5 cursor-pointer transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
 
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -52,7 +68,19 @@ export default function StudentAssignmentsModal({
 
         <div className="space-y-3 font-mono text-xs">
           {assignments.length === 0 ? (
-            <p className="text-xs text-[var(--ink-dim)] italic py-6 text-center">No assignments currently published.</p>
+            <div className="py-8 text-center space-y-3">
+              <p className="text-xs text-[var(--ink-dim)] italic">No assignments currently published.</p>
+              {onRefresh && (
+                <button
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-300 hover:bg-purple-500/30 text-xs font-mono cursor-pointer"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+                  <span>Check for New Assignments</span>
+                </button>
+              )}
+            </div>
           ) : (
             assignments.map((asg) => {
               const isSelected = activeAssignment?.id === asg.id;

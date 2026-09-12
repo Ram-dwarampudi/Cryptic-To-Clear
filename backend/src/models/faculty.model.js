@@ -1,5 +1,9 @@
+const fs = require("fs");
+const path = require("path");
 const userModel = require("./user.model");
 const { ACADEMIC_BRANCHES, ACADEMIC_SECTIONS, BRANCH_NAMES } = require("../constants/academic");
+
+const DATA_FILE_PATH = path.join(__dirname, "../data/faculty_store.json");
 
 /**
  * Institutional Faculty Repository connecting registered students,
@@ -34,7 +38,215 @@ class FacultyModel {
     this.submissions = [];
     this.recentActivity = [];
 
+    this._loadStore();
     this._migrateAssignments();
+  }
+
+  _seedDefaultAssignments() {
+    this.assignments = [
+      {
+        id: "asg_find_largest",
+        facultyId: "usr_faculty_demo",
+        classId: "cls_cse_a",
+        className: "CSE - Section A (3rd Year)",
+        title: "Find the largest of all elements in the given array",
+        description: "Given an array of integers, find and return the largest element present in the array. Read the number of elements N followed by N space-separated integers, and output the single maximum value.",
+        instructions: "Read N followed by N integers from standard input. Constraints: 1 <= N <= 10^5, -10^9 <= arr[i] <= 10^9.",
+        assignmentType: "coding",
+        languageMode: "ANY",
+        allowedLanguages: [],
+        points: 100,
+        difficulty: "easy",
+        startDate: new Date().toISOString(),
+        deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        maxAttempts: 5,
+        totalAssigned: 35,
+        submissionsCount: 0,
+        avgScore: 0,
+        createdAt: new Date().toISOString(),
+        testCases: [
+          {
+            id: "tc_fl_1",
+            input: "5\n1 8 7 56 90",
+            expectedOutput: "90",
+            isHidden: false,
+            explanation: "90 is the largest integer in [1, 8, 7, 56, 90]",
+          },
+          {
+            id: "tc_fl_2",
+            input: "4\n-10 -20 -5 -1",
+            expectedOutput: "-1",
+            isHidden: false,
+            explanation: "All negative numbers, maximum is -1",
+          },
+          {
+            id: "tc_fl_3",
+            input: "1\n42",
+            expectedOutput: "42",
+            isHidden: false,
+            explanation: "Single element array with value 42",
+          },
+          {
+            id: "tc_fl_4",
+            input: "6\n100 200 150 500 400 300",
+            expectedOutput: "500",
+            isHidden: true,
+            explanation: "Hidden evaluation test case 1",
+          },
+          {
+            id: "tc_fl_5",
+            input: "7\n0 0 0 0 0 0 1",
+            expectedOutput: "1",
+            isHidden: true,
+            explanation: "Hidden evaluation test case 2",
+          },
+        ],
+      },
+      {
+        id: "asg_palindrome_checker",
+        facultyId: "usr_faculty_demo",
+        classId: "cls_cse_a",
+        className: "All Engineering Sections",
+        title: "Palindrome String Checker",
+        description: "Check if the given string reads the same forwards and backwards. Output 'true' if the string is a palindrome, otherwise output 'false'.",
+        instructions: "Read a single word from standard input without whitespace. Constraints: 1 <= length(S) <= 10^4.",
+        assignmentType: "coding",
+        languageMode: "ANY",
+        allowedLanguages: [],
+        points: 100,
+        difficulty: "easy",
+        startDate: new Date().toISOString(),
+        deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        maxAttempts: 5,
+        totalAssigned: 35,
+        submissionsCount: 0,
+        avgScore: 0,
+        createdAt: new Date().toISOString(),
+        testCases: [
+          {
+            id: "tc_pal_1",
+            input: "racecar",
+            expectedOutput: "true",
+            isHidden: false,
+            explanation: "racecar reversed is racecar",
+          },
+          {
+            id: "tc_pal_2",
+            input: "hello",
+            expectedOutput: "false",
+            isHidden: false,
+            explanation: "hello reversed is olleh, not equal",
+          },
+          {
+            id: "tc_pal_3",
+            input: "madam",
+            expectedOutput: "true",
+            isHidden: true,
+            explanation: "Hidden evaluation test case",
+          },
+        ],
+      },
+      {
+        id: "asg_two_sum",
+        facultyId: "usr_faculty_demo",
+        classId: "cls_cse_a",
+        className: "All Engineering Sections",
+        title: "Target Sum Pair Finder",
+        description: "Given an array of integers and a target sum, determine if there exists two distinct elements whose sum equals target. Output 'YES' if such a pair exists, otherwise 'NO'.",
+        instructions: "Line 1: N and Target. Line 2: N space-separated integers. Constraints: 2 <= N <= 10^5.",
+        assignmentType: "coding",
+        languageMode: "ANY",
+        allowedLanguages: [],
+        points: 100,
+        difficulty: "medium",
+        startDate: new Date().toISOString(),
+        deadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        maxAttempts: 5,
+        totalAssigned: 35,
+        submissionsCount: 0,
+        avgScore: 0,
+        createdAt: new Date().toISOString(),
+        testCases: [
+          {
+            id: "tc_ts_1",
+            input: "4 9\n2 7 11 15",
+            expectedOutput: "YES",
+            isHidden: false,
+            explanation: "2 + 7 = 9",
+          },
+          {
+            id: "tc_ts_2",
+            input: "3 6\n3 2 4",
+            expectedOutput: "YES",
+            isHidden: false,
+            explanation: "2 + 4 = 6",
+          },
+          {
+            id: "tc_ts_3",
+            input: "2 10\n1 2",
+            expectedOutput: "NO",
+            isHidden: false,
+            explanation: "1 + 2 = 3 != 10",
+          },
+          {
+            id: "tc_ts_4",
+            input: "5 100\n10 20 30 40 50",
+            expectedOutput: "NO",
+            isHidden: true,
+            explanation: "Hidden evaluation test case",
+          },
+        ],
+      },
+    ];
+  }
+
+  _loadStore() {
+    try {
+      if (fs.existsSync(DATA_FILE_PATH)) {
+        const raw = fs.readFileSync(DATA_FILE_PATH, "utf-8");
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.assignments) && parsed.assignments.length > 0) {
+          this.assignments = parsed.assignments;
+        }
+        if (Array.isArray(parsed.classes) && parsed.classes.length > 0) {
+          this.classes = parsed.classes;
+        }
+        if (Array.isArray(parsed.submissions)) {
+          this.submissions = parsed.submissions;
+        }
+      }
+    } catch (err) {
+      console.warn("[FacultyModel] Could not load faculty store from disk:", err.message);
+    }
+
+    if (!Array.isArray(this.assignments) || this.assignments.length === 0) {
+      this._seedDefaultAssignments();
+      this._saveStore();
+    }
+  }
+
+  _saveStore() {
+    try {
+      const dir = path.dirname(DATA_FILE_PATH);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(
+        DATA_FILE_PATH,
+        JSON.stringify(
+          {
+            assignments: this.assignments,
+            classes: this.classes,
+            submissions: this.submissions,
+          },
+          null,
+          2
+        ),
+        "utf-8"
+      );
+    } catch (err) {
+      console.warn("[FacultyModel] Could not persist faculty store to disk:", err.message);
+    }
   }
 
   /**
@@ -309,6 +521,7 @@ class FacultyModel {
       studentCount: 0,
     };
     this.classes.push(newClass);
+    this._saveStore();
     return newClass;
   }
 
@@ -411,6 +624,7 @@ class FacultyModel {
     };
 
     this.assignments.unshift(newAsg);
+    this._saveStore();
     return newAsg;
   }
 
@@ -453,6 +667,7 @@ class FacultyModel {
       }
     }
 
+    this._saveStore();
     return asg;
   }
 
@@ -511,6 +726,7 @@ class FacultyModel {
     const totalScore = asgSubmissions.reduce((sum, s) => sum + s.score, 0);
     asg.avgScore = Math.round((totalScore / (asgSubmissions.length || 1)) * 10) / 10;
 
+    this._saveStore();
     return newSubmission;
   }
 
