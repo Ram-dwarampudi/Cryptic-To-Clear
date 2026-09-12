@@ -30,6 +30,7 @@ interface ToolbarProps {
   activeAssignment?: any | null;
   onSubmitAssignment?: () => void;
   isSubmittingAssignment?: boolean;
+  onOpenAssignmentSelector?: () => void;
   onToggleProblemSpecs?: () => void;
   isProblemSpecsOpen?: boolean;
   onRun: () => void;
@@ -74,6 +75,7 @@ export default function Toolbar({
   activeAssignment,
   onSubmitAssignment,
   isSubmittingAssignment,
+  onOpenAssignmentSelector,
   onToggleProblemSpecs,
   isProblemSpecsOpen,
   onRun,
@@ -217,6 +219,22 @@ export default function Toolbar({
 
       <div className="flex-1 min-w-2" />
 
+      {/* Assignments selector trigger (available on toolbar so navbar stays uniform across site) */}
+      {onOpenAssignmentSelector && (
+        <button
+          onClick={onOpenAssignmentSelector}
+          title={activeAssignment ? `Assignment: ${activeAssignment.title}` : "Open Course Assignments"}
+          className={`flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-mono font-medium transition-all transform hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer ${
+            activeAssignment
+              ? "bg-amber-500/20 text-amber-300 border border-amber-400/50 shadow-[0_0_12px_rgba(212,175,55,0.25)]"
+              : "text-white/80 bg-black/40 border border-white/20 hover:bg-white/10 hover:text-white"
+          }`}
+        >
+          <BookOpen className="h-3.5 w-3.5 text-amber-400" />
+          <span>{activeAssignment ? (activeAssignment.title.length > 15 ? `${activeAssignment.title.slice(0, 15)}...` : activeAssignment.title) : "Assignments"}</span>
+        </button>
+      )}
+
       {/* Assignment Mode: Show Problem Specs Toggle & Hide All AI Tools */}
       {activeAssignment ? (
         <div className="flex items-center gap-2">
@@ -257,6 +275,7 @@ export default function Toolbar({
           </button>
 
           <button
+            id="debugger"
             onClick={onDebug}
             disabled={isDebugging}
             title="Open Visual Debugger"

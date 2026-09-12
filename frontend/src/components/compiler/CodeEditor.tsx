@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import Editor, { OnMount } from "@monaco-editor/react";
+import { useEffect, useRef, useState } from "react";
+import Editor, { OnMount, loader } from "@monaco-editor/react";
 
 export interface EditorSettings {
   theme: "vs-dark" | "light";
@@ -55,6 +55,9 @@ export default function CodeEditor({
   const decorationsRef = useRef<DecorationsCollection | null>(null);
   const debugDecorationsRef = useRef<DecorationsCollection | null>(null);
 
+  const [useFallbackEditor, setUseFallbackEditor] = useState(false);
+  const [retryingMonaco, setRetryingMonaco] = useState(false);
+
   const onRunRef = useRef(onRun);
   const onCompileRef = useRef(onCompile);
   const onDownloadCodeRef = useRef(onDownloadCode);
@@ -71,8 +74,35 @@ export default function CodeEditor({
     onShowShortcutsRef.current = onShowShortcuts;
   });
 
+  // Safety timer: If Monaco fails to load or CDN hangs after 8s, offer lightweight fallback editor
+  useEffect(() => {
+    let isMounted = true;
+    const timer = setTimeout(() => {
+      if (isMounted && !editorRef.current) {
+        setUseFallbackEditor(true);
+      }
+    }, 8000);
+
+    loader.init().then(() => {
+      if (isMounted && editorRef.current) {
+        setUseFallbackEditor(false);
+      }
+    }).catch((err) => {
+      console.warn("Monaco Editor CDN init failed, engaging fallback editor:", err);
+      if (isMounted) {
+        setUseFallbackEditor(true);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [retryingMonaco]);
+
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    setUseFallbackEditor(false);
     editor.updateOptions({
       tabSize: 2,
       glyphMargin: true,
@@ -207,6 +237,60 @@ export default function CodeEditor({
     ]);
     editor.revealLineInCenter(currentLine);
   }, [currentLine]);
+
+  if (useFallbackEditor) {
+    const lines = (value || "").split("\n");
+    return (
+      <div id="monaco-editor-container" className="h-full w-full relative flex flex-col bg-[var(--card)] text-[var(--ink)] font-mono">
+        <div className="flex items-center justify-between px-3 py-1.5 border-b border-[var(--border)] bg-amber-500/10 text-xs shrink-0">
+          <div className="flex items-center gap-2 text-amber-300">
+            <span className="h-2 w-2 rounded-full bg-amber-400" />
+            <span className="font-semibold">Lightweight Editor</span>
+            <span className="text-[11px] text-[var(--ink-faint)] hidden sm:inline">— Monaco engine CDN delayed or offline</span>
+          </div>
+          <button
+            onClick={() => {
+              setUseFallbackEditor(false);
+              setRetryingMonaco((v) => !v);
+              loader.init().then(() => setUseFallbackEditor(false)).catch(() => {});
+            }}
+            className="px-2 py-0.5 rounded bg-amber-400 text-black text-xs font-bold hover:bg-amber-300 transition-colors shadow-sm cursor-pointer"
+          >
+            Retry Monaco
+          </button>
+        </div>
+        <div className="flex-1 flex overflow-hidden relative">
+          <div className="w-12 shrink-0 select-none py-3 text-right pr-2 font-mono text-xs text-[var(--ink-faint)] bg-black/20 border-r border-[var(--border)] overflow-hidden">
+            {lines.map((_, i) => (
+              <div key={i} className="leading-6" style={{ fontSize: `${settings.fontSize}px` }}>{i + 1}</div>
+            ))}
+          </div>
+          <textarea
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                if (e.shiftKey) {
+                  onCompileRef.current?.();
+                } else {
+                  onRunRef.current?.();
+                }
+              }
+            }}
+            spellCheck={false}
+            style={{ fontSize: `${settings.fontSize}px` }}
+            className="flex-1 h-full w-full bg-transparent p-3 outline-none resize-none font-mono leading-6 text-[var(--ink)] overflow-auto whitespace-pre"
+          />
+        </div>
+        {disableCopyPaste && (
+          <div className="absolute top-10 right-4 z-20 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-mono select-none pointer-events-none shadow-md backdrop-blur-sm">
+            🔒 Copy/Paste Disabled in Assignment Mode
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div id="monaco-editor-container" className="h-full w-full relative">

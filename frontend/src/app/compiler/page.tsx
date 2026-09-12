@@ -958,6 +958,19 @@ export default function CompilerPage() {
     }
   }, [language, code, input]);
 
+  // Handle /compiler#debugger deep link / anchor
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkDebuggerHash = () => {
+      if (window.location.hash === "#debugger") {
+        void handleDebug();
+      }
+    };
+    checkDebuggerHash();
+    window.addEventListener("hashchange", checkDebuggerHash);
+    return () => window.removeEventListener("hashchange", checkDebuggerHash);
+  }, [handleDebug]);
+
   const handleDebugStepInto = () => {
     setDebugStepIndex((i) => Math.min(i + 1, (trace?.steps.length ?? 1) - 1));
   };
@@ -1587,10 +1600,7 @@ export default function CompilerPage() {
 
   return (
     <main className="h-screen h-[100dvh] overflow-hidden bg-[var(--bg)]">
-      <Navbar
-        activeAssignment={activeAssignment}
-        onOpenAssignmentSelector={() => setShowAssignmentModal(true)}
-      />
+      <Navbar />
 
       <div
         ref={containerRef}
@@ -1602,6 +1612,7 @@ export default function CompilerPage() {
           onLanguageChange={handleLanguageChange}
           allowedLanguages={activeAssignment?.languageMode === "RESTRICTED" ? activeAssignment.allowedLanguages : undefined}
           activeAssignment={activeAssignment}
+          onOpenAssignmentSelector={() => setShowAssignmentModal(true)}
           onSubmitAssignment={handleAssignmentSubmit}
           isSubmittingAssignment={isSubmittingAssignment}
           onToggleProblemSpecs={() => setIsProblemSpecsOpen((v) => !v)}

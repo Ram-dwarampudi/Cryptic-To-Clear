@@ -4,13 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, BookOpen } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "@/context/AuthContext";
 import UserMenu from "./auth/UserMenu";
 import NotificationsDropdown from "./social/NotificationsDropdown";
 import { LogIn } from "lucide-react";
-import { AssignmentItem } from "@/lib/api";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -21,18 +20,11 @@ const NAV_LINKS = [
   { label: "Contact", href: "/contact" },
 ];
 
-interface NavbarProps {
-  activeAssignment?: AssignmentItem | null;
-  onOpenAssignmentSelector?: () => void;
-}
-
-export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: NavbarProps = {}) {
+export default function Navbar() {
   const router = useRouter();
   const { user, token, openAuthModal } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-
-  const isFaculty = user?.role === "faculty" || user?.role === "admin" || user?.isDemoAccount;
 
   useEffect(() => {
     router.prefetch("/compiler");
@@ -85,21 +77,6 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
 
         {/* CTA & User Menu */}
         <div className="hidden md:flex items-center gap-3">
-          {/* Assignments button — only shown on compiler page for non-faculty users */}
-          {!isFaculty && onOpenAssignmentSelector && (
-            <button
-              onClick={onOpenAssignmentSelector}
-              title="Open Course Assignments"
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-mono border transition-all cursor-pointer shrink-0 ${
-                activeAssignment
-                  ? "bg-[rgba(212,175,55,0.15)] border-[rgba(212,175,55,0.5)] text-[#E8C97A] font-semibold shadow-[0_0_12px_rgba(212,175,55,0.2)]"
-                  : "glass text-[var(--ink-dim)] hover:text-[var(--ink)] hover:border-[rgba(212,175,55,0.35)]"
-              }`}
-            >
-              <BookOpen className="h-3.5 w-3.5 text-[#E8C97A]" />
-              <span>{activeAssignment ? `Assignment: ${activeAssignment.title.slice(0, 18)}...` : "Assignments"}</span>
-            </button>
-          )}
           <ThemeToggle />
           {user && <NotificationsDropdown token={token} />}
           {user ? (
@@ -153,25 +130,6 @@ export default function Navbar({ activeAssignment, onOpenAssignmentSelector }: N
                 </li>
               ))}
 
-              {/* Assignments button — mobile, only on compiler page for non-faculty users */}
-              {!isFaculty && onOpenAssignmentSelector && (
-                <li>
-                  <button
-                    onClick={() => {
-                      setOpen(false);
-                      onOpenAssignmentSelector();
-                    }}
-                    className={`w-full flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-mono transition-colors ${
-                      activeAssignment
-                        ? "bg-[rgba(212,175,55,0.15)] text-[#E8C97A] font-semibold"
-                        : "text-[var(--ink-dim)] hover:text-[var(--ink)] hover:bg-white/5"
-                    }`}
-                  >
-                    <BookOpen className="w-4 h-4 text-[#E8C97A]" />
-                    <span>{activeAssignment ? `Assignment: ${activeAssignment.title.slice(0, 18)}...` : "Assignments"}</span>
-                  </button>
-                </li>
-              )}
 
               {!user && (
                 <li className="pt-1">

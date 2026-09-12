@@ -9,7 +9,7 @@ const FOOTER_COLUMNS = [
     links: [
       { label: "Compiler", href: "/compiler" },
       { label: "Features", href: "/features" },
-      { label: "Interactive Debugger", href: "/compiler" },
+      { label: "Interactive Debugger", href: "/compiler#debugger" },
       { label: "Doubt Resolution", href: "/doubts" },
     ],
   },
