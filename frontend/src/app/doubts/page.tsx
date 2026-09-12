@@ -43,13 +43,14 @@ import {
 } from "@/lib/community-api";
 import { useAuth } from "@/context/AuthContext";
 import DirectMessageDrawer from "@/components/social/DirectMessageDrawer";
+import { CURATED_DOUBTS, CURATED_DOUBT_STATS } from "@/lib/doubt-data";
 
 export default function DoubtsPage() {
   const { user, token, openAuthModal } = useAuth();
 
-  const [doubts, setDoubts] = useState<DoubtItem[]>([]);
-  const [stats, setStats] = useState<UserDoubtStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [doubts, setDoubts] = useState<DoubtItem[]>(CURATED_DOUBTS);
+  const [stats, setStats] = useState<UserDoubtStats | null>(CURATED_DOUBT_STATS);
+  const [loading, setLoading] = useState(false);
 
   // Direct messaging state
   const [activeDmPeer, setActiveDmPeer] = useState<{
@@ -70,7 +71,7 @@ export default function DoubtsPage() {
 
   // Modal and Expansion
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
-  const [expandedDoubtId, setExpandedDoubtId] = useState<string | null>(null);
+  const [expandedDoubtId, setExpandedDoubtId] = useState<string | null>("doubt_quicksort_2025");
 
   // Answering
   const [answerContent, setAnswerContent] = useState("");
@@ -229,8 +230,11 @@ export default function DoubtsPage() {
               >
                 <Plus className="h-4 w-4" />
                 <span>Ask a Doubt</span>
-                <span className="ml-1 text-[11px] px-1.5 py-0.5 rounded bg-black/20 text-[#0a0d13] font-mono">
-                  +5 Karma
+                <span 
+                  title="Asking or solving a doubt rewards your campus profile with contribution karma points" 
+                  className="ml-1 text-[11px] px-2 py-0.5 rounded bg-black/20 text-[#0a0d13] font-mono font-bold"
+                >
+                  Earn +5 Karma
                 </span>
               </button>
             </div>

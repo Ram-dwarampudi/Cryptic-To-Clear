@@ -389,8 +389,67 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center font-mono text-xs text-[#E8C97A]">
-          Loading University Authentication Portal...
+        <div className="min-h-screen relative flex flex-col justify-between overflow-x-hidden pt-20 pb-12 px-4 sm:px-6 lg:px-8 bg-[var(--bg)] text-[var(--ink)]">
+          {/* Top Bar Navigation */}
+          <header className="max-w-7xl mx-auto w-full mb-6 flex items-center justify-between">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-xs font-mono text-[var(--ink-dim)] hover:text-[#E8C97A] transition-colors px-3 py-1.5 rounded-lg border border-white/10"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Home</span>
+            </Link>
+
+            <div className="flex items-center gap-3">
+              <Link
+                href="/compiler"
+                className="text-xs font-mono text-[var(--ink-dim)] hover:text-white px-3 py-1.5 rounded-lg border border-white/10"
+              >
+                Launch Compiler
+              </Link>
+              <Link
+                href="/interviews"
+                className="text-xs font-mono text-[var(--ink-dim)] hover:text-white px-3 py-1.5 rounded-lg border border-white/10 hidden sm:inline-block"
+              >
+                Interview Archive
+              </Link>
+            </div>
+          </header>
+
+          {/* Main Skeleton Box */}
+          <main className="max-w-7xl mx-auto w-full my-auto flex flex-col items-center justify-center py-12">
+            <div className="w-full max-w-md glass-strong rounded-3xl p-8 border border-[rgba(212,175,55,0.3)] shadow-2xl text-center space-y-4">
+              <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1 font-mono text-[11px] text-[#E8C97A] border border-[rgba(212,175,55,0.3)]">
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>University Authentication Portal</span>
+              </div>
+              <h2 className="font-serif-heading text-xl font-bold text-white">
+                Preparing Secure Session
+              </h2>
+              <p className="text-xs text-[var(--ink-dim)]">
+                Connecting to institutional authentication gateway...
+              </p>
+              <div className="py-6 flex items-center justify-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-ping" />
+                <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-[#D4AF37]" />
+              </div>
+              <div className="pt-4 border-t border-white/5 flex justify-center gap-3 text-xs font-mono">
+                <Link href="/" className="text-[#E8C97A] hover:underline">
+                  Return to Home
+                </Link>
+                <span className="text-zinc-600">•</span>
+                <Link href="/compiler" className="text-zinc-400 hover:text-white">
+                  Direct Compiler
+                </Link>
+              </div>
+            </div>
+          </main>
+
+          {/* Footer Note */}
+          <footer className="max-w-7xl mx-auto w-full mt-8 pt-4 border-t border-white/5 text-center text-xs font-mono text-[var(--ink-faint)]">
+            Cryptic to Clear • University Tech Campus Academic Platform • Secure TLS &amp; JWT Authentication
+          </footer>
         </div>
       }
     >

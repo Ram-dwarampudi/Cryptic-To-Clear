@@ -159,8 +159,11 @@ export default function InterviewsPage() {
               >
                 <Plus className="h-4 w-4" />
                 <span>Share Your Experience</span>
-                <span className="ml-1 text-[11px] px-1.5 py-0.5 rounded bg-black/20 text-[#0a0d13] font-mono">
-                  +25 Karma
+                <span 
+                  title="Sharing a verified interview experience rewards your campus profile with contribution karma points"
+                  className="ml-1 text-[11px] px-2 py-0.5 rounded bg-black/20 text-[#0a0d13] font-mono font-bold"
+                >
+                  Earn +25 Karma
                 </span>
               </button>
             </div>

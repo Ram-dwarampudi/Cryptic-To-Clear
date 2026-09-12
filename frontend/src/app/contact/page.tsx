@@ -237,7 +237,12 @@ export default function ContactPage() {
                   <Mail className="h-4 w-4 text-[#D4AF37] shrink-0 mt-0.5" />
                   <div>
                     <strong className="text-white block">Official Support Email</strong>
-                    <span className="font-mono text-[#E8C97A]">support@cryptictoclear.edu</span>
+                    <a
+                      href="mailto:support@cryptictoclear.com"
+                      className="font-mono text-[#E8C97A] hover:underline"
+                    >
+                      support@cryptictoclear.com
+                    </a>
                   </div>
                 </div>
 

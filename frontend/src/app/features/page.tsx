@@ -16,6 +16,7 @@ import {
   Cpu,
   Sparkles,
   ShieldCheck,
+  Terminal,
 } from "lucide-react";
 
 export default function FeaturesPage() {
@@ -309,6 +310,148 @@ nums = [1, 2, 3]`,
                 <p className="text-xs text-[var(--ink-dim)] mt-1 leading-relaxed">
                   Strict JSON schema constraints ensure reproducible, accurate AI explanations without hallucinations.
                 </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Languages & Compiler Toolchains Section */}
+      <section id="languages" className="py-20 border-t border-[rgba(212,175,55,0.2)] bg-black/20 scroll-mt-20">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 mb-4 border border-[rgba(212,175,55,0.3)] shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+              <Terminal className="h-4 w-4 text-[#E8C97A]" />
+              <span className="font-mono text-xs font-semibold text-[#E8C97A] uppercase tracking-wider">
+                Native Execution Runtimes
+              </span>
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-white">
+              Supported Languages &amp; Toolchain Specs
+            </h2>
+            <p className="mt-3 text-sm text-[var(--ink-dim)] leading-relaxed">
+              Every submission compiles against native isolated toolchains with strict memory and execution timeouts, standardizing student evaluations to university contest specifications.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* C Toolchain */}
+            <div className="glass-strong rounded-2xl p-6 border border-white/10 hover:border-[#D4AF37]/50 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-mono font-bold text-[#E8C97A] px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/30">
+                    C17 Standard
+                  </span>
+                  <span className="text-[10.5px] font-mono text-zinc-400">GCC 13.2</span>
+                </div>
+                <h3 className="font-display text-lg font-bold text-white mb-2">C Language</h3>
+                <p className="text-xs text-zinc-300 leading-relaxed mb-4">
+                  Full POSIX compliance, pointers, structures, file I/O, dynamic memory allocation (`malloc`, `free`), and algorithmic performance.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-white/10 space-y-1.5 font-mono text-[11px] text-zinc-400">
+                <div className="flex justify-between">
+                  <span>Compiler:</span>
+                  <span className="text-white">gcc -std=c17 -O2</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Time Limit:</span>
+                  <span className="text-emerald-400">2.0s</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Memory Limit:</span>
+                  <span className="text-cyan-400">256 MB</span>
+                </div>
+              </div>
+            </div>
+
+            {/* C++ Toolchain */}
+            <div className="glass-strong rounded-2xl p-6 border border-white/10 hover:border-[#D4AF37]/50 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-mono font-bold text-[#E8C97A] px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/30">
+                    C++20 Standard
+                  </span>
+                  <span className="text-[10.5px] font-mono text-zinc-400">G++ 13.2</span>
+                </div>
+                <h3 className="font-display text-lg font-bold text-white mb-2">C++ (Modern)</h3>
+                <p className="text-xs text-zinc-300 leading-relaxed mb-4">
+                  Full C++ Standard Template Library (STL) vector, map, unordered_set, algorithms, ranges, concepts, and smart pointers.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-white/10 space-y-1.5 font-mono text-[11px] text-zinc-400">
+                <div className="flex justify-between">
+                  <span>Compiler:</span>
+                  <span className="text-white">g++ -std=c++20 -O2</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Time Limit:</span>
+                  <span className="text-emerald-400">2.0s</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Memory Limit:</span>
+                  <span className="text-cyan-400">256 MB</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Java Toolchain */}
+            <div className="glass-strong rounded-2xl p-6 border border-white/10 hover:border-[#D4AF37]/50 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-mono font-bold text-[#E8C97A] px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/30">
+                    LTS 21
+                  </span>
+                  <span className="text-[10.5px] font-mono text-zinc-400">OpenJDK 21</span>
+                </div>
+                <h3 className="font-display text-lg font-bold text-white mb-2">Java SE</h3>
+                <p className="text-xs text-zinc-300 leading-relaxed mb-4">
+                  Modern Java platform with records, pattern matching, virtual threads, streams, and collection frameworks for enterprise labs.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-white/10 space-y-1.5 font-mono text-[11px] text-zinc-400">
+                <div className="flex justify-between">
+                  <span>Runtime:</span>
+                  <span className="text-white">javac &amp; java -Xmx256M</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Time Limit:</span>
+                  <span className="text-emerald-400">4.0s</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Memory Limit:</span>
+                  <span className="text-cyan-400">256 MB</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Python Toolchain */}
+            <div className="glass-strong rounded-2xl p-6 border border-white/10 hover:border-[#D4AF37]/50 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-mono font-bold text-[#E8C97A] px-2 py-0.5 rounded bg-[#D4AF37]/15 border border-[#D4AF37]/30">
+                    v3.12 Stable
+                  </span>
+                  <span className="text-[10.5px] font-mono text-zinc-400">CPython</span>
+                </div>
+                <h3 className="font-display text-lg font-bold text-white mb-2">Python 3</h3>
+                <p className="text-xs text-zinc-300 leading-relaxed mb-4">
+                  Complete standard library including math, collections, itertools, heapq, json, and typing for algorithm practice.
+                </p>
+              </div>
+              <div className="pt-3 border-t border-white/10 space-y-1.5 font-mono text-[11px] text-zinc-400">
+                <div className="flex justify-between">
+                  <span>Interpreter:</span>
+                  <span className="text-white">python3 -u</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Time Limit:</span>
+                  <span className="text-emerald-400">5.0s</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Memory Limit:</span>
+                  <span className="text-cyan-400">256 MB</span>
+                </div>
               </div>
             </div>
           </div>
