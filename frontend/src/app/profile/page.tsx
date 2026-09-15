@@ -218,7 +218,7 @@ export default function StudentProfileDashboard() {
       rollNo: "24PA1A5730",
       collegeName: "Vishnu Educational Society",
       stream: "Computer Science & Business Systems",
-      overallScore: 68,
+      overallScore: 134,
       karmaPoints: 35,
       leetcodeHandle: "vYeuVxyec7",
       codechefHandle: "svkatreddy",
@@ -412,20 +412,37 @@ export default function StudentProfileDashboard() {
   };
 
   // Sync Platforms
+  // Sync Platforms
   const handleSyncPlatforms = async (e: React.FormEvent) => {
     e.preventDefault();
     setActionLoading(true);
     setActionSuccess(null);
     try {
-      const res = await syncExternalPlatforms(handlesForm, token);
+      const sanitizedHandles = {
+        leetcodeHandle: (handlesForm.leetcodeHandle || "").replace(/^https?:\/\/(www\.)?leetcode\.com\/(u\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "").trim(),
+        codeforcesHandle: (handlesForm.codeforcesHandle || "").replace(/^https?:\/\/(www\.)?codeforces\.com\/(profile\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "").trim(),
+        codechefHandle: (handlesForm.codechefHandle || "").replace(/^https?:\/\/(www\.)?codechef\.com\/(users\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "").trim(),
+        hackerrankHandle: (handlesForm.hackerrankHandle || "").replace(/^https?:\/\/(www\.)?hackerrank\.com\/(profile\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "").trim(),
+        githubHandle: (handlesForm.githubHandle || "").replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/^@+/, "").replace(/\/+$/, "").trim(),
+      };
+      setHandlesForm(sanitizedHandles);
+      const res = await syncExternalPlatforms(sanitizedHandles, token);
       if (res.success) {
+        if (res.externalStats?.platforms) {
+          setDashboard((prev: any) => prev ? {
+            ...prev,
+            platforms: res.externalStats.platforms,
+            summary: res.externalStats.summary || prev.summary,
+            scoreBreakdown: res.externalStats.scoreBreakdown || prev.scoreBreakdown,
+          } : prev);
+        }
         setActionSuccess("Coding accounts linked & DevScore recalculated!");
         setTimeout(() => {
           setIsSyncModalOpen(false);
           setActionSuccess(null);
           loadDashboard();
           loadLeaderboard();
-        }, 900);
+        }, 600);
       } else {
         alert(res.message || "Failed to sync platforms.");
       }
@@ -440,8 +457,23 @@ export default function StudentProfileDashboard() {
   const handleRefreshLiveStats = async () => {
     setActionLoading(true);
     try {
-      const res = await syncExternalPlatforms(handlesForm, token);
+      const sanitizedHandles = {
+        leetcodeHandle: (handlesForm.leetcodeHandle || "").replace(/^https?:\/\/(www\.)?leetcode\.com\/(u\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "").trim(),
+        codeforcesHandle: (handlesForm.codeforcesHandle || "").replace(/^https?:\/\/(www\.)?codeforces\.com\/(profile\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "").trim(),
+        codechefHandle: (handlesForm.codechefHandle || "").replace(/^https?:\/\/(www\.)?codechef\.com\/(users\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "").trim(),
+        hackerrankHandle: (handlesForm.hackerrankHandle || "").replace(/^https?:\/\/(www\.)?hackerrank\.com\/(profile\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "").trim(),
+        githubHandle: (handlesForm.githubHandle || "").replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/^@+/, "").replace(/\/+$/, "").trim(),
+      };
+      const res = await syncExternalPlatforms(sanitizedHandles, token);
       if (res.success) {
+        if (res.externalStats?.platforms) {
+          setDashboard((prev: any) => prev ? {
+            ...prev,
+            platforms: res.externalStats.platforms,
+            summary: res.externalStats.summary || prev.summary,
+            scoreBreakdown: res.externalStats.scoreBreakdown || prev.scoreBreakdown,
+          } : prev);
+        }
         await Promise.allSettled([loadDashboard(), loadLeaderboard()]);
       } else {
         alert(res.message || "Could not sync stats.");
@@ -1451,7 +1483,7 @@ export default function StudentProfileDashboard() {
                 {platforms.github?.connected ? (
                   <div className="space-y-2">
                     <p className="text-sm font-bold text-white truncate font-mono">
-                      @{platforms.github.handle}
+                      @{platforms.github.handle ? platforms.github.handle.replace(/^@+/, "") : ""}
                     </p>
                     <div className="flex items-baseline justify-between text-xs font-mono pt-1">
                       <span className="text-[var(--ink-dim)]">Repositories:</span>
@@ -1480,7 +1512,7 @@ export default function StudentProfileDashboard() {
               {platforms.github?.connected && (
                 <div className="mt-3 pt-2 border-t border-white/5 flex items-center justify-between text-[11px] font-mono text-[var(--ink-faint)]">
                   <a
-                    href={`https://github.com/${platforms.github.handle}`}
+                    href={`https://github.com/${platforms.github.handle ? platforms.github.handle.replace(/^@+/, "") : ""}`}
                     target="_blank"
                     rel="noreferrer"
                     className="hover:text-purple-400 flex items-center gap-1"
@@ -1820,10 +1852,10 @@ export default function StudentProfileDashboard() {
                             )}
                             {student.githubHandle && (
                               <a
-                                href={`https://github.com/${student.githubHandle}`}
+                                href={`https://github.com/${student.githubHandle.replace(/^@+/, "")}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                title={`GitHub: @${student.githubHandle}`}
+                                title={`GitHub: @${student.githubHandle.replace(/^@+/, "")}`}
                                 className="px-1.5 py-0.5 rounded bg-white/5 text-gray-300 hover:bg-white/10 text-[10px] font-mono border border-white/10 transition flex items-center gap-1"
                               >
                                 <span>GH</span>
@@ -2637,12 +2669,24 @@ export default function StudentProfileDashboard() {
                           type="text"
                           placeholder={current.placeholder}
                           value={handlesForm[current.field]}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            let val = e.target.value.trim();
+                            if (selectedPlatform === "github") {
+                              val = val.replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/^@+/, "").replace(/\/+$/, "");
+                            } else if (selectedPlatform === "leetcode") {
+                              val = val.replace(/^https?:\/\/(www\.)?leetcode\.com\/(u\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "");
+                            } else if (selectedPlatform === "codechef") {
+                              val = val.replace(/^https?:\/\/(www\.)?codechef\.com\/(users\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "");
+                            } else if (selectedPlatform === "codeforces") {
+                              val = val.replace(/^https?:\/\/(www\.)?codeforces\.com\/(profile\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "");
+                            } else if (selectedPlatform === "hackerrank") {
+                              val = val.replace(/^https?:\/\/(www\.)?hackerrank\.com\/(profile\/)?/i, "").replace(/^@+/, "").replace(/\/+$/, "");
+                            }
                             setHandlesForm({
                               ...handlesForm,
-                              [current.field]: e.target.value.trim(),
-                            })
-                          }
+                              [current.field]: val,
+                            });
+                          }}
                           className={`w-full bg-black/40 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none transition-colors ${current.accentBorder}`}
                           autoFocus
                         />

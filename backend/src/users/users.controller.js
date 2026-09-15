@@ -29,6 +29,38 @@ exports.getProfile = async (req, res) => {
 };
 
 /**
+ * Sanitize and clean platform usernames from raw inputs (handles @, URLs, trailing slashes, etc.)
+ */
+function cleanPlatformHandle(handle, platform) {
+  if (!handle || typeof handle !== "string") return "";
+  let clean = handle.trim();
+  clean = clean.split("?")[0].split("#")[0];
+  clean = clean.replace(/^https?:\/\//i, "");
+  clean = clean.replace(/^www\./i, "");
+
+  if (platform === "github" || !platform) {
+    clean = clean.replace(/^github\.com\//i, "");
+  }
+  if (platform === "leetcode" || !platform) {
+    clean = clean.replace(/^leetcode\.com\/(u\/)?/i, "");
+  }
+  if (platform === "codechef" || !platform) {
+    clean = clean.replace(/^codechef\.com\/(users\/)?/i, "");
+  }
+  if (platform === "codeforces" || !platform) {
+    clean = clean.replace(/^codeforces\.com\/(profile\/)?/i, "");
+  }
+  if (platform === "hackerrank" || !platform) {
+    clean = clean.replace(/^hackerrank\.com\/(profile\/)?/i, "");
+  }
+
+  clean = clean.replace(/^[@/]+/, "");
+  clean = clean.replace(/\/+$/, "");
+
+  return clean.trim();
+}
+
+/**
  * @route PUT /api/users/profile
  * @desc Update user profile details and external coding handles
  */
@@ -66,13 +98,30 @@ exports.updateProfile = async (req, res, next) => {
     if (stream !== undefined) updateData.stream = stream;
     if (primaryLanguage !== undefined) updateData.primaryLanguage = primaryLanguage;
     if (graduationYear !== undefined) updateData.graduationYear = parseInt(graduationYear, 10) || null;
-    if (leetcodeHandle !== undefined) updateData.leetcodeHandle = leetcodeHandle.trim();
-    if (codechefHandle !== undefined) updateData.codechefHandle = codechefHandle.trim();
-    if (codeforcesHandle !== undefined) updateData.codeforcesHandle = codeforcesHandle.trim();
-    if (hackerrankHandle !== undefined) updateData.hackerrankHandle = hackerrankHandle.trim();
-    if (githubHandle !== undefined) updateData.githubHandle = githubHandle.trim();
+    if (leetcodeHandle !== undefined) updateData.leetcodeHandle = cleanPlatformHandle(leetcodeHandle, "leetcode");
+    if (codechefHandle !== undefined) updateData.codechefHandle = cleanPlatformHandle(codechefHandle, "codechef");
+    if (codeforcesHandle !== undefined) updateData.codeforcesHandle = cleanPlatformHandle(codeforcesHandle, "codeforces");
+    if (hackerrankHandle !== undefined) updateData.hackerrankHandle = cleanPlatformHandle(hackerrankHandle, "hackerrank");
+    if (githubHandle !== undefined) updateData.githubHandle = cleanPlatformHandle(githubHandle, "github");
 
     const updatedUser = await userModel.updateUser(req.user.id, updateData);
+
+    // If platform handles were updated, refresh external stats
+    if (
+      githubHandle !== undefined ||
+      leetcodeHandle !== undefined ||
+      codechefHandle !== undefined ||
+      codeforcesHandle !== undefined ||
+      hackerrankHandle !== undefined
+    ) {
+      syncUserExternalPlatforms(req.user.id, {
+        leetcodeHandle: updateData.leetcodeHandle,
+        codechefHandle: updateData.codechefHandle,
+        codeforcesHandle: updateData.codeforcesHandle,
+        hackerrankHandle: updateData.hackerrankHandle,
+        githubHandle: updateData.githubHandle,
+      }).catch((e) => console.warn("Background sync on profile update error:", e.message));
+    }
 
     return res.status(200).json({
       success: true,
@@ -369,30 +418,88 @@ async function fetchCodeChefStats(handle) {
 }
 
 /**
- * Helper to fetch GitHub stats
+ * Helper to fetch GitHub stats with dual API + HTML fallback for rate-limit resilience
  */
 async function fetchGitHubStats(handle) {
-  if (!handle) return null;
-  const username = handle.trim().replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/\/$/, "");
+  const username = cleanPlatformHandle(handle, "github");
   if (!username) return null;
 
+  // 1. Try official GitHub REST API
   try {
     const res = await fetch(`https://api.github.com/users/${encodeURIComponent(username)}`, {
-      headers: { "User-Agent": "Mozilla/5.0" },
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/vnd.github.v3+json",
+      },
       signal: AbortSignal.timeout(6000),
     });
-    const data = await res.json();
-    if (data && data.public_repos !== undefined) {
-      return {
-        handle: username,
-        repos: data.public_repos || 0,
-        followers: data.followers || 0,
-        bio: data.bio || null,
-      };
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && typeof data.public_repos === "number") {
+        return {
+          handle: username,
+          repos: data.public_repos,
+          followers: typeof data.followers === "number" ? data.followers : 0,
+          bio: data.bio || null,
+        };
+      }
+    } else {
+      console.warn(`GitHub API status ${res.status} for ${username}, falling back to HTML profile scraping...`);
     }
   } catch (err) {
-    console.warn("GitHub fetch error:", err.message);
+    console.warn("GitHub API fetch error:", err.message, "falling back to HTML profile scraping...");
   }
+
+  // 2. Fallback: Parse public GitHub profile HTML (resistant to 60 req/hr unauthenticated API limit)
+  try {
+    const resHtml = await fetch(`https://github.com/${encodeURIComponent(username)}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+      },
+      signal: AbortSignal.timeout(6000),
+    });
+
+    if (resHtml.ok) {
+      const html = await resHtml.text();
+
+      // Check if profile exists (not a 404 page)
+      if (!html.includes("Not Found") || html.includes("tab=repositories")) {
+        let repos = 0;
+        const repoMatch =
+          html.match(/tab=repositories[\s\S]*?class="[^"]*Counter[^"]*"[^>]*title="([0-9,]+)"/i) ||
+          html.match(/tab=repositories[\s\S]*?class="[^"]*Counter[^"]*"[^>]*>([0-9,]+)</i) ||
+          html.match(/Repositories[\s\S]*?class="[^"]*Counter[^"]*"[^>]*>([0-9,]+)</i) ||
+          html.match(/Repositories[\s\S]*?Counter[^>]*>([0-9,]+)</i) ||
+          html.match(/href="\/[^/"]+\?tab=repositories"[^>]*>[\s\S]*?<span[^>]*>([0-9,]+)<\/span>/i);
+
+        if (repoMatch && repoMatch[1]) {
+          repos = parseInt(repoMatch[1].replace(/,/g, ""), 10) || 0;
+        }
+
+        let followers = 0;
+        const followerMatch =
+          html.match(/([0-9,]+)\s*<\/span>\s*followers/i) ||
+          html.match(/followers[\s\S]*?class="[^"]*text-bold[^"]*"[^>]*>([0-9,]+)</i) ||
+          html.match(/href="[^\"]*tab=followers"[^>]*>[\s\S]*?<span[^>]*class="[^"]*text-bold[^"]*"[^>]*>([0-9,]+)<\/span>/i);
+
+        if (followerMatch && followerMatch[1]) {
+          followers = parseInt(followerMatch[1].replace(/,/g, ""), 10) || 0;
+        }
+
+        return {
+          handle: username,
+          repos,
+          followers,
+          bio: null,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("GitHub HTML fallback error:", err.message);
+  }
+
   return null;
 }
 
@@ -417,11 +524,11 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
 
   const { leetcodeHandle, codechefHandle, codeforcesHandle, hackerrankHandle, githubHandle } = customHandles;
 
-  const lcHandle = (leetcodeHandle && typeof leetcodeHandle === "string" && leetcodeHandle.trim()) ? leetcodeHandle.trim() : (user.leetcodeHandle || "");
-  const cfHandle = (codeforcesHandle && typeof codeforcesHandle === "string" && codeforcesHandle.trim()) ? codeforcesHandle.trim() : (user.codeforcesHandle || "");
-  const ccHandle = (codechefHandle && typeof codechefHandle === "string" && codechefHandle.trim()) ? codechefHandle.trim() : (user.codechefHandle || "");
-  const hrHandle = (hackerrankHandle && typeof hackerrankHandle === "string" && hackerrankHandle.trim()) ? hackerrankHandle.trim() : (user.hackerrankHandle || "");
-  const ghHandle = (githubHandle && typeof githubHandle === "string" && githubHandle.trim()) ? githubHandle.trim() : (user.githubHandle || "");
+  const lcHandle = cleanPlatformHandle(leetcodeHandle !== undefined ? leetcodeHandle : user.leetcodeHandle, "leetcode");
+  const cfHandle = cleanPlatformHandle(codeforcesHandle !== undefined ? codeforcesHandle : user.codeforcesHandle, "codeforces");
+  const ccHandle = cleanPlatformHandle(codechefHandle !== undefined ? codechefHandle : user.codechefHandle, "codechef");
+  const hrHandle = cleanPlatformHandle(hackerrankHandle !== undefined ? hackerrankHandle : user.hackerrankHandle, "hackerrank");
+  const ghHandle = cleanPlatformHandle(githubHandle !== undefined ? githubHandle : user.githubHandle, "github");
 
   let prevPlatforms = {};
   try {
@@ -467,11 +574,11 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
         ? prevPlatforms.codechef
         : (ccStats || prevPlatforms.codechef || null));
 
-  const finalGh = (ghStats && ghStats.repos > 0)
+  const finalGh = ghStats
     ? ghStats
-    : (isMatch(prevPlatforms.github?.handle, ghHandle) && prevPlatforms.github?.repos > 0
+    : (isMatch(prevPlatforms.github?.handle, ghHandle)
         ? prevPlatforms.github
-        : (ghStats || prevPlatforms.github || null));
+        : (ghHandle ? { handle: ghHandle, repos: prevPlatforms.github?.repos || 0, followers: prevPlatforms.github?.followers || 0 } : null));
 
   const finalHr = (hrStats && (hrStats.totalSolved > 0 || (hrStats.badges && hrStats.badges.length > 0)))
     ? hrStats
@@ -508,7 +615,7 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
     platforms: {
       leetcode: {
         handle: finalLc?.handle || lcHandle,
-        connected: Boolean((finalLc && finalLc.totalSolved > 0) || lcStats || (finalLc && finalLc.connected)),
+        connected: Boolean((finalLc && finalLc.totalSolved > 0) || lcStats || (finalLc && finalLc.connected) || lcHandle),
         totalSolved: lcSolved,
         easy: finalLc?.easy || finalLc?.easySolved || 0,
         medium: finalLc?.medium || finalLc?.mediumSolved || 0,
@@ -518,7 +625,7 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
       },
       codeforces: {
         handle: finalCf?.handle || cfHandle,
-        connected: Boolean(finalCf?.rating || finalCf?.totalSolved > 0 || cfStats || (finalCf && finalCf.connected)),
+        connected: Boolean(finalCf?.rating || finalCf?.totalSolved > 0 || cfStats || (finalCf && finalCf.connected) || cfHandle),
         rating: finalCf?.rating || null,
         rank: finalCf?.rank || null,
         maxRating: finalCf?.maxRating || null,
@@ -526,7 +633,7 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
       },
       codechef: {
         handle: finalCc?.handle || ccHandle,
-        connected: Boolean(finalCc?.rating || finalCc?.totalSolved > 0 || ccStats || (finalCc && finalCc.connected)),
+        connected: Boolean(finalCc?.rating || finalCc?.totalSolved > 0 || ccStats || (finalCc && finalCc.connected) || ccHandle),
         rating: finalCc?.rating || null,
         stars: finalCc?.stars || null,
         totalSolved: ccSolved,
@@ -539,9 +646,9 @@ async function syncUserExternalPlatforms(userId, customHandles = {}) {
       },
       github: {
         handle: finalGh?.handle || ghHandle,
-        connected: Boolean((finalGh && finalGh.repos > 0) || ghStats || (finalGh && finalGh.connected) || ghHandle),
-        repos: finalGh?.repos || 0,
-        followers: finalGh?.followers || 0,
+        connected: Boolean(finalGh?.handle || ghHandle),
+        repos: finalGh?.repos ?? 0,
+        followers: finalGh?.followers ?? 0,
       },
     },
     summary: {
@@ -648,13 +755,25 @@ exports.getDashboard = async (req, res, next) => {
       }
     }
 
-    // Auto-sync handles if handles are saved but externalStats has 0 solves or unrated
+    // Auto-sync handles if handles are saved but externalStats has missing platforms, or if github is out of sync
     const hasHandles = Boolean(user.leetcodeHandle || user.codechefHandle || user.codeforcesHandle || user.githubHandle);
+    const lastSyncTime = stats?.lastSyncedAt ? new Date(stats.lastSyncedAt).getTime() : 0;
+    const isStale = (Date.now() - lastSyncTime) > 30 * 60 * 1000;
+    const ghOutOfSync = Boolean(
+      user.githubHandle &&
+      (!stats?.platforms?.github ||
+        stats.platforms.github.handle !== user.githubHandle ||
+        (stats.platforms.github.repos === 0 && isStale))
+    );
+
     const needsSync =
       !stats ||
       !stats.platforms ||
-      (user.leetcodeHandle && (!stats.platforms.leetcode || Number(stats.platforms.leetcode.totalSolved) === 0)) ||
-      (user.codechefHandle && (!stats.platforms.codechef || !stats.platforms.codechef.rating));
+      ghOutOfSync ||
+      (isStale && (
+        (user.leetcodeHandle && (!stats.platforms.leetcode || Number(stats.platforms.leetcode.totalSolved) === 0)) ||
+        (user.codechefHandle && (!stats.platforms.codechef || !stats.platforms.codechef.rating))
+      ));
 
     if (hasHandles && needsSync) {
       try {
@@ -739,8 +858,8 @@ exports.getDashboard = async (req, res, next) => {
       topics: [],
     };
 
-    const platforms = stats?.platforms || {
-      leetcode: {
+    const platforms = {
+      leetcode: stats?.platforms?.leetcode || {
         handle: user.leetcodeHandle || "",
         connected: Boolean(user.leetcodeHandle),
         totalSolved: 0,
@@ -750,7 +869,7 @@ exports.getDashboard = async (req, res, next) => {
         ranking: null,
         rating: null,
       },
-      codeforces: {
+      codeforces: stats?.platforms?.codeforces || {
         handle: user.codeforcesHandle || "",
         connected: Boolean(user.codeforcesHandle),
         rating: null,
@@ -758,26 +877,35 @@ exports.getDashboard = async (req, res, next) => {
         maxRating: null,
         totalSolved: 0,
       },
-      codechef: {
+      codechef: stats?.platforms?.codechef || {
         handle: user.codechefHandle || "",
         connected: Boolean(user.codechefHandle),
         rating: null,
         stars: null,
         totalSolved: 0,
       },
-      hackerrank: {
+      hackerrank: stats?.platforms?.hackerrank || {
         handle: user.hackerrankHandle || "",
         connected: Boolean(user.hackerrankHandle),
         totalSolved: 0,
         badges: [],
       },
-      github: {
+      github: stats?.platforms?.github || {
         handle: user.githubHandle || "",
         connected: Boolean(user.githubHandle),
         repos: 0,
         followers: 0,
       },
     };
+
+    if (user.githubHandle) {
+      if (!platforms.github) {
+        platforms.github = { handle: user.githubHandle, connected: true, repos: 0, followers: 0 };
+      } else {
+        platforms.github.handle = user.githubHandle;
+        platforms.github.connected = true;
+      }
+    }
 
     return res.status(200).json({
       success: true,
@@ -893,6 +1021,29 @@ exports.getPublicProfile = async (req, res, next) => {
       }
     }
 
+    // Auto-sync if this user has a githubHandle or other handles that are out of sync or missing
+    const hasHandles = Boolean(user.leetcodeHandle || user.codechefHandle || user.codeforcesHandle || user.githubHandle);
+    const lastSyncTime = stats?.lastSyncedAt ? new Date(stats.lastSyncedAt).getTime() : 0;
+    const isStale = (Date.now() - lastSyncTime) > 30 * 60 * 1000;
+    const ghOutOfSync = Boolean(
+      user.githubHandle &&
+      (!stats?.platforms?.github ||
+        stats.platforms.github.handle !== user.githubHandle ||
+        (stats.platforms.github.repos === 0 && isStale))
+    );
+
+    if (hasHandles && (!stats || !stats.platforms || ghOutOfSync)) {
+      try {
+        const synced = await syncUserExternalPlatforms(user.id);
+        if (synced) {
+          stats = synced.externalStats;
+          user.overallScore = synced.updatedUser.overallScore;
+        }
+      } catch (e) {
+        console.warn("Public profile auto-sync error:", e.message);
+      }
+    }
+
     const overallScore = user.overallScore || stats?.summary?.overallScore || 0;
     const tierInfo = getTierInfo(overallScore);
 
@@ -936,12 +1087,12 @@ exports.getPublicProfile = async (req, res, next) => {
         hackerrank: user.hackerrankHandle || "",
         github: user.githubHandle || "",
       },
-      platforms: stats?.platforms || {
-        leetcode: { connected: Boolean(user.leetcodeHandle), handle: user.leetcodeHandle, totalSolved: 0 },
-        codeforces: { connected: Boolean(user.codeforcesHandle), handle: user.codeforcesHandle, rating: null, totalSolved: 0 },
-        codechef: { connected: Boolean(user.codechefHandle), handle: user.codechefHandle, rating: null, totalSolved: 0 },
-        hackerrank: { connected: Boolean(user.hackerrankHandle), handle: user.hackerrankHandle, totalSolved: 0 },
-        github: { connected: Boolean(user.githubHandle), handle: user.githubHandle, repos: 0 },
+      platforms: {
+        leetcode: stats?.platforms?.leetcode || { connected: Boolean(user.leetcodeHandle), handle: user.leetcodeHandle, totalSolved: 0 },
+        codeforces: stats?.platforms?.codeforces || { connected: Boolean(user.codeforcesHandle), handle: user.codeforcesHandle, rating: null, totalSolved: 0 },
+        codechef: stats?.platforms?.codechef || { connected: Boolean(user.codechefHandle), handle: user.codechefHandle, rating: null, totalSolved: 0 },
+        hackerrank: stats?.platforms?.hackerrank || { connected: Boolean(user.hackerrankHandle), handle: user.hackerrankHandle, totalSolved: 0 },
+        github: stats?.platforms?.github || { connected: Boolean(user.githubHandle), handle: user.githubHandle, repos: 0, followers: 0 },
       },
       summary: stats?.summary || {
         problemsSolved: 0,
@@ -961,3 +1112,7 @@ exports.getPublicProfile = async (req, res, next) => {
     next(err);
   }
 };
+
+exports.syncUserExternalPlatforms = syncUserExternalPlatforms;
+exports.fetchGitHubStats = fetchGitHubStats;
+exports.cleanPlatformHandle = cleanPlatformHandle;

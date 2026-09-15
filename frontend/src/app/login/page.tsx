@@ -144,7 +144,7 @@ function LoginContent() {
                   </h2>
                 </div>
                 <p className="text-[11px] text-[var(--ink-dim)] font-mono leading-relaxed">
-                  10+ languages with AST debug visualizer and instant AI error fixes.
+                  4 languages with AST debug visualizer and instant AI error fixes.
                 </p>
               </div>
 
@@ -204,7 +204,7 @@ function LoginContent() {
               </div>
               <div className="h-8 w-px bg-white/10" />
               <div>
-                <div className="text-lg sm:text-xl font-bold text-white">10+ Langs</div>
+                <div className="text-lg sm:text-xl font-bold text-white">4 Langs</div>
                 <div className="text-[10px] text-[#E8C97A] uppercase tracking-wider">Smart Compiler</div>
               </div>
               <div className="h-8 w-px bg-white/10" />
@@ -287,11 +287,10 @@ function LoginContent() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("login")}
-                  className={`flex items-center justify-center gap-1.5 py-2 rounded-lg font-medium transition-all cursor-pointer ${
-                    activeTab === "login"
+                  className={`flex items-center justify-center gap-1.5 py-2 rounded-lg font-medium transition-all cursor-pointer ${activeTab === "login"
                       ? "btn-gold text-white font-bold shadow-md"
                       : "text-[var(--ink-dim)] hover:text-[var(--ink)]"
-                  }`}
+                    }`}
                 >
                   <User className="w-3.5 h-3.5 hidden sm:inline" />
                   <span>Student</span>
@@ -300,11 +299,10 @@ function LoginContent() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("faculty")}
-                  className={`flex items-center justify-center gap-1.5 py-2 rounded-lg font-medium transition-all cursor-pointer ${
-                    activeTab === "faculty"
+                  className={`flex items-center justify-center gap-1.5 py-2 rounded-lg font-medium transition-all cursor-pointer ${activeTab === "faculty"
                       ? "bg-purple-700/80 text-white font-bold shadow-md border border-purple-400/40"
                       : "text-[var(--ink-dim)] hover:text-[var(--ink)]"
-                  }`}
+                    }`}
                 >
                   <GraduationCap className="w-3.5 h-3.5 hidden sm:inline text-purple-300" />
                   <span>Faculty</span>
@@ -313,11 +311,10 @@ function LoginContent() {
                 <button
                   type="button"
                   onClick={() => setActiveTab("register")}
-                  className={`flex items-center justify-center gap-1.5 py-2 rounded-lg font-medium transition-all cursor-pointer ${
-                    activeTab === "register"
+                  className={`flex items-center justify-center gap-1.5 py-2 rounded-lg font-medium transition-all cursor-pointer ${activeTab === "register"
                       ? "btn-gold text-white font-bold shadow-md"
                       : "text-[var(--ink-dim)] hover:text-[var(--ink)]"
-                  }`}
+                    }`}
                 >
                   <Sparkles className="w-3.5 h-3.5 hidden sm:inline" />
                   <span>Register</span>
