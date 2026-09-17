@@ -4,6 +4,33 @@ const VALID_ROLES = new Set(["user", "assistant"]);
 const MAX_HISTORY_MESSAGES = 20;
 const MAX_MESSAGE_LENGTH = 8000;
 const MAX_SOURCE_LENGTH = 20000;
+ 
+/**
+ * Detects if a query is clearly about entertainment, movies, celebrities, sports,
+ * or other non-academic/non-coding topics, while allowing coding-related queries that
+ * happen to mention these terms (e.g. "write a movie booking system in python").
+ */
+function isOffTopicQuery(query) {
+  if (!query || typeof query !== "string") return false;
+
+  const hasCodingIntent =
+    /\b(code|coding|program|programming|function|algorithm|script|class|method|sql|query|database|schema|debug|error|bug|syntax|java|python|cpp|c\+\+|html|css|javascript|typescript|react|api|backend|frontend|complexity|big o|data structure|array|linked list|tree|graph|leetcode|stack|queue|loop|recursion|object|variable|pointer)\b/i.test(
+      query
+    );
+
+  if (hasCodingIntent) return false;
+
+  const offTopicPatterns = [
+    /\b(tfi|tollywood|bollywood|hollywood|kollywood|mollywood)\b/i,
+    /\b(movie|movies|film|films|cinema|box office|trailer|teaser|blockbuster)\b/i,
+    /\b(actor|actress|celebrity|celebrities|hero|heroine|star cast|director|film maker)\b/i,
+    /\b(song|songs|album|lyrics|singer|music video)\b/i,
+    /\b(cricket|football|ipl|fifa|world cup|match score|messi|ronaldo|kohli|dhoni)\b/i,
+    /\b(politics|politician|election|minister|chief minister|prime minister|bjp|congress)\b/i,
+  ];
+
+  return offTopicPatterns.some((pattern) => pattern.test(query));
+}
 
 /**
  * POST /api/chat
@@ -49,6 +76,15 @@ async function chat(req, res, next) {
       return res.status(400).json({
         success: false,
         message: "No valid messages were provided.",
+      });
+    }
+
+    const lastUserMsg = cleanMessages.filter((m) => m.role === "user").slice(-1)[0];
+    if (lastUserMsg && isOffTopicQuery(lastUserMsg.content)) {
+      return res.status(200).json({
+        success: true,
+        reply:
+          "I am specialized solely as a coding and academic study assistant. I cannot answer questions about movies, entertainment, or non-technical topics.\n\nPlease feel free to ask any question about programming, computer science, algorithms, or the code in your editor!",
       });
     }
 

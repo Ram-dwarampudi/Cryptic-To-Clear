@@ -724,6 +724,26 @@ export default function CompilerPage() {
 
   // ---- Permanent AI chat -------------------------------------------------
 
+  const isOffTopicStudyQuery = (query: string): boolean => {
+    if (!query) return false;
+    const hasCodingIntent =
+      /\b(code|coding|program|programming|function|algorithm|script|class|method|sql|query|database|schema|debug|error|bug|syntax|java|python|cpp|c\+\+|html|css|javascript|typescript|react|api|backend|frontend|complexity|big o|data structure|array|linked list|tree|graph|leetcode|stack|queue|loop|recursion|object|variable|pointer)\b/i.test(
+        query
+      );
+    if (hasCodingIntent) return false;
+
+    const offTopicPatterns = [
+      /\b(tfi|tollywood|bollywood|hollywood|kollywood|mollywood)\b/i,
+      /\b(movie|movies|film|films|cinema|box office|trailer|teaser|blockbuster)\b/i,
+      /\b(actor|actress|celebrity|celebrities|hero|heroine|star cast|director|film maker)\b/i,
+      /\b(song|songs|album|lyrics|singer|music video)\b/i,
+      /\b(cricket|football|ipl|fifa|world cup|match score|messi|ronaldo|kohli|dhoni)\b/i,
+      /\b(politics|politician|election|minister|chief minister|prime minister|bjp|congress)\b/i,
+    ];
+
+    return offTopicPatterns.some((p) => p.test(query));
+  };
+
   const sendChat = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
@@ -736,6 +756,24 @@ export default function CompilerPage() {
         timestamp: Date.now(),
         content: trimmed,
       };
+
+      if (isOffTopicStudyQuery(trimmed)) {
+        setMessages((m) => [
+          ...m,
+          userMsg,
+          {
+            id: makeId(),
+            role: "assistant",
+            kind: "text",
+            timestamp: Date.now(),
+            content:
+              "I am specialized solely as a coding and academic study assistant. I cannot answer questions about movies, entertainment, or non-technical topics.\n\nPlease feel free to ask any question about programming, computer science, algorithms, or the code in your editor!",
+          },
+        ]);
+        setChatInput("");
+        openAiPanel();
+        return;
+      }
       const loadingId = makeId();
       const loadingMsg: ChatMessage = {
         id: loadingId,
