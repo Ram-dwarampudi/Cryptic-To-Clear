@@ -23,7 +23,30 @@ export default function OAuthButtons({ onSelectProvider, onSuccess }: OAuthButto
   const [demoEmail, setDemoEmail] = useState("alex.student@gmail.com");
   const [demoName, setDemoName] = useState("Alex Turner");
 
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const DEFAULT_GOOGLE_CLIENT_ID = "1015061056737-48cgp6p5gnrllntss64k9v3e713o9jan.apps.googleusercontent.com";
+  const googleClientId = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID).trim();
+
+  // Helper to wait for or inject the Google Identity Services SDK
+  const waitForGoogleSdk = async (timeoutMs = 4000): Promise<boolean> => {
+    if (typeof window === "undefined") return false;
+    if (window.google?.accounts?.oauth2) return true;
+
+    // Inject script if missing
+    if (!document.querySelector('script[src*="accounts.google.com/gsi/client"]')) {
+      const s = document.createElement("script");
+      s.src = "https://accounts.google.com/gsi/client";
+      s.async = true;
+      s.defer = true;
+      document.head.appendChild(s);
+    }
+
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (window.google?.accounts?.oauth2) return true;
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+    return !!window.google?.accounts?.oauth2;
+  };
 
   // Handler for Google button click
   const handleGoogleClick = async () => {
@@ -34,41 +57,45 @@ export default function OAuthButtons({ onSelectProvider, onSuccess }: OAuthButto
 
     setErrorMessage(null);
 
-    // If Google Client ID is configured and Google SDK is loaded: run live Google OAuth popup!
-    if (googleClientId && googleClientId.trim() !== "" && typeof window !== "undefined" && window.google?.accounts?.oauth2) {
-      try {
-        setLoading(true);
-        const tokenClient = window.google.accounts.oauth2.initTokenClient({
-          client_id: googleClientId.trim(),
-          scope: "email profile openid",
-          callback: async (response: any) => {
-            if (response.error) {
-              setLoading(false);
-              setErrorMessage("Google Sign-In was canceled or failed: " + (response.error_description || response.error));
-              return;
-            }
+    if (googleClientId) {
+      setLoading(true);
+      const isSdkReady = await waitForGoogleSdk();
 
-            if (response.access_token) {
-              const res = await loginWithGoogleAccount({ accessToken: response.access_token });
-              setLoading(false);
-              if (res.success) {
-                if (onSuccess) onSuccess();
-                else window.location.href = "/compiler";
-              } else {
-                setErrorMessage(res.message || "Failed to log in with Google.");
+      if (isSdkReady && window.google?.accounts?.oauth2) {
+        try {
+          const tokenClient = window.google.accounts.oauth2.initTokenClient({
+            client_id: googleClientId,
+            scope: "email profile openid",
+            callback: async (response: any) => {
+              if (response.error) {
+                setLoading(false);
+                setErrorMessage("Google Sign-In was canceled or failed: " + (response.error_description || response.error));
+                return;
               }
-            }
-          },
-        });
-        tokenClient.requestAccessToken();
-      } catch (err: any) {
-        setLoading(false);
-        setErrorMessage(err.message || "Failed to initialize Google Sign-In.");
+
+              if (response.access_token) {
+                const res = await loginWithGoogleAccount({ accessToken: response.access_token });
+                setLoading(false);
+                if (res.success) {
+                  if (onSuccess) onSuccess();
+                  else window.location.href = "/compiler";
+                } else {
+                  setErrorMessage(res.message || "Failed to log in with Google.");
+                }
+              }
+            },
+          });
+          tokenClient.requestAccessToken();
+        } catch (err: any) {
+          setLoading(false);
+          setErrorMessage(err.message || "Failed to initialize Google Sign-In.");
+        }
+        return;
       }
-      return;
+      setLoading(false);
     }
 
-    // If client ID is not configured yet, open the setup & demo modal
+    // If client ID is completely absent or Google SDK failed to load (e.g. ad blocker)
     setShowConfigModal(true);
   };
 

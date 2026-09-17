@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Space_Grotesk, Inter, JetBrains_Mono, Cinzel, Plus_Jakarta_Sans, Playfair_Display, Merriweather } from "next/font/google";
 import "./globals.css";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
@@ -74,7 +75,7 @@ export default function RootLayout({
         {/* Applies the stored theme synchronously, before paint, so there's
             no flash of the wrong theme on load. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-        <script src="https://accounts.google.com/gsi/client" async defer></script>
+        <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" />
       </head>
       <body
         className={`${playfair.variable} ${merriweather.variable} ${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} ${cinzel.variable} ${jakarta.variable} antialiased bg-[var(--bg)] text-[var(--ink)]`}
