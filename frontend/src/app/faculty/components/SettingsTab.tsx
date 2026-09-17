@@ -18,7 +18,10 @@ import {
   Check,
   AlertCircle,
   Camera,
+  Upload,
+  FileImage,
 } from "lucide-react";
+import { processImageFile } from "@/lib/image-upload";
 
 const FACULTY_AVATAR_PRESETS = [
   { label: "Dr. Rani (Academic Female)", url: "https://api.dicebear.com/7.x/avataaars/svg?seed=DrRani&hair=longHair" },
@@ -50,6 +53,25 @@ export default function SettingsTab() {
       "Senior Faculty specializing in Advanced Algorithms, Compilers, and AI-driven pedagogical mentoring.",
     avatar: user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=ProfJenkins",
   });
+
+  // Local avatar drag & drop state
+  const facultyFileRef = React.useRef<HTMLInputElement>(null);
+  const [isDraggingFacultyAvatar, setIsDraggingFacultyAvatar] = useState(false);
+  const [facultyImageLoading, setFacultyImageLoading] = useState(false);
+  const [facultyImageInfo, setFacultyImageInfo] = useState<{ fileName: string; fileSize: string } | null>(null);
+
+  const processFacultyImage = async (file: File) => {
+    setFacultyImageLoading(true);
+    try {
+      const res = await processImageFile(file);
+      setFormData((prev) => ({ ...prev, avatar: res.dataUrl }));
+      setFacultyImageInfo({ fileName: res.fileName, fileSize: res.fileSizeFormatted });
+    } catch (err: any) {
+      alert(err.message || "Failed to process image.");
+    } finally {
+      setFacultyImageLoading(false);
+    }
+  };
 
   useEffect(() => {
     async function load() {
@@ -333,8 +355,76 @@ export default function SettingsTab() {
                 ))}
               </div>
 
+              {/* Local File Drag & Drop Zone */}
+              <input
+                ref={facultyFileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    processFacultyImage(e.target.files[0]);
+                  }
+                  if (facultyFileRef.current) facultyFileRef.current.value = "";
+                }}
+              />
+              <div
+                onClick={() => facultyFileRef.current?.click()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDraggingFacultyAvatar(true);
+                }}
+                onDragLeave={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDraggingFacultyAvatar(false);
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDraggingFacultyAvatar(false);
+                  if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
+                    processFacultyImage(e.dataTransfer.files[0]);
+                  }
+                }}
+                className={`p-3.5 rounded-xl border-2 border-dashed transition-all cursor-pointer flex items-center justify-between gap-3 text-xs ${
+                  isDraggingFacultyAvatar
+                    ? "border-purple-400 bg-purple-900/40 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                    : "border-purple-500/30 bg-purple-950/30 hover:border-purple-400/60 hover:bg-purple-900/20"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-purple-500/20 text-purple-300 shrink-0">
+                    {facultyImageLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-purple-300" />
+                    ) : (
+                      <Upload className="w-4 h-4 text-purple-300" />
+                    )}
+                  </div>
+                  <div>
+                    <span className="font-semibold text-purple-200 block">
+                      Drag & Drop Photo from Local Storage
+                    </span>
+                    <span className="text-[10px] text-purple-300/70 block">
+                      or click to browse your computer (PNG, JPG, WEBP, SVG)
+                    </span>
+                  </div>
+                </div>
+                {facultyImageInfo ? (
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-emerald-500/20 border border-emerald-500/30 text-[10px] text-emerald-300 font-bold shrink-0">
+                    <FileImage className="w-3 h-3" />
+                    <span className="truncate max-w-[120px]">{facultyImageInfo.fileName}</span>
+                  </div>
+                ) : (
+                  <span className="text-[11px] text-purple-300 underline font-bold shrink-0">
+                    Browse File
+                  </span>
+                )}
+              </div>
+
               {/* Custom Image URL input */}
-              <div className="pt-2">
+              <div className="pt-1">
                 <label className="text-[10px] font-mono text-[var(--ink-dim)] block mb-1">
                   Or provide Custom Avatar Image URL:
                 </label>

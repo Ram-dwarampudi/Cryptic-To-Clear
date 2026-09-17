@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import AvatarPicker from "./AvatarPicker";
+import { processImageFile } from "@/lib/image-upload";
 import { ACADEMIC_BRANCHES, ACADEMIC_SECTIONS, BRANCH_NAMES } from "@/lib/constants/academic";
 
 interface RegisterFormProps {
@@ -530,6 +531,51 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
             </div>
           </div>
         )}
+      </div>
+
+      {/* Profile Photo / Avatar Selector with Drag & Drop */}
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDrop={async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
+            try {
+              const res = await processImageFile(e.dataTransfer.files[0]);
+              setAvatar(res.dataUrl);
+            } catch (err: any) {
+              setError(err.message || "Failed to process image.");
+            }
+          }
+        }}
+        className="p-3 rounded-2xl bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] hover:border-[#D4AF37]/40 flex items-center justify-between gap-3 transition-all"
+      >
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-black/50 border border-[#D4AF37]/30 flex items-center justify-center overflow-hidden shrink-0">
+            {avatar ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatar} alt="Avatar" className="h-full w-full object-cover" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+            )}
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-white block">Profile Avatar (Optional)</span>
+            <span className="text-[10px] text-[var(--ink-dim)] block">
+              {avatar ? "Custom photo selected" : "Drop local image or pick character"}
+            </span>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAvatarModal(true)}
+          className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-mono text-[#E8C97A] hover:text-white transition-all cursor-pointer shrink-0"
+        >
+          {avatar ? "Change" : "Choose / Drop"}
+        </button>
       </div>
 
       <button

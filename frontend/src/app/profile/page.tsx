@@ -53,7 +53,9 @@ import {
   Users,
   MessageSquare,
   UserPlus,
+  Upload,
 } from "lucide-react";
+import { processImageFile } from "@/lib/image-upload";
 import AvatarPicker from "@/components/auth/AvatarPicker";
 import StudentPublicProfileModal from "@/components/social/StudentPublicProfileModal";
 import DirectMessageDrawer from "@/components/social/DirectMessageDrawer";
@@ -318,13 +320,20 @@ export default function StudentProfileDashboard() {
     }
   }, [user, authLoading, token, router]);
 
+  // Direct drag & drop on hero avatar
+  const [isDraggingHeroAvatar, setIsDraggingHeroAvatar] = useState(false);
+  const heroAvatarInputRef = React.useRef<HTMLInputElement>(null);
+
   // Save Avatar Only
   const handleSaveAvatarOnly = async (avatarUrl: string) => {
     setActionLoading(true);
     try {
-      // Optimistically update AuthContext user, edit form, and leaderboard immediately
+      // Optimistically update AuthContext user, edit form, dashboard, and leaderboard immediately
       updateUser({ avatar: avatarUrl });
       setEditForm((prev) => ({ ...prev, avatar: avatarUrl }));
+      setDashboard((prev: any) =>
+        prev ? { ...prev, profile: { ...prev.profile, avatar: avatarUrl } } : prev
+      );
       setLeaderboard((prev) =>
         prev.map((s) => {
           const isThisUser =
@@ -338,6 +347,9 @@ export default function StudentProfileDashboard() {
       if (res.success) {
         if (res.user?.avatar) {
           updateUser({ avatar: res.user.avatar });
+          setDashboard((prev: any) =>
+            prev ? { ...prev, profile: { ...prev.profile, avatar: res.user.avatar } } : prev
+          );
         }
         await Promise.allSettled([loadDashboard(), loadLeaderboard()]);
         setIsAvatarModalOpen(false);
@@ -348,6 +360,21 @@ export default function StudentProfileDashboard() {
       alert("Error updating avatar.");
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleHeroAvatarDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingHeroAvatar(false);
+    const files = e.dataTransfer?.files;
+    if (files && files[0]) {
+      try {
+        const res = await processImageFile(files[0]);
+        await handleSaveAvatarOnly(res.dataUrl);
+      } catch (err: any) {
+        alert(err.message || "Failed to process image.");
+      }
     }
   };
 
@@ -652,29 +679,68 @@ export default function StudentProfileDashboard() {
 
               {/* Profile Avatar & Names */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 mb-6">
+                <input
+                  ref={heroAvatarInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                  className="hidden"
+                  onChange={async (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      try {
+                        const res = await processImageFile(e.target.files[0]);
+                        await handleSaveAvatarOnly(res.dataUrl);
+                      } catch (err: any) {
+                        alert(err.message || "Failed to process image.");
+                      }
+                    }
+                    if (heroAvatarInputRef.current) heroAvatarInputRef.current.value = "";
+                  }}
+                />
                 <div
                   className="relative group cursor-pointer"
                   onClick={() => setIsAvatarModalOpen(true)}
-                  title="Click to change your avatar"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingHeroAvatar(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDraggingHeroAvatar(false);
+                  }}
+                  onDrop={handleHeroAvatarDrop}
+                  title="Click or Drag & Drop a photo from your computer to update avatar"
                 >
-                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-[#D4AF37] via-[#9c784f] to-[#16213b] p-0.5 shadow-xl flex-shrink-0">
+                  <div className={`h-20 w-20 rounded-2xl p-0.5 shadow-xl flex-shrink-0 transition-all ${
+                    isDraggingHeroAvatar
+                      ? "bg-[#D4AF37] ring-4 ring-[#D4AF37]/50 scale-105 shadow-[0_0_25px_rgba(212,175,55,0.6)]"
+                      : "bg-gradient-to-br from-[#D4AF37] via-[#9c784f] to-[#16213b]"
+                  }`}>
                     <div className="h-full w-full rounded-[14px] bg-[#070b14] flex items-center justify-center text-3xl font-bold font-serif text-[#E8C97A] overflow-hidden relative">
-                      {p?.avatar ? (
+                      {isDraggingHeroAvatar ? (
+                        <div className="flex flex-col items-center justify-center bg-[#070b14]/90 inset-0 absolute text-[#E8C97A] animate-pulse">
+                          <Upload className="w-7 h-7 mb-0.5" />
+                          <span className="text-[8px] font-mono font-bold">Drop Image</span>
+                        </div>
+                      ) : p?.avatar ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={p.avatar} alt={p.name} className="h-full w-full object-cover" />
                       ) : (
                         p?.name?.charAt(0).toUpperCase() || "S"
                       )}
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
-                        <Camera className="w-5 h-5 text-[#E8C97A]" />
-                        <span className="text-[9px] font-mono text-white mt-0.5 font-bold">Edit</span>
-                      </div>
+                      {!isDraggingHeroAvatar && (
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity">
+                          <Camera className="w-5 h-5 text-[#E8C97A]" />
+                          <span className="text-[9px] font-mono text-white mt-0.5 font-bold">Edit / Drop</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <button
                     type="button"
                     className="absolute -bottom-1 -right-1 p-1.5 rounded-lg bg-[#D4AF37] text-black shadow-md hover:scale-110 transition-transform cursor-pointer"
-                    title="Change Avatar"
+                    title="Change Avatar (or drag and drop photo directly)"
                   >
                     <Edit3 className="w-3 h-3" />
                   </button>
@@ -2350,7 +2416,25 @@ export default function StudentProfileDashboard() {
 
               <form onSubmit={handleSaveProfile} className="space-y-4 font-mono text-xs">
                 {/* Avatar Preview & Quick Change */}
-                <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-black/40 border border-white/10">
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDrop={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
+                      try {
+                        const res = await processImageFile(e.dataTransfer.files[0]);
+                        setEditForm((prev) => ({ ...prev, avatar: res.dataUrl }));
+                      } catch (err: any) {
+                        alert(err.message || "Failed to process image.");
+                      }
+                    }
+                  }}
+                  className="flex items-center gap-3.5 p-3 rounded-2xl bg-black/40 border border-white/10 hover:border-[#D4AF37]/40 transition-all"
+                >
                   <div className="h-12 w-12 rounded-xl bg-[#070b14] border border-[#D4AF37]/30 flex items-center justify-center overflow-hidden shrink-0">
                     {editForm.avatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -2363,7 +2447,7 @@ export default function StudentProfileDashboard() {
                   </div>
                   <div className="flex-1">
                     <span className="text-xs font-bold text-white block">Profile Avatar</span>
-                    <span className="text-[11px] text-[var(--ink-dim)] block mt-0.5">Customize your character or icon</span>
+                    <span className="text-[11px] text-[var(--ink-dim)] block mt-0.5">Drop local image here or click change</span>
                   </div>
                   <button
                     type="button"
