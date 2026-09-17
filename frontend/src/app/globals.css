@@ -116,6 +116,21 @@ html.light .gold-vignette {
   ) !important;
 }
 
+/* Light theme brand logo icon & full logo — switches to crisp black in light theme */
+html.light img[src*="logo-icon.png"],
+:root.light img[src*="logo-icon.png"],
+[data-theme="light"] img[src*="logo-icon.png"] {
+  content: url("/logo-icon-light.png");
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12)) !important;
+}
+
+html.light img[src*="logo.png"]:not([src*="logo-icon"]):not([src*="logo-light"]),
+:root.light img[src*="logo.png"]:not([src*="logo-icon"]):not([src*="logo-light"]),
+[data-theme="light"] img[src*="logo.png"]:not([src*="logo-icon"]):not([src*="logo-light"]) {
+  content: url("/logo-light.png");
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12)) !important;
+}
+
 /* Light theme button & input adjustments */
 html.light input[type="text"]:not(.bg-transparent),
 html.light input[type="email"]:not(.bg-transparent),

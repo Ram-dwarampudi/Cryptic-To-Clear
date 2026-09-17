@@ -124,7 +124,7 @@ export default function ContactPage() {
                     <input
                       id="contact-name"
                       type="text"
-                      placeholder="e.g. Ram Dwarampudi"
+                      placeholder="Name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full bg-[#0d1117] border border-[rgba(212,175,55,0.25)] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
@@ -141,7 +141,7 @@ export default function ContactPage() {
                     <input
                       id="contact-email"
                       type="email"
-                      placeholder="student@svecw.edu.in"
+                      placeholder="student@college"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="w-full bg-[#0d1117] border border-[rgba(212,175,55,0.25)] rounded-xl px-4 py-3 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"

@@ -135,19 +135,19 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
       const options =
         role === "faculty"
           ? {
-              role: "faculty" as const,
-              rollNo: facultyId.trim().toUpperCase() || "FAC-" + Math.floor(1000 + Math.random() * 9000),
-              collegeName: collegeName.trim(),
-              stream: department.trim(),
-              avatar: avatar || undefined,
-            }
+            role: "faculty" as const,
+            rollNo: facultyId.trim().toUpperCase() || "FAC-" + Math.floor(1000 + Math.random() * 9000),
+            collegeName: collegeName.trim(),
+            stream: department.trim(),
+            avatar: avatar || undefined,
+          }
           : {
-              role: "student" as const,
-              rollNo: rollNo.trim().toUpperCase(),
-              branch,
-              section,
-              avatar: avatar || undefined,
-            };
+            role: "student" as const,
+            rollNo: rollNo.trim().toUpperCase(),
+            branch,
+            section,
+            avatar: avatar || undefined,
+          };
 
       const res = await register(name.trim(), email.trim(), password, options);
 
@@ -179,11 +179,10 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
             setRole("student");
             setError(null);
           }}
-          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-            role === "student"
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${role === "student"
               ? "btn-gold text-white font-bold shadow-sm"
               : "text-[var(--ink-dim)] hover:text-white"
-          }`}
+            }`}
         >
           <UserIcon className="w-3.5 h-3.5" />
           <span>Student</span>
@@ -195,11 +194,10 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
             setRole("faculty");
             setError(null);
           }}
-          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${
-            role === "faculty"
+          className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg font-medium transition-all cursor-pointer ${role === "faculty"
               ? "bg-purple-700/85 text-white font-bold shadow-sm border border-purple-400/40"
               : "text-[var(--ink-dim)] hover:text-white"
-          }`}
+            }`}
         >
           <GraduationCap className="w-3.5 h-3.5 text-purple-300" />
           <span>Faculty / Educator</span>
@@ -342,11 +340,10 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
                   value={section}
                   onChange={(e) => setSection(e.target.value)}
                   disabled={!branch}
-                  className={`w-full bg-[rgba(10,14,24,0.7)] border rounded-xl pl-10 pr-8 py-2 text-sm transition-all font-mono outline-none appearance-none ${
-                    !branch
+                  className={`w-full bg-[rgba(10,14,24,0.7)] border rounded-xl pl-10 pr-8 py-2 text-sm transition-all font-mono outline-none appearance-none ${!branch
                       ? "border-white/10 text-[var(--ink-faint)] cursor-not-allowed opacity-60 bg-white/[0.02]"
                       : "border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 text-[var(--ink)] cursor-pointer"
-                  }`}
+                    }`}
                   required
                 >
                   <option value="" disabled className="bg-[#0a0e18] text-gray-400">
@@ -465,7 +462,7 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={role === "faculty" ? "e.g. Dr. Rajesh Sharma" : "e.g. Ram Dwarampudi"}
+            placeholder={role === "faculty" ? "e.g. Dr. Rajesh Sharma" : "e.g. Ram "}
             className="w-full bg-[rgba(10,14,24,0.7)] border border-[rgba(212,175,55,0.2)] focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 rounded-xl pl-10 pr-3 py-2 text-sm text-[var(--ink)] placeholder-[var(--ink-faint)] transition-all font-mono outline-none"
             required
           />
@@ -538,11 +535,10 @@ export default function RegisterForm({ onSwitchTab, onSuccess, initialRole = "st
       <button
         type="submit"
         disabled={loading}
-        className={`w-full flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-mono font-bold text-white shadow-lg transition-all disabled:opacity-50 cursor-pointer mt-2 ${
-          role === "faculty"
+        className={`w-full flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-xs font-mono font-bold text-white shadow-lg transition-all disabled:opacity-50 cursor-pointer mt-2 ${role === "faculty"
             ? "bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 hover:opacity-95 shadow-[0_0_20px_rgba(168,85,247,0.35)]"
             : "btn-gold shadow-[0_0_20px_rgba(212,175,55,0.3)] hover:shadow-[0_0_28px_rgba(232,201,122,0.55)]"
-        }`}
+          }`}
       >
         {loading ? (
           <Loader2 className="w-4 h-4 animate-spin" />
